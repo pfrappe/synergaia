@@ -1,0 +1,73 @@
+.fg {
+position:relative;
+overflow:hidden;
+width:500px;
+margin:0 auto;
+padding:0;
+}
+
+.fg a:link, .fg a:active, .fg a:visited {outline:0;text-decoration:none;color:#004e7b;}
+.fg a:hover {color:#a63510;} 
+
+.fg img {border:0;}
+.fg .clear {clear:both;}
+
+.fg .titlebar {margin:0 10px;}
+.fg .title {font-size:14px;font-weight:700;}
+
+.fg .thumb-wrapper {
+position:relative;
+overflow:hidden;
+float:left;
+width:150px;
+height:110px;
+margin:8px;
+background-color:#444;
+border-radius:2px;
+box-shadow: 0px 0px 5px 1px #7a7a7a;
+z-index:198;
+}
+
+.fg .thumb-wrapper:hover {box-shadow: 0px 0px 5px 1px #fc7cb3;}
+
+.fg .thumb-wrapper .caption {
+position:absolute;
+width:94%;
+padding:0 3%;
+left:0;
+bottom:0;
+height:16px;
+line-height:16px;
+font-size:11px;
+color:#eee;
+background:url(pngbg.png) repeat;
+z-index:199;
+}
+
+.fg .thumb {width:100%;height:110px;overflow:hidden;}
+.fg .thumb img {height:auto;}
+.fg .refresh {cursor:pointer;}
+
+/***** pagination style *****/
+.fg .paginate-wrapper {font-size:12px;}
+
+.fg a.paginate {
+color:#555;
+padding:0;
+margin:0 2px;
+text-decoration:none;
+}
+
+.fg a.current-paginate, 
+.fg a.paginate:hover {
+color:#333;
+font-weight:700;
+padding:0;
+margin:0 2px;
+text-decoration:none;
+}
+
+.fg a.paginate-arrow {
+text-decoration:none;
+border:0;
+}

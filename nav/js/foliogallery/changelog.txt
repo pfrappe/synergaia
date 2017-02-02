@@ -1,0 +1,12 @@
+version 1.2
+- Renamed the gallery to folioGallery
+- Added option for displaying captions in album files
+- Added png and gif automatic thumbnail creation
+- Changed thumbnail styling
+- Modified the CSS 
+- Made other minor modifications
+
+Version 1.1
+- Correct number of images are now displayed in colorbox modal window.
+- Correct number of images are now looped in colorbox modal window. 
+- Made minor changes to php file.

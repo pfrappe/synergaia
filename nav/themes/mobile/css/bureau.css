@@ -1,0 +1,166 @@
+@charset "UTF-8";
+/* SynerGaïa 1.0.7 (see AUTHORS file)
+/* Ce fichier est généré automatiquement et ne devrait pas être modifié manuellement */
+body { background-color: white; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; margin: 0; }
+
+#banniere { width: 100%; height: 18px; font-size: 9pt; background-color: #888888; border-bottom: solid 1px #222222; }
+#banniere ul { width: 100%; text-align: right; list-style-type: none; margin: 0; padding: 0; }
+#banniere ul li { display: inline; padding: 0; margin: 0 2px 0 0; height: 18px; color: #eeeeee; }
+#banniere ul li:before { content: '| '; color: #eeeeee; vertical-align: top; }
+#banniere ul li:first-child:before { content: ''; }
+#banniere ul li a { text-decoration: none; color: #eeeeee; }
+#banniere ul li a:hover { text-decoration: underline; }
+#banniere ul li form { display: inline; margin: 0; padding: 0; }
+#banniere ul li form fieldset { display: inline; margin: 0; padding: 0; border: none; }
+#banniere ul li input[type=text] { background-color: #EEE; height: 14px; border: solid 1px black; border-radius: 3px; padding: 0px; font-size: 9pt; }
+
+
+#banniere ul li input[type=submit] { background-color: #EEE; border: solid 1px black; height: 14px; margin: 0; padding: 0; font-size: 8pt; }
+#banniere ul li.message a.operation { background-color: #E88; color: #822; padding: 2px 5px; }
+#banniere ul li.message a.operation img { display: none; }
+
+#themes { clear: both; height: 29px; margin: 0; padding-top: 16px; background: #5184da url("../img/themes_bg.png") repeat-x 0 0; }
+#themes ul { list-style-type: none; padding: 0; margin: 0; }
+#themes ul li { float: left; margin-right: 20px; }
+#themes ul li a { display: block; text-decoration: none; padding: 6px 8px 5px 8px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#themes ul li a img { vertical-align: middle; width: 16px; height: 16px; }
+#themes ul li a span { color: #cfddf5; font-size: 8pt; font-weight: bold; text-transform: uppercase; vertical-align: middle; }
+#themes ul li.select a { background-color: #e9edf0; border: solid 1px #8ea3b2; border-bottom: none; border-radius: 5px 5px 0 0; }
+#themes ul li.select a span { color: #2352a2; }
+
+#raccourcis { clear: both; background-color: #e9edf0; height: 20px; border-bottom: solid #8ea3b2 1px; }
+#raccourcis h2 { float: left; padding: 2px 10px; font-size: 16pt; display: none; }
+#raccourcis ul { float: right; list-style-type: none; padding: 0; margin: 0; }
+#raccourcis ul li { float: left; padding: 0 5px 0 0; }
+#raccourcis ul li a img { width: 16px; height: 16px; vertical-align: middle; }
+#raccourcis ul li a span { display: none; }
+
+#menus { width: 200px; float: left; border-right: solid 1px #dddddd; min-height: 400px; }
+#menus .operations { width: 180px; margin: 8px; padding: 5px; }
+#menus .operations a.modifier { visibility: hidden; position: absolute; margin-top: 3px; margin-left: 2px; font-size: 8pt !important; font-weight: normal !important; }
+#menus .operations a.modifier:before { content: '('; }
+#menus .operations a.modifier:after { content: ')'; }
+#menus .operations div { width: 100%; }
+#menus .operations div:first-child { text-align: left; }
+#menus .operations div:first-child a { font-weight: bold; font-size: 10pt; }
+#menus .operations div:first-child a img { display: none; }
+#menus .operations div ul { list-style-type: none; padding: 0; margin: 0; margin-left: 5px; padding-left: 5px; border-left: solid 1px #86a6da; }
+#menus .operations div a { color: #3674da; text-decoration: none; font-size: 8pt; }
+#menus .operations div a:hover { text-decoration: underline; }
+#menus .operations div a img { margin-right: 3px; vertical-align: middle; }
+#menus .operations div:hover a.modifier { visibility: inherit; }
+
+#corps { display: block; padding-left: 210px; }
+#corps div.operationAide { position: absolute; right: 0; width: 15%; border-left: dotted 1px #bbbbbb; font-size: 8pt; margin: 0; margin-left: 5px; padding: 3px; }
+#corps div.operationContenu { padding-top: 8px; width: 80%; }
+#corps div.operationContenuLarge { padding-top: 8px; width: 99%; }
+#corps p.operationEntete { padding: 0; margin: 0; margin-bottom: 5px; font-weight: bold; border-bottom: dotted 1px #bbbbbb; }
+#corps p.operationEntete:hover a { display: inline; }
+#corps p.operationEntete a { display: none; color: #3674da; text-decoration: none; font-size: 8pt; font-weight: normal; }
+#corps p.operationEntete a:hover { text-decoration: underline; }
+#corps p.operationEntete a:before { content: '('; }
+#corps p.operationEntete a:after { content: ')'; }
+#corps div.collection { width: 100%; }
+#corps div.collection div.collectionEntete { padding: 3px 2px; background-color: #F1F3F5; width: 100%; height: 19px; }
+#corps div.collection div.collectionEntete div.collectionZoneFiltre { float: left; }
+#corps div.collection div.collectionEntete div.collectionZoneFiltre * { font-size: 8pt; color: #666; }
+#corps div.collection div.collectionEntete div.collectionZonePagination { float: left; margin-left: 20%; }
+#corps div.collection div.collectionEntete div.collectionZonePagination * { vertical-align: top; }
+#corps div.collection div.collectionEntete div.collectionZoneControles { float: right; }
+#corps div.collection div.collectionEntete div.collectionZoneControles * { font-size: 8pt; color: #666; }
+#corps div.collection div.collection table { width: 99%; border-collapse: collapse; margin-left: 5px; }
+#corps div.collection div.collection table tr { height: 20px; }
+#corps div.collection div.collection table tr:nth-child(even) { background-color: #F8F8F8; }
+#corps div.collection div.collection table tr th { text-align: left; font-weight: normal; color: #3674DA; font-size: 8pt; text-decoration: none; }
+#corps div.collection div.collection table tr th a:hover { text-decoration: underline; }
+#corps div.collection div.collection table tr th:first-child { width: 1px; }
+#corps div.collection div.collection table tr td { border-bottom: solid 1px #e5e5e5; color: #666; padding: 5px 2px; vertical-align: top; }
+#corps div.collection div.collection table tr td:first-child input[type=checkbox] { margin: 0; padding: 0; }
+#corps div.collection div.collection table tr td:first-child a { font-size: 10pt; font-weight: bold; color: #3674DA; text-decoration: none; white-space: nowrap; }
+#corps div.collection div.collection table tr td:first-child a:hover { text-decoration: underline; }
+#corps div.collection div.collectionPied { margin-top: 2px; padding: 3px 2px; background-color: #F1F3F5; height: 17px; }
+#corps div.collection div.collectionPied div.collectionZonePagination { text-align: center; }
+#corps div.collection div.collectionPied div.collectionZonePagination * { vertical-align: top; }
+#corps div.calendrier { margin-right: 10px; }
+#corps div.calendrier .fc-content { clear: right; }
+#corps ul { list-style: none; padding: 0; padding-left: 5px; margin: 0; }
+#corps ul li { padding: 0; margin: 0; }
+#corps richtext ul { list-style: disc outside none; padding: 0; padding-left: 5px; margin-left: 10px;}
+#corps richtext ul li { padding: 0; margin: 0; }
+#corps richtext ul li ul { list-style: circle outside none; padding: 0; padding-left: 5px; margin-left: 20px;}
+
+#pied { clear: both; display: block; height: 16px; margin-top: 0; background-color: #eeeeee; border-top: solid 1px #7b7b7b; font-size: 8pt; }
+#pied ul { list-style-type: none; margin: 0; padding-left: 10px; padding-top: 2px; }
+#pied ul li { float: left; margin-right: 20px; padding: 0; color: #888888; }
+#pied ul li a { color: #888888; }
+
+#debug { clear: both; display: block; height: 16px; margin-top: 0; background-color: #ffffff; border-top: solid 1px #7b7b7b; font-size: 9pt; font-color: #ff0000;}
+
+textarea.champ_Texte { display: block; border: solid 1px #aaaaaa; vertical-align: top; padding-left: 20px; background: url("../img/icons/16x16/types/texte.png") 2px 0 no-repeat; width: 90%; min-height: 16px; resize: vertical; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; }
+textarea.champ_Texte:focus { background-color: #fffac6; }
+
+input[type=text].champ_Nombre { padding-left: 20px; background: url("../img/icons/16x16/types/nombre.png") 2px 50% no-repeat; text-align: right; }
+input[type=text].champ_Nombre:focus { background-color: #fffac6; }
+
+input[type=text].champ_Date { padding-left: 20px; width: 65px; background: url("../img/icons/16x16/types/date.png") 2px 50% no-repeat; text-align: right; }
+input[type=text].champ_Date:focus { background-color: #fffac6; }
+
+input[type=text].champ_Heure { padding-left: 20px; width: 50px; background: url("../img/icons/16x16/types/heure.png") 2px 50% no-repeat; text-align: right; }
+input[type=text].champ_Heure:focus { background-color: #fffac6; }
+
+input[type=text].champ_DateHeure { padding-left: 20px; width: 120px; background: url("../img/icons/16x16/types/dateheure.png") 2px 50% no-repeat; }
+input[type=text].champ_DateHeure:focus { background-color: #fffac6; }
+
+select.champ_Utilisateur { padding-left: 20px; background: url("../img/icons/16x16/types/utilisateur.png") 2px 50% no-repeat; }
+select.champ_Utilisateur:focus { background-color: #fffac6; }
+
+select.champ_VraiFaux { padding-left: 0; }
+select.champ_VraiFaux:focus { background-color: #fffac6; }
+
+select.champ_Theme:focus { background-color: #fffac6; }
+
+select.champ_ModeleOperation:focus { background-color: #fffac6; }
+
+select.champ_Icone:focus { background-color: #fffac6; }
+
+div.liste_checkbox { max-height: 100px; overflow: auto; border: solid 1px #bbbbbb; transition: max-height 0.5s ease; }
+div.liste_checkbox:hover { max-height: 200px; }
+
+div.graphiqueHistogramme .colonne { fill: steelblue; stroke: white; }
+div.graphiqueHistogramme .etiquette { font: 8px sans-serif; }
+div.graphiqueHistogramme .legende rect { stroke: #fff; }
+div.graphiqueHistogramme .libelle { font: 8px sans-serif; }
+
+div.graphiqueSecteurs .secteur path { stroke: #fff; }
+div.graphiqueSecteurs .etiquette { font: 12px sans-serif; }
+div.graphiqueSecteurs .legende rect { stroke: #fff; }
+div.graphiqueSecteurs .libelle { font: 9px sans-serif; }
+
+div.graphiqueCourbes .point path { fill: steelblue; stroke: #fff; }
+div.graphiqueCourbes .etiquette { font: 12px sans-serif; }
+div.graphiqueCourbes .legende rect { stroke: #fff; }
+div.graphiqueCourbes .libelle { font: 8px sans-serif; }
+
+div.consultationDictionnaire .node circle { fill: #fff; stroke: steelblue; stroke-width: 1.5px; }
+div.consultationDictionnaire .node .code { font: 10px sans-serif; font-weight: bold; }
+div.consultationDictionnaire .node .libelle { font: 8px sans-serif; }
+div.consultationDictionnaire .node .proprietes { visibility: hidden; }
+div.consultationDictionnaire .node:hover .proprietes { visibility: inherit; }
+div.consultationDictionnaire .proprietes .code { font-size: 9px sans-serif; }
+div.consultationDictionnaire .proprietes .libelle { font-size: 8px sans-serif; }
+div.consultationDictionnaire .link { fill: none; stroke: #ccc; stroke-width: 1.5px; }
+
+pre {padding: 1em; border: 1px dashed rgb(47, 111, 171); color: black; background-color: rgb(249, 249, 249); line-height: 1.1em;}
+
+/* css for timepicker */
+.ui-timepicker-div .ui-widget-header { margin-bottom: 8px; }
+.ui-timepicker-div dl { text-align: left; }
+.ui-timepicker-div dl dt { float: left; clear:left; padding: 0 0 0 5px; }
+.ui-timepicker-div dl dd { margin: 0 10px 10px 45%; }
+.ui-timepicker-div td { font-size: 90%; }
+.ui-tpicker-grid-label { background: none; border: none; margin: 0; padding: 0; }
+
+.ui-timepicker-rtl{ direction: rtl; }
+.ui-timepicker-rtl dl { text-align: right; padding: 0 5px 0 0; }
+.ui-timepicker-rtl dl dt{ float: right; clear: right; }
+.ui-timepicker-rtl dl dd { margin: 0 45% 10px 10px; }

@@ -1,0 +1,81 @@
+{ "Agenda":
+	[
+		{
+			"_id": "RendezVous",
+            "@Type": "@DictionnaireObjet",
+            "@Code": "RendezVous",
+            "@Modele": "synergaia_dictionnaire/@Document",
+            "@Base": "synergaia_rendezvous",
+            "@Titre": "Rendez-vous",
+            "@Description": ""
+        }, {
+            "_id": "RendezVous.Commentaire",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "RendezVous.Commentaire",
+            "@Propriete": "Commentaire",
+            "@Objet": "synergaia_dictionnaire/RendezVous",
+            "@Modele": "synergaia_dictionnaire/@TexteRiche",
+            "@Titre": "Commentaire",
+            "@Description": ""
+        }, {
+            "_id": "RendezVous.Debut",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "RendezVous.Debut",
+            "@Propriete": "Debut",
+            "@Objet": "synergaia_dictionnaire/RendezVous",
+            "@Modele": "synergaia_dictionnaire/@DateHeure",
+            "@Titre": "Début",
+            "@Description": ""
+        }, {
+            "_id": "RendezVous.Fin",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "RendezVous.Fin",
+            "@Propriete": "Fin",
+            "@Objet": "synergaia_dictionnaire/RendezVous",
+            "@Modele": "synergaia_dictionnaire/@DateHeure",
+            "@Titre": "Fin",
+            "@Description": ""
+        }, {
+            "_id": "RendezVous.Lieu",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "RendezVous.Lieu",
+            "@Propriete": "Lieu",
+            "@Objet": "synergaia_dictionnaire/RendezVous",
+            "@Modele": "synergaia_dictionnaire/@Texte",
+            "@Titre": "Lieu",
+            "@Description": ""
+        }, {
+            "_id": "RendezVous.Titre",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "RendezVous.Titre",
+            "@Propriete": "Titre",
+            "@Objet": "synergaia_dictionnaire/RendezVous",
+            "@Modele": "synergaia_dictionnaire/@Texte",
+            "@Titre": "Titre",
+            "@Description": ""
+        }, {
+			"_id": "Agenda",
+			"@Type": "@Theme",
+			"@Code": "Agenda",
+			"@Titre": "Agenda",
+			"@IconeTheme": "calendar.png",
+			"@Position": "500"
+		}, {
+			"_id": "AgendaRendezVousNouveau",
+			"@Type": "@ModeleOperation",
+			"@Code": "AgendaRendezVousNouveau",
+			"@Titre": "Nouveau rendez-vous",
+			"@IconeOperation": "calendar_add.png",
+			"@Theme": "synergaia_dictionnaire/Agenda",
+			"@Phrase": "@Nouveau(\"RendezVous\").@Modifier(.Titre,.Debut,.Fin,.Lieu,.Commentaire)|Enregistrer>.@Afficher(.Titre,.Debut,.Fin,.Lieu,.Commentaire)"
+		}, {
+			"_id": "AgendaAfficher",
+			"@Type": "@ModeleOperation",
+			"@Code": "AgendaAfficher",
+			"@Titre": "Afficher l'agenda",
+			"@IconeOperation": "calendar.png",
+			"@Theme": "synergaia_dictionnaire/Agenda",
+			"@Phrase": "@Chercher(\"RendezVous\").@AfficherCalendrier(.Titre,.Debut,.Fin)|>.@Afficher(.Titre,.Debut,.Fin,.Lieu,.Commentaire)|Modifier>.@Modifier(.Titre,.Debut,.Fin,.Lieu,.Commentaire)"
+		}
+	]
+}

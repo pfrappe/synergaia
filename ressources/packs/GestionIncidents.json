@@ -1,0 +1,163 @@
+{
+    "Gestion des incidents": [
+        {
+            "_id": "FamilleIncidents",
+            "@Type": "@DictionnaireObjet",
+            "@Base": "incidents",
+            "@Code": "FamilleIncidents",
+            "@Modele": "@Document",
+            "@Titre": "Famille d'incidents"
+        }, {
+            "_id": "FamilleIncidents.Titre",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "FamilleIncidents.Titre",
+            "@Propriete": "Titre",
+            "@Objet": "FamilleIncidents",
+            "@Modele": "@Texte",
+            "@Titre": "Titre de la famille d'incidents"
+        }, {
+            "_id": "FamilleIncidents.Description",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "FamilleIncidents.Description",
+            "@Propriete": "Description",
+            "@Objet": "FamilleIncidents",
+            "@Modele": "@TexteRiche",
+            "@Titre": "Description de la famille d'incidents"
+        }, {
+            "_id": "FamilleIncidents.Responsables",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "FamilleIncidents.Responsables",
+            "@Propriete": "Responsables",
+            "@Objet": "FamilleIncidents",
+            "@Modele": "@Utilisateur",
+            "@Multiple": "1",
+            "@Titre": "Reponsables"
+        }, {
+            "_id": "Incident",
+            "@Type": "@DictionnaireObjet",
+            "@Base": "incidents",
+            "@Code": "Incident",
+            "@Modele": "@Document",
+            "@Titre": "Incident"
+        }, {
+            "_id": "Incident.Titre",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.Titre",
+            "@Propriete": "Titre",
+            "@Objet": "Incident",
+            "@Modele": "@Texte",
+            "@Titre": "Titre de l'incident"
+        }, {
+            "_id": "Incident.DateHeureApparition",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.DateHeureApparition",
+            "@Propriete": "DateHeureApparition",
+            "@Objet": "Incident",
+            "@Modele": "@DateHeure",
+            "@Titre": "Date et heure d'apparition de l'incident"
+        }, {
+            "_id": "Incident.DateOuverture",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.DateOuverture",
+            "@Propriete": "DateOuverture",
+            "@Objet": "Incident",
+            "@Modele": "@Date",
+            "@Titre": "Date d'ouverture de l'incident"
+        }, {
+            "_id": "Incident.Demandeur",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.Demandeur",
+            "@Propriete": "Demandeur",
+            "@Objet": "Incident",
+            "@Modele": "@Utilisateur",
+            "@Titre": "Demandeur de l'incident"
+        }, {
+            "_id": "Incident.Bloquant",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.Bloquant",
+            "@Propriete": "Bloquant",
+            "@Objet": "Incident",
+            "@Modele": "@VraiFaux",
+            "@Titre": "Incident bloquant"
+        }, {
+            "_id": "Incident.Description",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.Description",
+            "@Propriete": "Description",
+            "@Objet": "Incident",
+            "@Modele": "@TexteRiche",
+            "@Titre": "Description détaillée"
+        }, {
+            "_id": "Incident.FichierJoint",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.FichierJoint",
+            "@Propriete": "FichierJoint",
+            "@Objet": "Incident",
+            "@Modele": "@Fichier",
+            "@Titre": "Fichier joint"
+        }, {
+            "_id": "Incident.Famille",
+            "@Type": "@DictionnairePropriete",
+            "@Code": "Incident.Famille",
+            "@Propriete": "Famille",
+            "@Objet": "Incident",
+            "@Modele": "FamilleIncidents",
+            "@Titre": "Famille"
+        }, {
+            "_id": "@Collection.AfficherIncidents",
+            "@Type": "@DictionnaireMethode",
+            "@Code": "@Collection.AfficherIncidents",
+            "@Methode": "AfficherIncidents",
+            "@Objet": "@Collection",
+            "@Action": ".@Afficher(.Titre,.Famille.Titre,.DateOuverture,.Bloquant,.Demandeur)",
+            "@Titre": "Afficher une liste d'incidents"
+        }, {
+            "_id": "Incidents",
+            "@Type": "@Theme",
+            "@Code": "Incidents",
+            "@Titre": "Incidents",
+            "@IconeTheme": "bug.png",
+            "@Position": "600"
+        }, {
+            "_id": "IncidentsIncidentAjouter",
+            "@Type": "@ModeleOperation",
+            "@Code": "IncidentsIncidentAjouter",
+            "@Titre": "Ajouter un incident",
+            "@IconeOperation": "bug_add.png",
+            "@Theme": "Incidents",
+            "@Phrase": "@Nouveau(\"Incident\").@Modifier(.Titre,.Description,.@Champ(.Famille))"
+        }, {
+            "_id": "IncidentsIncidents",
+            "@Type": "@ModeleOperation",
+            "@Code": "IncidentsIncidents",
+            "@Titre": "Lister les incidents",
+            "@IconeOperation": "bug.png",
+            "@Theme": "Incidents",
+            "@Phrase": "@Chercher(\"Incident\").AfficherIncidents>.@DocumentPrincipal.@Afficher>.@DocumentPrincipal.@Modifier(.Titre,.Description,.DateOuverture,.DateHeureApparition,.Demandeur,.@Champ(.Famille),.FichierJoint)"
+        }, {
+            "_id": "IncidentsIncidentsCalendrier",
+            "@Type": "@ModeleOperation",
+            "@Code": "IncidentsIncidentsCalendrier",
+            "@Titre": "Calendrier des incidents",
+            "@IconeOperation": "bug.png",
+            "@Theme": "Incidents",
+            "@Phrase": "@Chercher(\"Incident\").@AfficherCalendrier(.Titre,.DateHeureApparition)>.@DocumentPrincipal.@Afficher>.@DocumentPrincipal.@Modifier"
+        }, {
+            "_id": "IncidentsFamilleAjouter",
+            "@Type": "@ModeleOperation",
+            "@Code": "IncidentsFamilleAjouter",
+            "@Titre": "Ajouter une famille",
+            "@IconeOperation": "page_add.png",
+            "@Theme": "Incidents",
+            "@Phrase": "@Nouveau(\"FamilleIncidents\").@Modifier"
+        }, {
+            "_id": "IncidentsFamilles",
+            "@Type": "@ModeleOperation",
+            "@Code": "IncidentsFamilles",
+            "@Titre": "Lister les familles",
+            "@IconeOperation": "page_edit.png",
+            "@Theme": "Incidents",
+            "@Phrase": "@Chercher(\"FamilleIncidents\").@Afficher(.Titre,.Responsables)>.@DocumentPrincipal.@Afficher>.@DocumentPrincipal.@Modifier"
+        }
+    ]
+}

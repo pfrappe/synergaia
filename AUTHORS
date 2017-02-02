@@ -1,0 +1,25 @@
+SynerGaia is written by:
+	2011-2012 : Pierre Frappé, Benoit Harrault, Mona Bouraghda (all from SARL Planete Gaia)
+	2013-2014 : Pierre Frappé and SynerGaïa Team
+	@copyleft 2012-2014
+
+	These libraries are free software; you can redistribute them and/or
+	modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
+	License as published by the Free Software Foundation; either
+	version 3 of the License, or any later version.
+
+	These libraries are distributed in the hope that they will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+	See the GNU AFFERO GENERAL PUBLIC LICENSE for more details.
+
+	You should have received a copy of the GNU Affero General Public
+	License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+	
+With help from many libraries and frameworks including:
+	jQuery, jQueryMobile
+	editableGrid
+	tinyMCE
+	fullcalendar
+	jquery.simple.dtpicker
+	jquery.contextmenu.js (Matt Kruse)

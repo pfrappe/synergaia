@@ -1,0 +1,1341 @@
+@charset "UTF-8";
+/*=========== SynerGaïa 1.3.1 (see AUTHORS file) =======*/
+@media print  {
+	@page {
+		margin:0;
+	}
+	
+	#corps {
+		display:inherit;
+		padding-left: 10px;
+		padding-top: 20px;
+		padding-bottom: 55px;
+		padding-right: 10px;
+	}
+	
+	#corps div.operationContenu {
+		padding: 0;
+		margin: 0;
+	}
+	
+	.noprint {
+		display: none;
+	}
+}
+
+@media screen {
+	#corps {
+		xxdisplay: inline-block;
+		xxfloat: left;
+		xxxwidth: 100%;
+		wwpadding-left: 0;
+	}
+	
+	#corps .operationContenu {
+		display: block;
+		position:relative;
+		float: left;
+		z-index: 1000;
+		padding-top: 10px;
+		padding-bottom: 10px;
+		padding-left: 5px;
+		width: 100%;
+		box-shadow: 2px 2px 2px 3px rgba(200, 200, 220, 0.7);
+		border-radius: 5px; 
+		background-color: rgb(240, 240, 240);
+		background-image: linear-gradient(to bottom, rgb(255, 255, 255), rgb(245, 245, 245));
+		background-repeat: repeat-x;
+	}
+	
+	.noscreen {
+		display: none;
+	}
+}
+/*========================== LOGIN =========================*/
+#login-body, #logout {
+    font-family: tahoma, sans-serif;
+    color: #222;
+    background: url('../img/login-bg.png') 50% 100px no-repeat #FFF;
+    font-size: 16px;
+    font-weight: bold;
+    width: 640px;
+    margin: auto;
+}
+#login-wrapper {
+    width: 200px;
+    text-align: center;
+    margin: auto;
+}
+#login-top {
+    height: 120px;
+    padding-top: 140px;
+    text-align: center;
+}
+#login-form p {
+    margin: 0;
+}
+#login-form label {
+    display: none;
+}
+#login-form input.text-input {
+    width: 184px;
+    padding: 6px;
+    color: #555;
+    font-size: 16px;
+    background: #AAA;
+    border-radius: 4px;
+    border: solid 2px #222;
+    background-color: rgb(213,213,213);
+    background-repeat: repeat-x;
+    background-image: -moz-linear-gradient(center top,rgb(228,228,228),rgb(213,213,213));
+}
+#login-form input.text-input-login {
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0px 1px 0px rgba(255,255,255,0.2) inset, 0px 1px 2px rgba(0,0,0,0.05);
+}
+#login-form input.text-input-password {
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0px 1px 0px rgba(255,255,255,0.2) inset, 0px 1px 2px rgba(0,0,0,0.05);
+}
+#login-form input.button {
+    margin: auto;
+    margin-top: 5px;
+    width: 200px;
+    text-align: center;
+    display: block;
+    padding: 4px 19px;
+    font-size: 15px;
+    color: rgb(255,255,255);
+    text-shadow: 0px -1px 0px rgba(0,0,0,0.25);
+    cursor: pointer;
+    background-color: rgb(36,142,36);
+    background-repeat: repeat-x;
+    background-image: -moz-linear-gradient(center top,rgb(54,170,54),rgb(36,142,36));
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
+    border-radius: 6px;
+    box-shadow: 0px 1px 0px rgba(255,255,255,0.2) inset, 0px 1px 2px rgba(0,0,0,0.05);
+}
+#login-form input.button:focus {
+    outline: 1px dotted rgb(102,102,102);
+}
+#login-form input.button:hover {
+    background-position: 0px -15px;
+}
+#login-form div.error {
+    margin-top: 20px;
+    font-size: 10pt;
+    padding: 4px;
+    border: solid 2px #B00;
+    background-color: #FCC;
+    border-radius: 4px;
+    box-shadow: 0px 1px 0px rgba(255,255,255,0.2) inset, 0px 1px 2px rgba(0,0,0,0.05);
+}
+#login-form div.logout {
+}
+
+/*==========================  BODY =========================*/
+body {
+	margin: 0;
+	background-color: white;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+	color: #003000;
+}
+.loader {
+	display: block;
+	width: "200";
+	height: "200";
+	margin: auto;
+	padding-top: 200;
+	opacity: .05;
+}
+/*==========================  BANNIERE =========================*/
+#banniere {
+	display: block;
+	height: 95px;
+	margin:0;
+	padding-top:10px;
+	padding-left:5px;
+	padding-bottom:0px;
+	padding-right:25px;
+	vertical-align: middle;
+	background-color: #f5f530;
+	font-size: 10pt;
+	color: #3030FF; 
+}
+
+#banniere ul {
+	width: 100%; 
+	padding: 3px; 
+	margin: 0px; 
+	padding-top:3px; 
+	padding-left:10px;
+	padding-bottom:5px;
+	text-align: right; 
+	list-style-type: none; 
+	font-family: "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+#banniere ul li {
+	display: inline;
+	padding-right: 10px;
+	padding-bottom: 15px;
+}
+
+#banniere ul li.titre {
+	display: inline;
+	float: left;
+	font-size: 45px;
+	font-weight:bold;
+	color: #203020; 
+	font-weight:bold; 
+}
+#banniere ul li.titre img{
+	padding-top: 3px; 
+	max-height: 75px;
+	box-shadow: 4px 3px 3px 0px rgba(50, 50, 50, 0.7);
+	border-radius: 5px; 
+}
+#banniere ul li.titre span{
+	padding-left: 20px;
+	padding-right: 20px;
+	vertical-alignx: middle;
+	text-alignx: middle;
+}
+
+#banniere ul li a {
+	text-decoration: none;
+	color: #515151;
+}
+
+#banniere ul li a:hover {
+	text-decoration: none; 
+	font-weight:bold; 
+}
+
+#banniere ul li a img {
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+}
+
+/*==========================  THEMES =========================*/
+#themes {
+	width: 100%;
+	padding-left: 20px;
+	padding-top: 8px;
+	height: 35px;
+	margin: 0;
+	background-color: #f0f0f0;
+	border-top: 1px solid;
+	border-bottom: 1px solid;
+	border-color: #cccccc;
+	font-family: "Open Sans",Helvetica,Arial,sans-serif;
+	font-size: 9pt;
+	color: #363636;
+}
+
+#themes ul {
+	clear: left;
+	float: left;
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+
+#themes ul li {
+	display: inline;
+	margin-right: 20px;
+}
+
+#themes ul li a {
+	text-decoration: none;
+	padding: 6px 8px 5px 8px;
+	max-width: 150px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: #303030;
+}
+#themes ul li a:hover {
+	font-weight:bold; 
+}
+	
+#themes ul li a img {
+	vertical-align: middle; 
+	width: 16px; 
+	height: 16px;
+	display: none;
+}
+
+#themes ul li a span {
+	text-transform: uppercase; 
+	vertical-align: middle;
+}
+
+#themes ul li.select a {
+	color: #303030;
+	font-weight: bold; 
+}
+
+#themes ul li.select a span {
+}
+/*==========================  RACCOURCIS =========================*/
+#raccourcis {
+	clear: both;
+	background-color: #e9edf0;
+	height: 20px;
+	border-bottom: solid #dddddd 1px;
+}
+
+#raccourcis h2 {
+	float: left;
+	padding: 2px 10px;
+	font-size: 16pt;
+	display: none;
+}
+
+#raccourcis ul {
+	float: right;
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+
+#raccourcis ul li {
+	float: left;
+	padding: 0 5px 0 0;
+}
+
+#raccourcis ul li a img {
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+}
+
+#raccourcis ul li a span {
+	display: none;
+}
+/*==========================  ADMIN =========================*/
+#admin {
+	display: block;
+	float:left;
+	width: 100%;
+}
+
+#admin ul li form {
+	width: 100%;
+	margin: 0;
+	padding-right: 3px;
+	border: 0px;
+}
+
+#admin ul li form fieldset {
+	width: 100%;
+	display: inline;
+	float: right;
+	margin: 0;
+	padding: 0;
+	padding-bottom:10px;
+	border: 0px;
+}
+
+#admin ul li textarea.formule{
+	display: inline;
+	width: 70%;
+	height: 16px;
+	border: solid 1px #efefef;
+	border-radius: 3px;
+	padding: 0px;
+	background-color: #f8f8f8;
+	font-size: 9pt;
+	color: #ff5050;
+}
+
+#admin ul li input[type=submit] {
+	display: inline;
+	background-color: #f5f5f5;
+	border: solid 1px #aaaaaa;
+	border-radius: 3px;
+	height: 16px;
+	margin: 5px;
+	padding: 1px;
+	font-size: 8pt;
+	color: #999999;
+}
+
+#admin ul li.message a.operation {
+	background-color: #E88; 
+	color: red; 
+	padding: 2px 5px;
+}
+
+#admin ul li.message a.operation img {
+	display: none;
+}
+/*==========================  MENU ET CORPS =========================*/
+/*==========================  MENU =========================*/
+#menuetcorps {
+	clear: both;
+	width: 100%;
+	height: 100%;
+	padding-top: 20px;
+	padding-right:10px;
+	background-color: rgb(245, 245, 245);
+	background-repeat: repeat;
+}
+
+#menus {
+	float: left;
+	width: 220px;
+	min-height: 500px;
+	color: #60ff30;
+	font-family: "Open Sans",Helvetica,Arial,sans-serif;
+}
+
+#menus .operations {
+	width: 190px;
+	margin: 10px;
+	padding-top: 5px;
+	padding-left: 3px;
+	box-shadow: 2px 2px 2px 3px rgba(200, 200, 220, 0.7);
+	border-radius: 5px; 
+	background-color: rgb(250, 250, 250);
+}
+
+#menus .operations a.modifier {
+	visibility: hidden;
+	position: absolute;
+	margin-top: 3px;
+	margin-left: 2px;
+	font-size: 8pt !important;
+	font-weight: normal !important;
+}
+
+#menus .operations a.modifier:before {
+	content: '(';
+}
+
+#menus .operations a.modifier:after {
+	content: ')';
+}
+
+#menus .operations div {
+	padding-bottom: 10px;
+}
+
+#menus .operations div:first-child {
+	text-align: left;
+	background-color: rgb(255, 255, 255);
+}
+
+#menus .operations div:first-child a {
+	font-weight: bold;
+	font-size: 12pt;
+	text-transform: uppercase; 
+}
+
+#menus .operations div:first-child a img {
+	display: none;
+}
+
+#menus .operations div ul {
+	list-style-type: none;
+	padding-top: 7px;
+	padding-left: 2px;
+	margin: 0;
+	margin-left: 0px;
+}
+
+#menus .operations div ul li {
+	padding-top : 5px;
+	font-size: 9pt;
+	color: #003000;
+}
+
+#menus .operations div a {
+	text-decoration: none;
+	font-size: 9pt;
+	color: #003000;
+}
+
+#menus .operations div ul li:hover {
+	background-color: #f8f8f8;
+	font-weight:bold;
+}
+
+#menus .operations div a img {
+	margin-right: 3px;
+	vertical-align: middle;
+	display: none;
+}
+
+#menus .operations div:hover a.modifier {
+	visibility: inherit;
+}
+/*==========================  PIED =========================*/
+#pied {
+	clear: both;
+	display: block;
+	height: 16px;
+	margin-top: 30px;
+	font-size: 8pt;
+}
+
+#pied ul {
+	list-style-type: none;
+	margin: 0px;
+	padding:0;
+	padding-top: 2px;
+}
+
+#pied ul li {
+	margin-right: 0px;
+	padding: 0;
+	color: #888888;
+}
+
+/*========================== OPERATION =========================*/
+#aide {
+	clear: both;
+	margin-left: 5px;
+	padding: 10px;
+	box-shadow: 0px 0px 2px 1px rgba(200, 200, 220, 0.7);
+	border-radius: 5px;
+	background-color: rgb(245, 255, 250);
+	font-size: 10pt;
+}
+
+#corps .operationEntete {
+	padding: 0;
+	margin: 0;
+	margin-bottom: 10px;
+	border-bottom: 1px #eeeeee;
+	font-size : 14pt;
+	font-weight: bold;
+	color: #003000;
+}
+
+#corps .operationEntete:hover a {
+	display: inline;
+}
+
+#corps .operationEntete a {
+	display: none; 
+	color: #3030ff; 
+	text-decoration: none; 
+	font-size: 8pt; 
+	font-weight: normal;
+}
+
+#corps .operationEntete a:hover {
+	font-weight: bold;
+}
+
+#corps .operationEntete a:before {
+	content: '(';
+}
+
+#corps .operationEntete a:after {
+	content: ')';
+}
+
+#corps .titrechamp {
+	font-weight: bold;
+}
+
+#corps a.lien {
+	color: #3030ff;
+}
+
+#corps .corpstable {
+	width: 99%;
+	border-collapse: collapse;
+}
+
+#corps .corpstable thead tr {
+	background-color: rgb(245, 245, 245);
+	border-bottom: 2px solid rgb(229, 229, 229);
+	font-weight: stong;
+}
+#corps .corpstable thead tr th {
+	padding: 3px;
+	text-align: left;
+}
+
+#corps .corpstable tbody tr:nth-child(even) {
+	background-color: rgb(240, 240, 240);
+}
+
+#corps .corpstable tbody tr:hover {
+	background-color: rgb(230, 235, 235);
+}
+
+#corps .corpstable tbody tr td {
+	padding-top: 2px;
+	padding-bottom: 2px;
+	border-bottom: 1px solid rgb(220, 220, 220);
+}
+
+#corps .corpstable tbody tr td a {
+	text-decoration: none;
+	font-weight: bold;
+	color: #208020;
+}
+
+#corps .corpstable tbody tr td a:hover {
+	background-color: rgb(245, 255, 245);
+	color: #208020;
+}
+
+#corps .obligatoire:after {
+	content: '*';
+	color: #ff0000;
+}
+
+#corps ul.objetcomposite {
+	padding: 5px;
+	padding-left: 35px;
+	border: solid 1px #bbccbb;
+	border-radius: 5px; 
+	background-color: rgb(245, 245, 245);
+}
+
+#corps .notation div{
+	padding: 5px;
+	padding-left: 35px;
+	border: solid 1px #bbccbb;
+	border-radius: 5px; 
+	background-color: rgb(245, 245, 245);
+}
+
+#corps .notation table{
+	padding: 5px;
+	border: solid 1px #bbccbb;
+	background-color: rgb(245, 245, 245);
+}
+
+#corps ul.adresse {
+	padding: 5px;
+	padding-left: 35px;
+	border: solid 1px #bbccbb;
+	border-radius: 5px; 
+	background-color: rgb(245, 245, 245);
+}
+
+#corps .autreschamps {
+	margin: 5px;
+	padding: 5px;
+	padding-left: 15px;
+	border-radius: 5px; 
+	border: 1px solid rgb(229, 229, 229);
+	background-color: rgb(255, 255, 255);
+}
+
+#corps .titrechamp {
+	color: #777777;
+}
+/*========================== CORPS COLLECTION =========================*/
+#corps div.collection {
+	width: 100%;
+}
+
+#corps div.collection div.collectionEntete {
+	padding: 3px 2px;
+	background-color: #F1F3F5;
+	width: 90%;
+	height: 19px;
+}
+
+#corps div.collection div.collectionEntete div.collectionZoneFiltre {
+	float: left;
+}
+
+#corps div.collection div.collectionEntete div.collectionZoneFiltre * {
+	font-size: 8pt; 
+	color: #666;
+}
+
+#corps div.collection div.collectionEntete div.collectionZonePagination {
+	float: left;
+	margin-left: 20%;
+}
+
+#corps div.collection div.collectionEntete div.collectionZonePagination * {
+	vertical-align: top;
+}
+
+#corps div.collection div.collectionEntete div.collectionZoneControles {
+	float: right;
+}
+
+#corps div.collection div.collectionEntete div.collectionZoneControles * {
+	font-size: 8pt; 
+	color: #666;
+}
+
+#corps div.collection div.collection table {
+	width: 99%;
+	border-collapse: collapse;
+	margin-left: 5px;
+}
+
+#corps div.collection div.collection table tr {
+	height: 20px;
+}
+
+#corps div.collection div.collection table tr:nth-child(even) {
+	background-color: #F8F8F8;
+}
+
+#corps div.collection div.collection table tr th {
+	text-align: left;
+	font-weight: normal;
+	color: #3674DA;
+	font-size: 8pt;
+	text-decoration: none;
+}
+
+#corps div.collection div.collection table tr th a:hover {
+	text-decoration: underline;
+}
+
+#corps div.collection div.collection table tr th:first-child {
+	width: 1px;
+}
+
+#corps div.collection div.collection table tr td {
+	border-bottom: solid 1px #e5e5e5; 
+	color: #666; 
+	padding: 5px 2px; 
+	vertical-align: top;
+}
+
+#corps div.collection div.collection table tr td:first-child input[type=checkbox] {
+	margin: 0;
+	padding: 0;
+}
+
+#corps div.collection div.collection table tr td:first-child a {
+	font-size: 10pt; 
+	font-weight: bold; 
+	color: #3674DA; 
+	text-decoration: none; 
+	white-space: nowrap;
+}
+
+#corps div.collection div.collection table tr td:first-child a:hover {
+	text-decoration: underline;
+}
+
+#corps div.collection div.collectionPied {
+	margin-top: 2px;
+	padding: 3px 2px;
+	background-color: #F1F3F5;
+	height: 17px;
+}
+
+#corps div.collection div.collectionPied div.collectionZonePagination {
+	text-align: center;
+}
+
+#corps div.collection div.collectionPied div.collectionZonePagination * {
+	vertical-align: top;
+}
+
+#corps div.calendrier {
+	margin-right: 10px;
+}
+
+#corps div.calendrier .fc-content {
+	clear: right;
+}
+
+#corps ul {
+	list-style: none;
+	padding: 0;
+	padding-left: 5px;
+	margin: 0;
+}
+
+#corps ul li {
+	padding-top: 3px;
+	margin: 0;
+}
+	
+/*========================== CORPS TEXTE RICHE ========================*/
+#corps richtext ul {
+	list-style: disc outside none; 
+	padding: 0; 
+	padding-left: 5px; 
+	margin-left: 20px;
+}
+
+#corps richtext ul li {
+	padding: 0;
+	margin: 0;
+}
+
+#corps richtext ul li ul {
+	list-style: circle outside none; 
+	padding: 0; 
+	padding-left: 5px; 
+	margin-left: 30px;
+}
+
+#corps richtext pre {
+	padding: 1em;
+	border: 1px dashed #2F6EAB;
+	color: #000;
+	background-color: #F9F9F9;
+	line-height: 1.1em;
+}
+
+#corps richtext h1, h2, h3, h4, h5, h6 {
+	margin: 0px;
+	padding-top: 0.5em;
+	padding-bottom: 0.17em;
+	font-family: "Open Sans",Helvetica,Arial,sans-serif;
+	font-weight: bold;
+}
+#corps richtext h1{
+	border-bottom: 1px solid #AAA;
+	color: #005000;
+}
+
+#corps richtext h2, h3 {
+	border-bottom: 1px solid #999;
+}
+#corps richtext h3{
+	font-style : italic;
+}
+#corps richtext, h4, h5, h6 {
+}
+	
+/*========================== CORPS TEXTE AUTRE ========================*/
+#corps .titre1 {
+	font-size: 13pt;
+	font-weight: bold;
+}
+
+#corps .titre2 {
+	font-size: 11pt;
+	font-weight: bold;
+}
+
+#corps .rouge {
+	color: #ff0000;
+}
+
+#corps .vert {
+	color: #00aa00;
+}
+
+#corps .bleu {
+	color: #0000bb;
+}
+
+#corps .gras {
+	font-weight: bold;
+}
+
+/*-- drag drop de fichiers --*/
+#corps .dropzone {
+	width: 300px;
+	height: 50px;
+	border: 3px dashed #bbbbbb;
+	line-height: 50px;
+	text-align: center;
+}
+/*-- fin drag drop de fichiers --*/
+/*-- arbre généalogique --*/
+#corps .arbre {
+}
+
+#corps .arbre_lien {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+
+#corps .arbre_noeud {
+}
+
+#corps .arbre_titre {
+	color: #0000bb;
+	font-weight: bold;
+}
+
+#corps .arbre_modele {
+	fill: #777;
+	font-size: smaller;
+}
+
+#corps .arbre_resume {
+	fill: #777;
+	font-size: smaller;
+}
+/*-- fin arbre généalogique --*/
+/*-- Forum --*/
+#corps .forum table{
+	width: 100%;
+	border: solid 1px grey;
+}
+
+#corps .forum_titre {
+	width: 100%;
+	color: #0000bb;
+	font-weight: bold;	
+}
+
+#corps .forum_colgauche {
+	width: 10%;
+	background-color: #eeeeee;
+}
+
+#corps .forum_auteur {
+	font-weight: bold;	
+}
+
+#corps .forum_infos {
+	font-size: smaller;
+}
+
+#corps .forum_texte {
+}
+/*-- fin Forum --*/
+/*========================== CORPS PAGE LIVRE ===============*/
+#corps .pagelivre {
+	padding: 20px;
+	margin-right: 10px;
+	box-shadow: 30px 0px 30px 0px #aaaaaa;
+	background-color: inherit;
+	background-image: linear-gradient(to left, rgb(250, 250, 245), rgb(200, 200, 200));
+	background-repeat: repeat-y;
+	background-size: 80px 30px;
+	border: solid 1px #eeeeee;
+}
+#corps .pagelivre:after {
+    bottom: 0px;  
+    left: 5%;  
+    width: 90%;  
+    height: 50px;      
+    border-radius: 125px / 12px;  
+    box-shadow: 0 0 8px #565656;
+}
+
+/*========================= ADROITE ===================*/
+#corps .adroite {
+	display: inline;
+	float: right;
+	margin-right: 15px;
+}
+.adroite {
+    position: relative;
+	width: 395px;
+	padding: 5px;
+	box-shadow: 2px 2px 2px 3px rgba(190, 190, 200, 0.7);
+	border-radius: 5px; 
+	background-color: rgb(200, 250, 250);
+	background-image: linear-gradient(to bottom, rgb(255, 255, 255), rgb(225, 245, 245));
+	background-repeat: repeat-x;
+	z-index: 0;
+}
+.adroite:hover {
+	width: 400px;
+	z-index: 2000;
+	box-shadow: 5px 5px 2px 3px rgba(190, 190, 200, 0.6);
+}
+	
+.adroite ul {
+	display: block;
+	list-style: none outside none;
+	margin-left: -25px;
+}
+.adroite ul li{
+	margin-top: 5px;
+	padding-bottom: 5px;
+}
+
+/*==================== THEMES ==============*/
+#themeaide ul {
+	list-style: disc outside none;	
+}
+
+#themeaide ul li ul {
+	list-style: circle outside none;	
+}
+
+#debug {
+	clear: both; 
+	display: block; 
+	height: 16px; 
+	margin-top: 0; 
+	background-color: #ffffff; 
+	border-top: solid 1px #dddddd; 
+	font-size: 9pt; 
+	color: #ff0000;
+}
+
+.break { page-break-before : always;}
+
+/*=================== CHAMPS ================*/
+textarea.champ_Texte {
+	display: block;
+	border: solid 1px #aaaaaa;
+	vertical-align: top;
+	padding-left: 20px;
+	background:
+	url("../img/icons/16x16/types/texte.png") 2px 0 no-repeat;
+	width: 90%;
+	min-height: 16px;
+	resize: vertical;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+}
+
+textarea.champ_Texte:focus {
+	background-color: #fffac6;
+	resize: vertical;
+}
+
+textarea.champ_TexteFormule {
+	display: block;
+	border: solid 1px #bbbbbb;
+	vertical-align: top;
+	padding-left: 20px;
+	background:
+	url("../img/icons/16x16/types/texte.png") 2px 0 no-repeat;
+	width: 90%;
+	min-height: 16px;
+	resize: vertical;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+}
+
+span.champ_TexteFormule {
+	display: block;
+	border: solid 1px #bbbbbb;
+	vertical-align: top;
+	padding-left: 10px;
+	width: 90%;
+	min-height: 16px;
+	xresize: vertical;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 9pt;
+}
+
+textarea.champ_TexteFormule:focus {
+	background-color: #c6fffa;
+}
+
+input[type=text].champ_Nombre {
+	padding-left: 20px;
+	background: url("../img/icons/16x16/types/nombre.png") 2px 50% no-repeat;
+	text-align: right;
+}
+
+input[type=text].champ_Nombre:focus {
+	background-color: #fffac6;
+}
+
+input[type=text].champ_Date {
+	padding-left: 20px; 
+	width: 100px; 
+	background: url("../img/icons/16x16/types/date.png") 2px 50% no-repeat; 
+	text-align: right;
+}
+
+input[type=text].champ_Date:focus {
+	background-color: #fffac6;
+}
+
+input[type=text].champ_Heure {
+	padding-left: 20px;
+	width: 100px;
+	background: url("../img/icons/16x16/types/heure.png") 2px 50% no-repeat;
+	text-align: right;
+}
+
+input[type=text].champ_Heure:focus {
+	background-color: #fffac6;
+}
+
+input[type=text].champ_DateHeure {
+	padding-left: 20px;
+	width: 120px;
+	background: url("../img/icons/16x16/types/dateheure.png") 2px 50% no-repeat;
+}
+
+input[type=text].champ_DateHeure:focus {
+	background-color: #fffac6;
+}
+
+select.champ_Utilisateur {
+	padding-left: 20px;
+	background: url("../img/icons/16x16/types/utilisateur.png") 2px 50% no-repeat;
+}
+
+select.champ_Utilisateur:focus {
+	background-color: #fffac6;
+}
+
+select.champ_VraiFaux {
+	padding-left: 0;
+}
+
+select.champ_VraiFaux:focus {
+	background-color: #fffac6;
+}
+
+select.champ_Theme:focus {
+	background-color: #fffac6;
+}
+
+select.champ_ModeleOperation:focus {
+	background-color: #fffac6;
+}
+
+select.champ_Icone:focus {
+	background-color: #fffac6;
+}
+
+div.liste_checkbox {
+	max-height: 100px;
+	overflow: auto;
+	border: solid 1px #bbbbbb;
+	transition: max-height 0.5s ease;
+}
+
+div.liste_checkbox:hover {
+	max-height: 200px;
+}
+
+div.toc ol {
+    counter-reset: item
+}
+div.toc li {
+    display: block
+}
+div.toc li:before {
+    content: counters(item, ".")" ";
+    counter-increment: item
+}
+
+div.graphiqueHistogramme .colonne { fill: steelblue; stroke: white; }
+div.graphiqueHistogramme .etiquette { font: 8px sans-serif; }
+div.graphiqueHistogramme .legende rect { stroke: #fff; }
+div.graphiqueHistogramme .libelle { font: 8px sans-serif; }
+
+div.graphiqueSecteurs .secteur path { stroke: #fff; }
+div.graphiqueSecteurs .etiquette { font: 8px sans-serif; }
+div.graphiqueSecteurs .legende rect { stroke: #fff; }
+div.graphiqueSecteurs .libelle { font: 9px sans-serif; }
+
+div.graphiqueCourbes .point path { fill: steelblue; stroke: #fff; }
+div.graphiqueCourbes .etiquette { font: 8px sans-serif; }
+div.graphiqueCourbes .legende rect { stroke: #fff; }
+div.graphiqueCourbes .libelle { font: 8px sans-serif; }
+
+div.consultationDictionnaire .node circle { fill: #fff; stroke: steelblue; stroke-width: 1.5px; }
+div.consultationDictionnaire .node .code { font: 10px sans-serif; font-weight: bold; }
+div.consultationDictionnaire .node .libelle { font: 8px sans-serif; }
+div.consultationDictionnaire .node .proprietes { visibility: hidden; }
+div.consultationDictionnaire .node:hover .proprietes { visibility: inherit; }
+div.consultationDictionnaire .proprietes .code { font-size: 9px sans-serif; }
+div.consultationDictionnaire .proprietes .libelle { font-size: 8px sans-serif; }
+div.consultationDictionnaire .link { fill: none; stroke: #ccc; stroke-width: 1.5px; }
+
+pre.debug {
+	padding: 1em;
+	border: 1px dashed rgb(47, 111, 171);
+	color: black;
+	background-color: rgb(249, 249, 249);
+	line-height: 1.1em;
+}
+/*=========== fenêtres modales ================*/
+#popup_fond { /*--Masque opaque noir de fond--*/
+	display: none; /*--masqué par défaut--*/
+	background: #000;
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	opacity: .60;
+	z-index: 9999;
+}
+.popup_block{
+	display: none; /*--masqué par défaut--*/
+	background: #eee;
+	padding: 20px;
+	border: 20px solid #ddd;
+	float: left;
+	font-size: 1em;
+	position: fixed;
+	z-index: 99999;
+	/*--Les différentes définitions de Box Shadow en CSS3--*/
+	-webkit-box-shadow: 0px 0px 20px #000;
+	-moz-box-shadow: 0px 0px 20px #000;
+	box-shadow: 0px 0px 20px #000;
+	/*--Coins arrondis en CSS3--*/
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+img.btn_close {
+	float: right;
+	margin: -55px -55px 0 0;
+}
+/*--Gérer la position fixed pour IE6--*/
+*html #popup_fond {
+position: absolute;
+}
+*html .popup_block {
+position: absolute;
+}
+/*=== fin fenêtres modales ====*/
+
+/*==== champ de suggestion de formules ====*/
+#autosuggestions {
+	display: none;
+	position: absolute;
+	/* width: 491px; */
+	top: 396.4px;
+	left: 277.5px;
+	overflow: auto;
+	z-index: 9999;
+}
+#autosuggestions img{
+	float:right;
+	display:inline;
+}
+#autosuggestions-liste {
+	max-height: 300px;
+	border: 1px solid #999;
+	background: none repeat scroll 0% 0% #FFF;
+	display:inline;
+	float:left;
+	overflow: auto;
+}
+.autosuggestion {
+	padding: 2px 5px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	white-space: nowrap;
+	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: hidden;
+}
+.autosuggestion:hover {
+	background-color: #fffad6;
+}
+/*==================== DOCUMENT VIGNETTE ================*/
+.document_vignette {
+	xdisplay:block;
+	xfloat:left;
+	padding: 3px;
+	border: 1px solid #dddddd;
+	background: none repeat scroll 0% 0% #FFF;
+	overflow: auto;
+}
+
+.document_vignette a {
+	text-decoration: none;
+	color: #002200;
+}
+.document_vignette_image {
+	display: inline;
+	float: left;
+}
+.document_vignette_titre {
+	display: block;
+	font-weight: bold;
+	font-size: 12pt;
+}
+.document_vignette_texte {
+	display: block;
+	margin-top: 3px;
+	font-size: 8pt;
+}
+/*==================== CERCLE DE RELATIONS =================
+* source : http://bl.ocks.org/mbostock/7607999
+**/
+.node {
+  font: 11pt "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #000;
+}
+
+#cercle .node:hover {
+  fill: #00f;
+}
+
+#cercle .link {
+  stroke: steelblue;
+  stroke-opacity: .4;
+  fill: none;
+  pointer-events: none;
+}
+
+#cercle .node:hover,
+#cercle .node--source,
+#cercle .node--target {
+	font-weight: 700;
+}
+
+#cercle .node--source {
+	fill: #2ca02c;
+}
+
+#cercle .node--target {
+	fill: #d62728;
+}
+
+#cercle .link--source,
+#cercle .link--target {
+	stroke-opacity: 1;
+	stroke-width: 2px;
+}
+
+#cercle .link--source {
+	stroke: #d62728;
+}
+
+#cercle .link--target {
+	stroke: #2ca02c;
+}
+
+#cercle .surligne {
+	fill: "yellow";
+	opacity:.25;
+}
+/*====================== PROXIMITES =============*/
+.prox-svg{
+	color: "#dddddd";
+	font-size: 8pt;
+	padding: 1px;
+	display: inline;
+	float: center;
+	vertical-align: middle;
+	font-family: Arial, Helvetica, sans-serif;	
+}
+
+.prox-body{
+	padding: 1px;
+	vertical-align: middle;
+	border-radius: 2px;
+	border: 1px solid;
+	border-color: #cccccc;
+	color: "#dddddd";
+	font-size: 8pt;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+#prox-opt{
+	color: "blue";
+	font-size: 8pt;
+	font-family: Arial, Helvetica, sans-serif;	
+}

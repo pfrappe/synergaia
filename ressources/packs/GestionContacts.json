@@ -1,0 +1,67 @@
+{
+	"Gestion des contacts": [
+		{
+			"_id": "Contact",
+			"@Type": "@DictionnaireObjet",
+			"@Base": "contacts",
+			"@Code": "Contact",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Contact"
+		}, {
+			"_id": "Contact.Nom",
+			"@Type": "@DictionnairePropriete",
+			"@Code": "Contact.Nom",
+			"@Propriete": "Nom",
+			"@Objet": "synergaia_dictionnaire/Contact",
+			"@Modele": "synergaia_dictionnaire/@Texte",
+			"@Titre": "Nom"
+		}, {
+			"_id": "Contact.Prenom",
+			"@Type": "@DictionnairePropriete",
+			"@Code": "Contact.Prenom",
+			"@Propriete": "Prenom",
+			"@Objet": "synergaia_dictionnaire/Contact",
+			"@Modele": "synergaia_dictionnaire/@Texte",
+			"@Titre": "Prénom"
+		}, {
+			"_id": "Contact.Telephone",
+			"@Type": "@DictionnairePropriete",
+			"@Code": "Contact.Telephone",
+			"@Propriete": "Telephone",
+			"@Objet": "synergaia_dictionnaire/Contact",
+			"@Modele": "synergaia_dictionnaire/@Texte",
+			"@Titre": "Téléphone"
+		}, {
+			"_id": "Contact.Mail",
+			"@Type": "@DictionnairePropriete",
+			"@Code": "Contact.Mail",
+			"@Propriete": "Mail",
+			"@Objet": "synergaia_dictionnaire/Contact",
+			"@Modele": "synergaia_dictionnaire/@Texte",
+			"@Titre": "Adresse mail"
+		}, {
+			"_id": "Contacts",
+			"@Type": "@Theme",
+			"@Code": "Contacts",
+			"@Titre": "Contacts",
+			"@IconeTheme": "group.png",
+			"@Position": "600"
+		}, {
+			"_id": "ContactsContactAjouter",
+			"@Type": "@ModeleOperation",
+			"@Code": "ContactsContactAjouter",
+			"@Titre": "Ajouter un contact",
+			"@IconeOperation": "user_add.png",
+			"@Theme": "synergaia_dictionnaire/Contacts",
+			"@Phrase": "@Nouveau(\"Contact\").@Modifier(.Nom,.Prenom,.Telephone,.Mail)|Enregistrer>.@Afficher"
+		}, {
+			"_id": "ContactsContacts",
+			"@Type": "@ModeleOperation",
+			"@Code": "ContactsContacts",
+			"@Titre": "Gestion des contacts",
+			"@IconeOperation": "group.png",
+			"@Theme": "synergaia_dictionnaire/Contacts",
+			"@Phrase": "@Chercher(\"Contact\").@Afficher(.Nom.@Concatener(\" \",.Prenom),.Telephone,.Mail)|>.@Afficher|Modifier>.@Modifier(.Nom,.Prenom,.Telephone,.Mail)"
+		}
+	]
+}
