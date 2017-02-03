@@ -1,7 +1,7 @@
 <?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
 /** SynerGaia 2.3 (see AUTHORS file)
 * Classe SynerGaia de compilation de requêtes et de formule
-* max //068(pour l'indication des lignes)
+* max //069(pour l'indication des lignes)
 */
 class SG_Compilateur extends SG_Objet{
 	// Type SynerGaia
@@ -670,7 +670,7 @@ class SG_Compilateur extends SG_Objet{
 		$this -> position = $pDebut + $longueur;
 		return $ret;
 	}
-	/** 1.0.6 ; 2.3 init $contexte
+	/** 1.0.6 ; 2.3 init $contexte ; traite $nomsyst=$nom ; correct si $1 vide
 	* FonctionInitiale : début d'instruction
 	* recherche soit un motsystème ou terme seul, avec paramètres (c'est à dire pas de valeur directe)
 	* si mot n'est pas une méthode de SG_Rien, c'est un new d'objet
@@ -796,10 +796,13 @@ class SG_Compilateur extends SG_Objet{
 						$php.= $p.'if (isset($this -> proprietes[\'' . $nomsyst . '\'])) {//023';
 					}
 					$php.= $p.'	$ret = $this -> proprietes[\'' . $nomsyst . '\'];';
-					$php.= $p.'} elseif (isset($this -> proprietes[\'' . $nom . '\'])) {';
-					$php.= $p.'	$ret = $this -> proprietes[\'' . $nom . '\'];';
+					if ($nomsyst !== $nom) {
+						$php.= $p.'} elseif (isset($this -> proprietes[\'' . $nom . '\'])) {';
+						$php.= $p.'	$ret = $this -> proprietes[\'' . $nom . '\'];';
+					}
 					// méthode de la classe d'objet
-					$php.= $p.'} else {' . $f .$p.'}'.PHP_EOL;
+					$php.= $p.'} else {' . $f .$p.'}'.PHP_EOL;					
+					$php.= $p.'if ($ret === \'\' or $ret === null) {$ret = new SG_Texte();} //069';
 				} else {
 					$php.= $param['php'] . $f;
 				}
