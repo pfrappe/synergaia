@@ -1,4 +1,4 @@
-/*==== SYNERGAIA 2.2 ===========*/
+/*==== SYNERGAIA 2.5 ===========*/
 // pour enlever facilement des éléments ou des listes
 Element.prototype.remove = function() {
     this.parentElement.removeChild(this);
@@ -85,34 +85,8 @@ function suggest_click(id, idchamp) {
 	// fermeture de la fenêtre
 	$("#autosuggestions").hide();
 }
-
+// ======= ajouts à jQuery ===========
 (function($) {
-	$.fn.getCursorPosition = function() {
-		var input = this.get(0);
-		if (!input) return; // No (input) element found
-		if ('selectionStart' in input) {
-			// Standard-compliant browsers
-			return input.selectionStart;
-		} else if (document.selection) {
-			// IE
-			input.focus();
-			var sel = document.selection.createRange();
-			var selLen = document.selection.createRange().text.length;
-			sel.moveStart('character', -input.value.length);
-			return sel.text.length - selLen;
-		}
-	}
-})(jQuery);
-
-// pour la gestion du texte de formule
-function keyup_formule (idFormule) {	
-	var theTable=$('#' + idFormule);
-	$("#" + idTableau + "-filtre").keyup(function() {$.uiTableFilter(theTable, this.value);})
-	var e=document.getElementById;
-	var texteactuel =e.innerHTML;
-}
-
-(function ($) {
 	var sgdatepicker = function (nom) {
 		var x = {},
 			y = '';
@@ -133,8 +107,74 @@ function keyup_formule (idFormule) {
 	$.fn.extend({
 		sgdatepicker: sgdatepicker.init
 	});
+	$.fn.getCursorPosition = function() {
+		var input = this.get(0);
+		if (!input) return; // No (input) element found
+		if ('selectionStart' in input) {
+			// Standard-compliant browsers
+			return input.selectionStart;
+		} else if (document.selection) {
+			// IE
+			input.focus();
+			var sel = document.selection.createRange();
+			var selLen = document.selection.createRange().text.length;
+			sel.moveStart('character', -input.value.length);
+			return sel.text.length - selLen;
+		}
+	}
+	// adapté de https://css-tricks.com/snippets/jquery/draggable-without-jquery-ui/
+    $.fn.drags = function(opt) {
+        opt = $.extend({handle:"",cursor:"move"}, opt);
+
+        if(opt.handle === "") {
+            var $el = this;
+        } else {
+            var $el = this.find(opt.handle);
+        }
+
+        return $el.css('cursor', opt.cursor)
+			.on("mousedown", function(e) {
+				if(opt.handle === "") {
+					var $drag = $(this).addClass('sg-draggable');
+				} else {
+					var $drag = $(this).addClass('sg-active-handle').parent().addClass('sg-draggable');
+				}
+				var z_idx = $drag.css('z-index'),
+					drg_h = $drag.outerHeight(),
+					drg_w = $drag.outerWidth(),
+					pos_y = $drag.offset().top + drg_h - e.pageY,
+					pos_x = $drag.offset().left + drg_w - e.pageX;
+				$drag.css('z-index', 1000).parents()
+					.on("mousemove", function(e) {
+						$('.sg-draggable').offset({
+							top:e.pageY + pos_y - drg_h,
+							left:e.pageX + pos_x - drg_w
+						})
+						.on("mouseup", function() {
+							$(this).removeClass('sg-draggable').css('z-index', z_idx);
+							});
+				});
+				//e.preventDefault(); // disable selection
+			})
+			.on("mouseup", function() {
+				if(opt.handle === "") {
+					$(this).removeClass('sg-draggable');
+				} else {
+					$(this).removeClass('sg-active-handle').parent().removeClass('sg-draggable');
+				}
+			});
+    }
 })(jQuery);
 
+// pour la gestion du texte de formule
+function keyup_formule (idFormule) {	
+	var theTable=$('#' + idFormule);
+	$("#" + idTableau + "-filtre").keyup(function() {$.uiTableFilter(theTable, this.value);})
+	var e=document.getElementById;
+	var texteactuel =e.innerHTML;
+}
+
+// @todo voir si utilisé ??
 function beforeSubmit() {
 	var o = $(".obligatoire");
 	erreur = false;
@@ -147,6 +187,7 @@ function beforeSubmit() {
 	return erreur;
 }
 
+// @todo voir si utilisé ??
 function resettoggle(id) {
 	var e = document.getElementById(id);
 	e.style.display = 'none';
@@ -167,10 +208,12 @@ function toggle_visibility(id, idimg) {
 	}
 }
 
+// @todo voir si utilisé ??
 function filtrerTableau(idTableau) {
 	var theTable=$('#' + idTableau);
 	$("#" + idTableau + "-filtre").keyup(function() {$.uiTableFilter(theTable, this.value);})
 }
+// @todo utilisé dans SG_Image.AfficherClic : voir si remplacer par popup(id,show) ?
 function sg_getModal(formule, idBloc) {
 	if (idBloc) {
 		$.ajax({
@@ -181,75 +224,15 @@ function sg_getModal(formule, idBloc) {
 			idbloc : idBloc,
 			success : function(result) {
 				$(this.idbloc).html(result);
-				popup_open();
+				SynerGaia.popupOpen();
 				}
 		});
 	}
 }
-function popup_open() {
-	var winheight = $(window).height();   // hauteur du browser
-	var winwidth = $(window).width();   // largeur du browser
-	var docheight = $(document).height(); // hauteur du document html
-	var docwidth = $(document).width(); // largeur du document HTML
-	var scrheight = screen.height; // hauteur de l'écran physique
-	var scrwidth = screen.width; // largeur de l'écran physique
-	var imgwidth = $('#popup_window, img').width(); // largeur de l'image
-	var imgheight = $('#popup_window, img').height(); // hauteur de l'image
-	
-	var coef = Math.min(1, winheight / imgheight, winwidth / imgwidth) * 0.9;
-	
-	var popup = $('#popup_window');
-	$('#popup_window, img').css({
-		'max-height': Number(winheight - 130 ),
-		'max_width': Number(winwidth - 120)
-	})
-	//Faire apparaitre la pop-up et ajouter le bouton de fermeture
-	popup.fadeIn().css({
-		'width': Number( imgwidth * coef),
-		'height': Number( imgheight * coef),
-		'display': 'block'
-	})
-	.prepend('<img src="nav/themes/defaut/img/icons/16x16/silkicons/cancel.png" class="btn_close" title="Fermer" alt="Fermer" onclick="popup_close()"/>');
-
-	//Récupération du margin, qui permettra de centrer la fenêtre - on ajuste de 80px en conformité avec le CSS
-	var popMargTop = (winheight - imgheight * coef) / 2;
-	var popMargLeft = (winwidth - imgwidth * coef) / 2;
-
-	//On affecte le margin
-	popup.css({
-		'margin-top' : popMargTop,
-		'margin-left' : popMargLeft
-	});
-
-	//Effet fade-in du fond opaque
-	$('body').append('<div id="popup_fond" onclick="popup_close()"></div>'); //Ajout du fond opaque noir
-	$('#popup_fond').css({'filter' : 'alpha(opacity=80)'}).fadeIn(); //pour corriger les bogues de IE
-
-	return false;
-}
-
-//Fermeture de la pop-up et du fond
-function popup_close() { //Au clic sur le bouton ou sur le calque...
-	var popup = $('#popup_window');
-	var fond = $('#popup_fond');
-	fond.css('display:none');
-	popup.css({
-		'display':'none',
-		'max-height': '',
-		'max_width': '',
-		'margin-top' : '',
-		'margin-left' : '',
-		'width': '',
-		'height': ''
-	})
-	popup.html('');
-	fond.remove();
-	return false;
-}
 
 // arbre généalogique horizontal à partir de JSON
 function afficherArbre(idBloc,json) {
-	var content = $(".operationContenu");
+	var content = $(".sg-ope-contenu");
 	var formheight = 1000;
 	var formwidth = content.width();
 	var margin = {top: 0, right: 300, bottom: 0, left: 0},
@@ -562,7 +545,7 @@ function consulter_dictionnaire(idBloc,urlJSON) {
 * 	.fullScreen(event, id) : agrandit le cadre photo en plein écran
 * 	.devantderriere(event) : passe l'élément devant (zIndex = 50), derrière zIndex = 0;
 * 	.zoomphoto
-* 	.favori
+* 	.favori : lance l'e modèle d'opération avec le jeton pour mettre emanuellement en favori
 * 	.onmouseover
 * 	.toggle (id, idimg) : affiche ou cache un élément et éventuellement fait tourner un triangle ou l'image dont l'id est passé
 * 	.tritable (id) : fonction de tri sur une colonne de table (tablesorter)
@@ -583,25 +566,28 @@ SynerGaia = {
 	offsetX: 0,
 	offsetY: 0,
 	dragtarget: null,
+	boxes: ['menu', 'sous-menu', 'gauche', 'operation', 'centre', 'droite', 'admin', 'debug', ],
+	bench: 0,
 	filtrertable: function (idtable, phrase) {
+		SynerGaia.bench = Date.now();
 		var table = $("#"  + idtable);
 		var img = document.getElementById(idtable + '-loader');
 		img.style.display = "inline";
 		SynerGaia.queue.clear();		
 		var style = document.getElementById('hidden-' + idtable);
-		// pour maj nombres
+		// pour maj nombre d'éléments affichés
 		var nbspan = document.getElementById(idtable + '-nb');
 		var lignes = table[0].tBodies[0].rows;
 		var nbtot = lignes.length;
 		var nbsel = 0;
 		if (style) {
 			if(phrase.length === 0) {
-				//style.styleSheet.cssText
+				// réafficher tout la table
 				style.textContent = '.hidden-' + idtable + '{display:table-row;}';
 				for(var i = 0 ; i < lignes.length; i++) {
-					var ligne = lignes[i];
-					if (ligne.style.display == 'table-row') {
-						ligne.style.display = '';
+					var s = lignes[i].style.display;
+					if (s != 'table-row') {
+						s = '';
 					}
 				}
 				nbspan.innerText = '';
@@ -632,31 +618,32 @@ SynerGaia = {
 									break;
 								}
 							}
-							var dejavisible = (ligne.style.display == 'table-row');
+							var s = ligne.style;
+							var dejavisible = (s.display == 'table-row');
 							if (trouve) {
 								nbsel++;
 								if (!dejavisible) { // à afficher
-									ligne.style.display = 'table-row';
+									s.display = 'table-row';
 								}
 							} else {
 								if (dejavisible) { // masquer
-									ligne.style.display = '';
-								} else {// à décompter
-									//nbsel--;
+									s.display = '';
 								}
 							}
 						}
+						nbspan.innerText = ' ' + nbsel + ' affichées';
 						if (termine) {
 							if (this.length >= 4) {
 								this[4].style.display = "none"; // masquer image loading
+								document.getElementById('pied').innerHTML+= ' fn : fin ' + debut + ' ' + (Date.now() - SynerGaia.bench);
 							}
 						}
-						nbspan.innerText = ' ' + nbsel + ' affichées';
 					}
 					SynerGaia.queue.add(filtrer, [lignes, debut, tranche, mots, img]);
 				}
 			}
 		}
+		document.getElementById('pied').innerHTML+= phrase + ' ' + (Date.now() - SynerGaia.bench);
 		return table;
 	},
 	queue: {
@@ -767,16 +754,10 @@ SynerGaia = {
 		} else {
 			w = 100;
 		}
-		elt.marginLeft = ml + '%';
-		elt.marginRight = (w + ml) + '%';
+	//	elt.marginRight = '0';
+		elt.marginLeft = ml + "%";
 		elt.width = w + '%';
 		
-/*		elt = document.getElementById('gauche').style;
-		elt.width = ml + '%';
-		
-		elt = document.getElementById('droite').style;
-		elt.marginLeft = (w + ml) + '%';
-		elt.width = ml + '%';*/
 	},
 	retrecir: function (){
 		var elt = document.getElementById('centre').style;
@@ -794,13 +775,6 @@ SynerGaia = {
 		elt.marginLeft = ml + '%';
 		elt.marginRight = (w + ml) + '%';
 		elt.width = w + '%';
-		
-/*		elt = document.getElementById('gauche').style;
-		elt.width = ml + '%';
-		
-		elt = document.getElementById('droite').style;
-		elt.marginLeft = (w + ml) + '%';
-		elt.width = ml + '%';*/
 	},
 	deplacerVers: function(e, id) {
 		var o = $('#operation');
@@ -808,28 +782,11 @@ SynerGaia = {
 		elt.innerHTML = o.html();
 		o.html('');
 	},
-	ajouterfichier: function(e, mult, donnees) {
-		var m = 'nfi';
-		if (mult) {
-			m = 'nfs';
-		}
-		// obtenir par ajax un nouvel id
-		$.ajax({
-			url : 'index.php?c=' + m,
-			type : 'GET',
-			data : donnees,
-			dataType : 'html',
-			success : function(result) {
-				// cloner un input en plus
-				$("#attachments").append('<li>' + result + '</li>');
-			},
-			error : function(xhr, ajaxOptions, thrownError) {
-				alert('non disponible ' + xhr.responseText + ' : ' + thrownError);
-				$('#erreurs').html(xhr.responseText);
-			}
-		});
-		
-		
+	ajouterfichier: function(e, id, mult, donnees) {
+		var modele = $('#' + id).html();
+		modele = SynerGaia.replaceAll(modele, id, id + Date.now()); 
+		$("#attachments").append('<li>' + modele + '</li>');
+		return false;
 	},
 	effacerfichier: function(e, id, champ) {
 		if(champ) {
@@ -854,6 +811,7 @@ SynerGaia = {
 		}
 	},
 	initChampDate: function(id) {
+		var o = $(id);
 		$(id).datepicker();
 	},
 	initChampDateHeure: function (id) {
@@ -874,7 +832,45 @@ SynerGaia = {
 		var objdt = $(id);
 		objdt.multiDatesPicker({dateFormat: "dd/mm/yy"});
 	},
+	initPeriode: function (id, deb, fin) {
+		$(id).datepicker({
+			minDate: 0,
+			numberOfMonths: [12, 1],
+			beforeShowDay: function (date) {
+				var date1 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, deb.val());
+				var date2 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, fin.val());
+				return [true, date1 && ((date.getTime() == date1.getTime()) || (date2 && date >= date1 && date <= date2)) ? "dp-highlight" : ""];
+			},
+			onSelect: function(dateText, inst) {
+				var date1 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, deb.val());
+				var date2 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, fin.val());
+				var selectedDate = $.datepicker.parseDate($.datepicker._defaults.dateFormat, dateText);
+				if (!date1 || date2) {
+					$(id + "-deb").val(dateText);
+					$(id + "-fin").val("");
+					$(this).datepicker();
+				} else if( selectedDate < date1 ) {
+					$(id + "-fin").val( $(id + "-deb").val() );
+					$(id + "-deb").val( dateText );
+					$(this).datepicker();
+				} else {
+					$(id + "-deb").val(dateText);
+					$(this).datepicker();
+				}
+			}
+		});
+	},
 	launchOperation: function (event, operation, donnees, eff, cible) {
+		var consignes = [];
+		var idonglet = $(event.target).closest('.sg-onglets').first().attr('id');
+		var noonglet = $(event.target).closest('.sg-onglets-page').first().attr('data-no');
+		if (noonglet === undefined) {
+			ongletsuivant = 0;
+		} else {
+			var ongletsuivant = parseInt(noonglet) + 1;
+			consignes['operation'] = idonglet + '-page-' + ongletsuivant;
+		}
+		$('#pied').html('');
 		var timeInMs = Date.now();
 		if (event !== null) {
 			if (event.stopPropagation) {
@@ -898,15 +894,11 @@ SynerGaia = {
 					dataType : 'html',
 					success : function(result) {
 						$("#autosuggestions").hide(); // 2.1 masquer éventuellement la fenêtre de suggestion de formule
-						SynerGaia.distribuerResult(result, [], "loader");
-						timeInMs = (Date.now() - timeInMs) / 1000;
-						if (SynerGaia.typemedia() === 'mobile') {
-							SynerGaia.initOnMobile();
-						}
-						$('#pied').html('<ul><li>Page affichée en ' + timeInMs + ' secondes</li></ul>');
+						SynerGaia.distribuerResult(result, consignes, "loader");
+						SynerGaia.finResult(timeInMs);
 					},
 					error : function(xhr, ajaxOptions, thrownError) {
-						$('#operation').html(xhr.responseText);
+						$('#erreurs').html(xhr.responseText);
 						SynerGaia.imageLoader("#loader", false);
 					}
 				});
@@ -924,7 +916,8 @@ SynerGaia = {
 		$('#aide').html('');
 		$('#debug').html('');
 		if (SynerGaia.typemedia() === 'mobile') {
-			m = SynerGaia.getURL('operation', thm + '&c=men');
+			m = SynerGaia.getURL('sous-menu', thm + '&c=men');
+			SynerGaia.permuteBox('menu','sous-menu');
 		} else {
 			m = SynerGaia.getURL('operation', thm);
 		}
@@ -947,7 +940,7 @@ SynerGaia = {
 		if(idBloc) {
 			var id = '#' + idBloc;
 			if ($(id).attr('display') == 'none') {
-				$(id).attr('display', 'block').html('<img class="loader" src="nav/js/loader.gif">');
+				$(id).attr('display', 'block').html('<img class="sg-loader" src="nav/js/loader.gif">');
 				SynerGaia.getURL(idBloc, donnees);
 			} else {
 				$(id).html('').attr('display', 'none');
@@ -958,7 +951,7 @@ SynerGaia = {
 		if(idBloc) {
 			var id = '#' + idBloc;
 			if ($(id).attr('display') == 'none') {
-				$(id).attr('display', 'block').html('<img class="loader" src="nav/js/loader.gif">');
+				$(id).attr('display', 'block').html('<img class="sg-loader" src="nav/js/loader.gif">');
 				SynerGaia.getURL(idBloc, donnees);
 			} else {
 				$(id).html('').attr('display', 'none');
@@ -972,7 +965,14 @@ SynerGaia = {
 		}
 	},
 	distribuerResult: function(result, consignes, loader) {
-		var parsedResult = eval("(" + result + ")");
+		var parsedResult;
+		var newbox = '';
+		var enPopup = false;
+		try {
+			parsedResult = eval("(" + result + ")");
+		} catch (e) {
+			parsedResult = {"erreurs": result};
+		}
 		if (Array.isArray(parsedResult) || typeof parsedResult === 'object') {
 			for (var key in parsedResult) {
 				if(key in consignes) {
@@ -982,10 +982,24 @@ SynerGaia = {
 					var t = parsedResult[key];
 					h.html(t);
 					var g = 0;
+					if (t != '' && SynerGaia.boxes.indexOf(key) != false && key != 'pied') {
+						newbox = key;
+					}
+				}
+				if (key == 'popup') {
+					enPopup = true;
 				}
 			}
 		} else {
 			$('#debug').html(parsedResult);
+		}
+		$('#operation').show();
+		if (enPopup) {
+			SynerGaia.popup('',true);
+		} else if (SynerGaia.typemedia() === 'mobile') {
+			if (newbox != '') {
+				SynerGaia.permuteBox('',newbox);
+			}
 		}
 		SynerGaia.imageLoader(loader, false);
 	},
@@ -1013,11 +1027,14 @@ SynerGaia = {
 	imageLoader: function(id, show) {
 		if (show) {
 			$("#loader").show();
+			$("#pied").html('');
 		} else {
 			$("#loader").hide();
 		}
 	},
-	submit: function(event, id) {
+	submit: function(event, id, action, msgcond, close) {
+		// préparatifs
+		var data, url;
 		var timeInMs = Date.now();
 		if (event !== null) {
 			if (event.stopPropagation) {
@@ -1025,41 +1042,60 @@ SynerGaia = {
 			}
 			event.cancelBubble = true;
 		}
-		// sauvegarder les champs textes riches (tinyMCE -> textarea)
-		if(tinymce) {
-			var bodies = document.getElementsByClassName("champ_TexteRiche");
-			for (var i = 0; i < bodies.length; i++) {
-				var bodyid = bodies[i].getAttribute("id");
-				var body = tinymce.get(bodyid);
-				if (body != null) {
-					$('#' + bodyid).html( tinymce.get(bodyid).getContent());
-				}
-			}
+		var ok = true;
+		if (msgcond != null && msgcond != undefined) {
+			ok = window.confirm(msgcond);
 		}
-		// charger les contenus de champs
-		var form = document.getElementById(id);
-		var data = new FormData( form ); //id.serialize();
-		var action = $('#' + id).attr('action');
-		SynerGaia.imageLoader("#operation");
-		$.ajax({
-			type: "POST",
-			url: action + "&c=sub&",
-			data: data,
-			processData: false,
-			contentType: false,
-			success: function(result) {
-				timeInMs = (Date.now() - timeInMs) / 1000;
-				SynerGaia.distribuerResult(result, []);
-				if (SynerGaia.typemedia() === 'mobile') {
-					SynerGaia.initOnMobile();
+		if (ok) {
+			// sauvegarder les champs textes riches (tinyMCE -> textarea)
+			if(tinymce) {
+				var bodies = document.getElementsByClassName("sg-richtext");
+				for (var i = 0; i < bodies.length; i++) {
+					var bodyid = bodies[i].getAttribute("id");
+					var body = tinymce.get(bodyid);
+					if (body != null) {
+						$('#' + bodyid).html( tinymce.get(bodyid).getContent());
+					}
 				}
-				$('#pied').html('<ul><li>Page affichée en ' + timeInMs + ' secondes</li></ul>');
-			},
-			error: function(jqXHR, textStatus, errorThrown) {
-				$('#debug').html('erreur d\'exécution : ' + errorThrown + ' ' + textStatus);
-				$('#operation').html(jqXHR.responseText)
 			}
-		});
+			$('#pied').html('');
+			// dans quel formulaire se trouve le bouton ?
+			if (id == null) {
+				id = $(event.target).closest("form").prop("id");
+			}
+			if (id != null) {
+				// si formulaire on prépare les data (sinon bouton)
+				var form = document.getElementById(id);
+				// charger les contenus de champs
+				if (form !== null && typeof form === 'object') {
+					data = new FormData( form ); //id.serialize();
+					if (action == null) {
+						action = $('#' + id).attr('action');
+					}
+				}
+			}
+			url = action + "&c=sub&w=" + id;
+			SynerGaia.imageLoader("", true);
+			$.ajax({
+				type: "POST",
+				url: url,
+				data: data,
+				processData: false,
+				contentType: false,
+				success: function(result) {
+					SynerGaia.distribuerResult(result, []);
+					SynerGaia.finResult(timeInMs);
+					if (close == true) {
+						SynerGaia.closePopup();
+					}
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					$('#debug').html('erreur d\'exécution : ' + errorThrown + ' ' + textStatus);
+					$('#erreurs').html(jqXHR.responseText);
+					SynerGaia.imageLoader("", false);
+				}
+			});
+		}
 	},
 	effacer: function() {
 		$("#gauche").html('');
@@ -1130,7 +1166,7 @@ SynerGaia = {
 				ratio = ratiow * 0.95;
 			}
 			// la div couvre tout
-			div.attr("class","photo-max");
+			div.attr("class","sg-photo-max");
 			// aggrandir l'image selon le ratio
 			div.attr('width', imageWidth * ratio)
 				.attr('height', imageHeight * ratio);
@@ -1140,7 +1176,7 @@ SynerGaia = {
 			div.attr("data-sg","1");
 		} else {
 			// réduire la photo
-			div.attr("class","photo-div");
+			div.attr("class","sg-photo-div");
 			div.attr('width', '')
 				.attr('height', '');
 			img.attr('width', '95%')
@@ -1159,17 +1195,17 @@ SynerGaia = {
 	devantderriere: function(event,devant) {
 		var elt = $(event.currentTarget);
 		var z = elt.zIndex();
-		if (z == 0 || devant == true) {
+		if (z <= 0 || devant == true) {
 			elt.zIndex(50);
-			elt.css("margin-top", "25px");
+			elt.css("margin-top", "5px");
 		} else if (z > 0 || devant == false) {
-			elt.zIndex(0);
-			elt.css("padding-top", "20px");
+			elt.zIndex(-10);
+			elt.css("padding-top", "-5px");
 		}
 	},
 	zoomphoto: function(event, url, id) {
 		var photo = $("#" + id);
-		var popup = $('#popup_window');
+		var popup = $('#popup');
 		popup.html(photo.html());
 		popup.css("zindex",10000);
 		var wh = window.height-100;
@@ -1179,11 +1215,12 @@ SynerGaia = {
 		popup.show();
 	},
 	favori: function(event, url, titre) {
-		if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark
+		window.open(url);
+/*		if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark
 			window.sidebar.addPanel(titre,url,""); 
 		} else if (window.external && window.external.AddFavorite) {// Microsoft Internet Explorer
 			window.external.AddFavorite(url,titre);
-		} 
+		} */
 	},
 	toggle: function(id, idimg) {
 		var e = document.getElementById(id);
@@ -1234,14 +1271,19 @@ SynerGaia = {
 			monthNamesShort: ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc"],
 			dayNames: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
 			dayNamesShort: ["Di","Lu","Ma","Me","Je","Ve","Sa"],
-			dayClick: function(date, allDay, jsEvent, view) {
+			dayClick: function(date, allDay) {
 				if (allDay) {
 					if(url != '') {
-						var pdate=date.toLocaleDateString();
-						//window.alert(url + pdate);
-						window.open(url + pdate,"_blank");
+						var pdate=SynerGaia.datejjmmaaa(date); //.toLocaleDateString();
+						SynerGaia.submit(null, id, url + pdate);//window.open(url + pdate,"_blank");
 					}
 				}
+			},
+			eventClick: function(event) {
+				if (event.url != '') {
+					SynerGaia.submit(null, id, event.url);
+				}
+				return false;
 			},
 			buttonText: {
 				prev: "&nbsp;&#9668;&nbsp;",
@@ -1322,7 +1364,7 @@ SynerGaia = {
 		)
 	}, 
 	initOnLoad: function () {
-		$('.champ_TexteFormule').keyup(function(e) {
+		$('.sg-formule').keyup(function(e) {
 			if (e.keyCode == 27) {
 				$("#autosuggestions").hide();
 				return;
@@ -1372,7 +1414,7 @@ SynerGaia = {
 						result=JSON.parse(result);
 						for (var i=0; i<result.length; i++) {
 							var id = 'suggestion_' + i;
-							div +='<div id="'+id+'" style="display:block;" class="autosuggestion" value="'+result[i]+'" ';
+							div +='<div id="'+id+'" style="display:block;" class="sg-suggestions-ligne" value="'+result[i]+'" ';
 							div += 'onclick="suggest_click(\''+id+'\',\''+idchamp+'\',\''+ mot + '\')">'+result[i]+'</div>'
 						}
 						// remplissage de l'html
@@ -1394,6 +1436,10 @@ SynerGaia = {
 		if (SynerGaia.typemedia() === 'mobile') {
 			SynerGaia.initOnMobile();
 		}
+/*	$('#centre').draggable();
+	$('#gauche').draggable();
+	$('#droite').draggable();
+*/
 		// attacher un événement aux éléments dragables
 		//$('[draggable="true"]').each(function( i, el) {SynerGaia.dragable(el, el)});
 		
@@ -1499,7 +1545,13 @@ SynerGaia = {
 			url: 'index.php?c=thm',
 			type: "POST",
 			success: function (res) {
-				document.getElementById('operation').innerHTML = res;
+				document.getElementById('menu').innerHTML = res;
+				$('#menu').show();
+				$('#sous-menu').hide();
+				$('#gauche').hide();
+				$('#operation').hide();
+				$('#droite').hide();
+				$('#aide').hide();
 			},
 			error: function(xhr, ajaxOptions, thrownError) {
 				$('#erreurs').html(xhr.responseText);
@@ -1521,25 +1573,29 @@ SynerGaia = {
 			e.style.padding='3px'; // 
 		}
 		$.mobile.defaultPageTransition = "flip";
-		$('#operation').swiperight(function () {
-			if ($('#gauche').html() != '') {
-				$('#operation').hide();
-				$('#gauche').show();
-			}
+		$('#menu').swipeleft(function () {
+			SynerGaia.versBox('menu','d');
+		});
+		$('#sous-menu').swiperight(function () {
+			SynerGaia.versBox('sous-menu','g');
+		});
+		$('#sous-menu').swipeleft(function () {
+			SynerGaia.versBox('sous-menu','d');
+		});
+		$('#gauche').swiperight(function () {
+			SynerGaia.versBox('gauche','g');
 		});
 		$('#gauche').swipeleft(function () {
-			$('#gauche').hide();
-			$('#operation').show();
+			SynerGaia.versBox('gauche','d');
+		});
+		$('#operation').swiperight(function () {
+			SynerGaia.versBox('operation','g');
 		});
 		$('#operation').swipeleft(function () {
-			if ($('#droite').html() != '') {
-				$('#operation').hide();
-				$('#droite').show();
-			}
+			SynerGaia.versBox('operation','d');
 		});
 		$('#droite').swiperight(function () {
-			$('#droite').hide();
-			$('#operation').show();
+			SynerGaia.versBox('droite','g');
 		});
 	},
 	getElement: function (el) {
@@ -1633,5 +1689,293 @@ SynerGaia = {
 	photoPrec: function(e, id) {
 	},
 	photoSuiv: function(e, id) {
-	}
+	},
+	photoZoom: function(e, doc, id) {
+		//$('#' + id).html('ici prochainement la photo ' + doc + '').show();
+	},
+	permuteBox: function(idold, idnew) {
+		var iold, inew, i, id;
+		iold = SynerGaia.boxes.indexOf(idold);
+		inew = SynerGaia.boxes.indexOf(idnew);
+		for (i = 0; i<= SynerGaia.boxes.length; i++) {
+			id = '#' + SynerGaia.boxes[i];
+			if (i != inew && $(id).is(":visible")) {
+				$(id).hide();
+			}
+		}
+		$('#' + idnew).show();
+	},
+	versBox: function(idold, sens) {
+		var ideb, ifin, inew, i, id, div, idshow;
+		if (sens = 'g') {
+			ifin = 0;
+			ideb = (- SynerGaia.boxes.indexOf(idold)) + 1;
+		} else {
+			ifin = SynerGaia.boxes.length;
+			ideb = SynerGaia.boxes.indexOf(idold) + 1;
+		}
+		// cacher toutes les boxes sauf la première non vide
+		for (i = ideb; i <= ifin; i++) {
+			idshow = SynerGaia.boxes[Math.abs(i)];
+			id = '#' + idshow;
+			div = $(id);
+			if (div.html() != '') {
+				div.show();
+				$('#' + idold).hide();
+				break;
+			} else {
+				if (div.is(":visible")) {
+					div.hide();
+				}
+			}			
+		}
+		SynerGaia.pointsBox(idshow);
+	},
+	pointsBox: function (idshow) {
+		var i = 0;
+		var ifin = SynerGaia.boxes.length;
+		for (i = 0; i <= ifin; i++) {
+			id = '#' + SynerGaia.boxes[i];
+			div = $(id);
+			if (div.html() != '') {
+				pt = $('#pt' + id);
+				if (id == '#' + idshow) {
+					pt.attr('src', '../themes/defaut/img/16x16/silkicons/bullet-black.png');
+				} else {
+					pt.attr('src', '../themes/defaut/img/16x16/silkicons/bullet-add.png');
+				}
+				pt.show();
+			} else {
+				pt.hide();
+			}
+		};
+		return false;
+	},
+	selectAll: function (id) {
+		$('#' + id + ' input[type="checkbox"]:visible').prop('checked',true);
+		return false;
+	},
+	unselectAll: function (id) {
+		$('#' + id + ' input[type="checkbox"]:visible').prop('checked',false);
+		return false;
+	},
+	champs: function (id) {
+		var data = $('#' + id).serialize();
+		return data;
+	},
+	diaporama: function (event, operation, btn, id, n) {
+		var donnees = '';
+		var timeInMs = Date.now();
+		if (event !== null) {
+			if (event.stopPropagation) {
+				event.stopPropagation();
+			}
+			event.cancelBubble = true;
+		}
+		if (operation) {
+			if (event && (event.which === 2 || event.ctrlKey)) {
+				window.open('index.php?' + operation, '_blank');
+			} else {
+				SynerGaia.imageLoader("#loader", true);
+				$.ajax({
+					url : 'index.php?c=mop&o=' + operation + '&b=' + btn + '&d=' + id + '&p1=' + n,
+					type : 'POST',
+					data : donnees,
+					dataType : 'html',
+					success : function(result) {
+						SynerGaia.distribuerResult(result, [], "loader");
+						SynerGaia.finResult(timeInMs);
+					},
+					error : function(xhr, ajaxOptions, thrownError) {
+						$('#erreurs').html(xhr.responseText);
+						SynerGaia.imageLoader("#loader", false);
+					}
+				});
+			}
+		}
+	},
+	fermerdiaporama: function () {
+		$('#formcentre').html('');
+		return false;
+	},
+	agendamois: function (event, id, operation, btn, date) {
+		var donnees = '';
+		var timeInMs = Date.now();
+		if (event !== null) {
+			if (event.stopPropagation) {
+				event.stopPropagation();
+			}
+			event.cancelBubble = true;
+		}
+		if (operation) {
+			if (event && (event.which === 2 || event.ctrlKey)) {
+				window.open('index.php?' + operation, '_blank');
+			} else {
+				SynerGaia.imageLoader("#loader", true);
+				$.ajax({
+					url : 'index.php?c=mop&o=' + operation + '&b=' + btn + '&d=' + id + '&p1=' + date,
+					type : 'POST',
+					data : null,
+					dataType : 'html',
+					success : function(result) {
+					//	SynerGaia.distribuerResult(result, [], "loader");
+						SynerGaia.initCalendar(id, url, result);
+						SynerGaia.finResult(timeInMs);
+					},
+					error : function(xhr, ajaxOptions, thrownError) {
+						$('#erreurs').html(xhr.responseText);
+						SynerGaia.imageLoader("#loader", false);
+					}
+				});
+			}
+		}
+	},
+	replaceAll: function (str, find, replace) {
+		var f = find.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+		return str.replace(new RegExp(f, 'g'), replace);
+	},
+	finResult: function(debut) {
+		SynerGaia.imageLoader("#loader", false);
+		var fin = (Date.now() - debut) / 1000;
+		if (SynerGaia.typemedia() === 'mobile') {
+			SynerGaia.initOnMobile();
+		}
+		$('#pied').append('<ul><li>Page affichée en ' + fin + ' secondes</li></ul>');
+	},
+	/**
+	 * copie dans le presse-papier le texte de la balise 'copyTarget' la plus proche ou le texte passé en paramètre
+	 */
+	copy: function (event, text, id) {
+		if (text == null) {
+			if (id == null) {
+				text = $(event.target).closest('#copyTarget').text();
+			} else {				
+				text = $('#' + id).text();
+			}
+		}
+		var item = document.createElement('textarea');
+		item.contentEditable = true;
+		item.id = "copylink";
+		item.style.display ='inline-block';
+		item.style.width ='10px';
+		event.target.parentNode.append(item);//document.body
+		item.innerHTML = text;
+		var savedTabIndex = item.getAttribute('tabindex');
+		item.setAttribute('tabindex', '-1');
+		SynerGaia.selectRange(item, 0,text.length);
+		//document.getElementByID("copylink").focus();
+		//document.execCommand('SelectAll');
+		document.execCommand("Copy", false, null);
+		item.setAttribute('tabindex', savedTabIndex);
+		event.target.parentNode.removeChild(item);//document.body
+		alert("Copié dans le presse-papier!");
+		return false;
+	},
+	onglet: function (event, id, no) {
+		$('[id^=' + id + '-titre]').attr('data-selecte','');
+		$('[id=' + id + '-titre-' + no + ']').attr('data-selecte','1');
+		$('[id^=' + id + '-page]').attr('data-selecte','');
+		$('[id=' + id + '-page-' + no + ']').attr('data-selecte','1');
+		return false;
+	},
+	datejjmmaaa: function (dt) {
+	  function pad(s) {return (s < 10) ? '0' + s : s;}
+	  var d = new Date(dt);
+	  return [pad(d.getDate()), pad(d.getMonth()+1), d.getFullYear()].join('/');
+	},
+	collAdd: function (event, classe) {
+		var id, t, input, attr, nom, clonet, fld, elts, i, no, val, oldid;
+		// chercher l'élément cliqué
+		t = $(event.target).closest('.sg-coll-elt');
+		// chercher son champ <input>
+		input = t.children('.sg-coll-elt-field')[0].children[0];
+		// récupérer le nom de champ synergaia sg-fieldxxx sans l'indice
+		attr = input.getAttribute("name");
+		nom = attr.substring(0,attr.lastIndexOf("["));
+		// récupérer son id strict (sans l'indice)
+		if (input.id.lastIndexOf("[") == -1) {
+			id = input.id;
+		} else {
+			id = input.id.substring(0,input.id.lastIndexOf("["));
+		}
+		// créer le nouveau champ et le prépare
+		clonet = t.clone();
+		fld = clonet.children('.sg-coll-elt-field')[0];
+		fld.children[0].value = "";
+		fld.children[0].defaultValue = "";
+		if (id != "") {
+			fld.innerHTML = SynerGaia.replaceAll(fld.innerHTML, id,  id + '-new');
+		}
+		// placer le nouvel élément dans la collection.
+		// comme on n'a pas enlevé la classe hasDatepicker, l'init du champdate n'est pas fait
+		if (t[0].nextSibling == undefined) {
+			t.parent().append(clonet);
+		} else {
+			t[0].parentNode.insertBefore(clonet[0], t[0].nextSibling);
+		}
+		// renuméroter les noms de champ et les id
+		elts = t.parent().children('.sg-coll-elt');
+		for (i = 0; i < elts.length; i++) {
+			fld = elts[i].children[0]
+			val = fld.children[0].value;
+			if (id != "") {
+				no = '-' + i;
+				oldid = fld.children[0].id;
+				fld.innerHTML = SynerGaia.replaceAll(fld.innerHTML, oldid,  id + no);
+			}
+			input = fld.children[0];
+			input.name = nom + "[" + i + "]";
+			input.value = val;
+			// traitements spécifique selon la classe
+			if (classe == "SG_Date") {
+				input.classList.remove("hasDatepicker"); // pour forcer initialisation datepicker
+				SynerGaia.initChampDate('#' + id + no);
+			}
+		}
+		return false;
+	},
+	collSupp: function (event) {
+		t = $(event.target).closest('.sg-coll-elt');
+		t.parent()[0].removeChild(t[0]);
+		return false;
+	},
+	/* effectue l'ouverture de la fenêtre popup */
+	popup: function (id, show = true) {
+		var popup = $('#popup');
+		var fond = $('#popup-fond');
+		if (show == true) {
+			fond.show();
+			popup.css('top','');
+			popup.css('left','');
+			popup.css('display','inline-block');
+			popup.drags();// @todo : à vérifier car il crée de multiples attributions d'événement et empêche le remplissage du popup
+		} else {
+			popup.hide();
+			fond.hide();
+			popup.html('');
+		}
+		return false;
+	},
+	/* select le contenu d'un champ textarea */
+	selectRange: function(el, start, end) {
+        if (el) {
+            el.focus();
+            
+            if (el.setSelectionRange) {
+                el.setSelectionRange(start, end);
+                
+            } else if (el.createTextRange) {
+                var range = el.createTextRange();
+                range.collapse(true);
+                range.moveEnd('character', end);
+                range.moveStart('character', start);
+                range.select();
+                
+            } else if (el.selectionStart) {
+                el.selectionStart = start;
+                el.selectionEnd = end;
+            }
+        }
+		return false;
+    }
 }
