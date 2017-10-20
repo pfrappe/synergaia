@@ -1,32 +1,51 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.3.4 (see AUTHORS file)
- * 
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @DominoDB */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_DominoDB : Classe de gestion des bases de données Domino. 
  * Il ne doit y en avoir qu'un seul d'ouvert si on ne veut risquer des login incessants.
  *
+ * @since 1.1
+ * @version 1.3.4
  */
 class SG_DominoDB extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@DominoDB' */
 	const TYPESG = '@DominoDB';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
-	// login par défaut
+	/** string login par défaut */
 	public $cookie = '';
+	/** string code utilisateur Lotus Notes */
 	public $user = '';
+	/** string mot de passe */
 	public $psw = '';
+	/** string nom du serveur Domino */
 	public $serveur = '';
-	
-	// 1.3.4 ajout : login en cours (ip => [user =>, cookie =>, psw =>])
+
+	/** @var string login en cours (ip => [user =>, cookie =>, psw =>])
+	 * @since 1.3.4 ajout
+	 * */
 	public $connexion = array();
 	
-	// 1.3.4 ajout array(clé minuscule => valeur)
+	/** @var array (clé minuscule => valeur) 
+	 * @since 1.3.4 ajout
+	 */
 	public $lastheaders = '';
 	
-	// 1.3.4 anti-boucles
+	/** @var integer anti-boucles
+	 * @since 1.3.4 ajout
+	 */
 	private $fois = 0;
 	
-	/** 1.1
-	* Construction d'un objet @DominoDB
-	*/
+	/**
+	 * Construction d'un objet @DominoDB
+	 * 
+	 * @since  1.1
+	 * @param string|SG_Texte|SG_Formule $pServeur
+	 * @param string|SG_Texte|SG_Formule $pUser
+	 * @param string|SG_Texte|SG_Formule $pPassword
+	 */
 	public function __construct($pServeur = '', $pUser = '', $pPassword = '') {
 		$serveur = new SG_Texte($pServeur);
 		$this -> serveur = $serveur -> texte;		
@@ -48,11 +67,15 @@ class SG_DominoDB extends SG_Objet {
 		}
 	}
 	
-	/** 1.1 ; 1.3.4 @param return , connect avec base @Texte
-	* établir la connexion et obtenir un cookie
-	* @param @DictionnaireBase : base à accéder (sinon valeurs de cet objet)
-	* @return : '' ou @Erreur
-	*/
+	/**
+	 * établir la connexion et obtenir un cookie
+	 * 
+	 * @since 1.1
+	 * @version 1.3.4 param return , connect avec base @Texte
+	 * @param SG_DictionnaireBase $pDocBase base à accéder (sinon valeurs de cet objet)
+	 * @param string|SG_Texte|SG_Formule $pURL
+	 * @return string|SG_Erreur Erreur
+	 */
 	public function Connecter($pDocBase = '', $pURL = '') {
 		$ret = '';
 		$docbase = $pDocBase;
@@ -113,9 +136,15 @@ class SG_DominoDB extends SG_Objet {
 		return $ret;
 	}
 	
-	/** 1.1 ; 1.3.4 test retour connecter ; anti-boucle
-	* obtenir le résultat d'une URL Domino
-	*/
+	/**
+	 * Obtenir le résultat d'une URL Domino
+	 * 
+	 * @since 1.1
+	 * @version 1.3.4 test retour connecter ; anti-boucle
+	 * @param string|SG_Texte|SG_Formule $pServeur
+	 * @param string|SG_Texte|SG_Formule $pURL
+	 * @return string|SG_Erreur
+	 */
 	public function getURL($pServeur = '', $pURL = '') {
 		$ret = '';
 		$serveur = $pServeur;
@@ -175,9 +204,13 @@ class SG_DominoDB extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.4 ajout
-	* Tester si le retour est une demande de login
-	**/
+
+	/**
+	 * Tester si le retour est une demande de login
+	 * @since 1.3.4 ajout
+	 * @param string|SG_Texte|SG_Formule $pHTML
+	 * @return boolean
+	 */
 	function estLogin($pHTML = '') {
 		$html = new SG_HTML($pHTML);
 		$html -> analyser();
