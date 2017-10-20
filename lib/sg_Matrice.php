@@ -1,17 +1,30 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.3.2 (see AUTHORS file)
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Matrice */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_Matrice : Classe de matrice de nombres
+ * @since 1.3.2
+ * @todo terminer la classe ; mettre des objets SynerGaïa partout
  */
 class SG_Matrice extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Matrice' */
 	const TYPESG = '@Matrice';
+
+	/** string Type SynerGaïa */
 	public $typeSG = self::TYPESG;
-	
+
+	/** array Tableau des valeurs internes */
 	public $matrice = array();
-	// utiliser si la matrice est carrée avec des clés associatives
+
+	/** array liste des clés utiliser si la matrice est carrée avec des clés associatives */
 	public $cles;
-	/** 1.3.2 ajout
-	*/
+	
+	/**
+	 * Construction initiale de la @Matrice
+	 * @since 1.3.2 ajout
+	 * @param array $pTableau des valeurs
+	 */
 	public function __construct($pTableau) {
 		$this -> matrice = array();
 		$n = 0;
@@ -33,9 +46,12 @@ class SG_Matrice extends SG_Objet {
 			}
 		}
 	}
-	/** 1.3.2 
-	/** 1.3.2 ajout
-	*/
+
+	/** 
+	 * Calcule la somme des lignes 
+	 * @since 1.3.2
+	 * @return array vecteur de la somme des lignes
+	 */
 	function SommeLignes() {
 		$ret = array();
 		foreach($this -> matrice as $key => $ligne) {
@@ -47,8 +63,12 @@ class SG_Matrice extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 ajout
-	*/
+
+	/**
+	 * Calcule la somme des colonnes
+	 * @since 1.3.2
+	 * @return array vecteur de la somme des colonnes
+	 */
 	function SommeColonnes() {
 		$ret = array();
 		foreach($this -> matrice as $ligne) {
@@ -62,8 +82,12 @@ class SG_Matrice extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 ajout
-	*/
+
+	/**
+	 * Totalise les éléments de la matrice
+	 * @since 1.3.2
+	 * @return array
+	 */
 	function SommeLignesColonnes() {
 		$ret = $this -> SommeLignes();
 		// ajouter les colonnes
@@ -77,9 +101,15 @@ class SG_Matrice extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 ajout
-	* interversion des lignes et des colonnes
-	*/
+
+	/**
+	 * interversion des lignes et des colonnes
+	 * @since 1.3.2
+	 * @param string $pCle1
+	 * @param string $pCle2
+	 * @param boolean $pSurPlace
+	 * @return SG_Matrice $this
+	 */
 	function Permuter($pCle1 = '', $pCle2 = '', $pSurPlace = true) {
 		$newmatrice = array();
 		$cle1 = $this -> cles[$pCle1];
@@ -124,11 +154,14 @@ class SG_Matrice extends SG_Objet {
 		}
 		$ret = $this;
 	}
-	/** 1.3.2 ajout
-	* Trier les lignes, les colonnes et les clés selon un vecteur de tri
-	* @param (array) $pVecteur ordre des clés à prendre en compte (si $pVecteur ne reprend pas toutes les clés, c'est un extrait de la matrice)
-	* @param (boolean) $pSurPlace 
-	**/
+
+	/**
+	 * Trier les lignes, les colonnes et les clés selon un vecteur de tri
+	 * @since 1.3.2 ajout
+	 * @param array $pVecteur ordre des clés à prendre en compte (si $pVecteur ne reprend pas toutes les clés, c'est un extrait de la matrice)
+	 * @param 0boolean $pSurPlace
+	 * @return SG_Matrice $this
+	 */
 	function Trier($pVecteur ='', $pSurPlace = true) {
 		$newmatrice = array();
 		// tri des lignes et des colonnes
@@ -151,17 +184,21 @@ class SG_Matrice extends SG_Objet {
 		$this -> matrice = $newmatrice;
 		$ret = $this;
 	}
-	/** 1.3.2 ajout
-	* clés dans l'ordre du + grd nb de précédents
-	**/
+
+	/**
+	 * clés dans l'ordre du + grd nb de précédents
+	 * @since 1.3.2
+	 */
 	function PlusPopulaires () {
 		$ret = $this -> SommeColonnes();
 		arsort($ret);
 		return $ret;
 	}
+
 	/** 1.3.2 ajout
-	* clés dans l'ordre du + grd nb de suivants
-	**/
+	 * clés dans l'ordre du + grd nb de suivants
+	 * @since 1.3.2
+	 */
 	function PlusDiscriminants () {
 		$ret = $this -> SommeLignes();
 		arsort($ret);
