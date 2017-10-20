@@ -1,46 +1,35 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.3.2 (see AUTHORS file)
-* SG_Import : Classe SynerGaia de gestion des imports de fichier ou flux
-*/
-class SG_Import extends SG_Objet {
-	// Type SynerGaia
-	const TYPESG = '@Import';
-	public $typeSG = self::TYPESG;
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Import */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
 
-	// Format de source inconnu
+/**
+ * SG_Import : Classe SynerGaia de gestion des imports de fichier ou flux
+ * @since 1.0
+ */
+class SG_Import extends SG_Objet {
+	/** string Type SynerGaia '@Import' */
+	const TYPESG = '@Import';
+
+	/** string Format de source inconnu */
 	const FORMAT_INCONNU = 0;
-	/**
-	 * Format de source CSV
-	 */
+	/** string Format de source CSV */
 	const FORMAT_CSV = 1;
-	/**
-	 * Format de source JSON
-	 */
+	/** string Format de source JSON */
 	const FORMAT_JSON = 3;
-	/**
-	 * Format de source DXL
-	 */
+	/** string Format de source DXL */
 	const FORMAT_DXL = 4;
 
-	/**
-	 * Emplacement de la source
-	 */
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+	/** string Emplacement de la source */
 	public $source = '';
-	/**
-	 * Format de la source
-	 */
+	/** integer Format de la source */
 	public $format = 0;
-	/**
-	 * Type d'objet à importer
-	 */
+	/** string Type d'objet à importer */
 	public $typeObjet = '';
-	/**
-	 * Séparateur de champs
-	 */
+	/** string Séparateur de champs */
 	public $separateur = ',';
-	/**
-	 * Appel des méthodes Enregistrer après enregistrement
-	 */
+	/** string Appel des méthodes Enregistrer après enregistrement */
 	public $appelEnregistrer = true;
 
 	/**
@@ -102,11 +91,12 @@ class SG_Import extends SG_Objet {
 		$this -> typeObjet = $tmpTypeObjet -> toString();
 	}
 
-	/** 1.0.7
+	/**
 	 * Exécution de l'import
-	 *
+	 * 
+	 * @since 1.0.7
 	 * @param indéfini $pBaseCible code de la base cible
-	 * @return @VraiFaux selon le résultat
+	 * @return SG_VraiFaux selon le résultat
 	 */
 	function Importer($pBaseCible = '') {
 		$tmpBaseCible = new SG_Texte($pBaseCible);
@@ -130,6 +120,7 @@ class SG_Import extends SG_Objet {
 	 * Définir le séparateur de champs
 	 *
 	 * @param indéfini $pSeparateur séparateur
+	 * @return SG_Import
 	 */
 	function DefinirSeparateur($pSeparateur = ',') {
 		$tmpSeparateur = new SG_Texte($pSeparateur);
@@ -137,10 +128,13 @@ class SG_Import extends SG_Objet {
 		return $this;
 	}
 
-	/** 1.1.2 traitement d'un @Fichier ; 1.3.2 enregistrer false
+	/**
 	 * Import d'un fichier au format CSV, entêtes = nom des champs
-	 *
+	 * 
+	 * @version 1.1.2 traitement d'un @Fichier
+	 * @version 1.3.2 enregistrer false
 	 * @param string $codeBaseCible code de la base cible
+	 * @return SG_VraiFaux
 	 */
 	function importer_CSV($codeBaseCible = '') {
 		$ret = SG_Rien::Vrai();
@@ -241,11 +235,12 @@ class SG_Import extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.3.2 engistrer false
+	/**
 	 * Import d'un fichier au format JSON
-	 *
+	 * 
+	 * @version 1.3.2 enregistrer false
+	 * @todo la création ne devrait pas être un SG_Document mais un objet SynerGaïa (voir cependant le risque de recompilation multiple ?) Mettre un sauvegarde sans compil ?
 	 * @param string $codeBaseCible code de la base cible
-	 *
 	 * @return SG_VraiFaux
 	 */
 	function importer_JSON($codeBaseCible = '') {
@@ -255,8 +250,8 @@ class SG_Import extends SG_Objet {
 		$contenuTexte = '';
 		if($typeSource === '@Fichier') {
 			$this-> source -> format = 'json';
-			if(isset($this->proprietes[$this->reference]['data'])) {
-				$contenuTexte = base64_decode($this->proprietes[$this->reference]['data']);
+			if(isset($this->proprietes[$this -> reference]['data'])) {
+				$contenuTexte = base64_decode($this->proprietes[$this -> reference]['data']);
 			}
 		} elseif ($typeSource === '@Texte') {
 			if (file_exists($this -> source -> texte)) {
@@ -288,7 +283,16 @@ class SG_Import extends SG_Objet {
 						}
 
 						// Fabrique le document
-						$doc = new SG_Document($codeBaseCible . '/' . $idDoc);
+						$type = $docJSON['@Type'];
+						$classe = SG_Dictionnaire::getClasseObjet($type);
+						$code = $docJSON['@Code'];
+						// dans quelle base ?
+						if ($codeBaseCible === '') {
+							$base = SG_Dictionnaire::getCodeBase($type);
+						} else {
+							$base = $codeBaseCible;
+						}
+						$doc = new SG_Document($base . '/' . $idDoc);
 						foreach ($docJSON as $champ => $valeur) {
 							// Définit la valeur des champs
 							if ($champ !== '_id') {
@@ -296,23 +300,28 @@ class SG_Import extends SG_Objet {
 							}
 						}
 						// Enregistre ; 1.3.2 ,false)
-						$doc -> Enregistrer($this -> appelEnregistrer, false);
+						$r = $doc -> Enregistrer($this -> appelEnregistrer, false);
+						if ($r instanceof SG_Erreur) {
+							journaliser($r);
+						}
 					}
 				}
 			} else {
 				$ret = new SG_Erreur(SG_Erreur::ERR_FICHIER_JSON_INVALIDE, $this -> source);
 			}
 		} else {
-			$ret = new SG_Erreur(SG_Erreur::ERR_FICHIER_NON_TROUVE, $this -> source);
+			$ret = new SG_Erreur('0003', $this -> source);
 		}
 
 		return $ret;
 	}
 
-	/** 1.3.2 engistrer false
+	/**
 	 * Import d'un fichier au format DXL (Lotus Notes), 
-	 *
+	 * 
+	 * @version 1.3.2 enregistrer false
 	 * @param string $codeBaseCible code de la base cible
+	 * @return SG_VraiFaux
 	 */
 	function importer_DXL($codeBaseCible = '') {
 		$ret = SG_Rien::Vrai();
@@ -493,10 +502,9 @@ class SG_Import extends SG_Objet {
 				unlink($fichier);
 			}
 		} else {
-			$ret = new SG_Erreur(SG_Erreur::ERR_FICHIER_NON_TROUVE, $this -> source);
+			$ret = new SG_Erreur('0004', $this -> source);
 		}
 		return $ret;
 	}
-
 }
 ?>
