@@ -1,48 +1,52 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
+<?php
+/** SynerGaia fichier pour la gestion de l'objet @Log */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * Classe SynerGaia de gestion des logs
+ * @version 2.1
  */
 class SG_Log {
 	/**
-	* Type SynerGaia
+	* string Type SynerGaia
 	*/
 	const TYPESG = '@Log';
 	/**
-	* Type SynerGaia de l'objet
-	*/
-	public $typeSG = self::TYPESG;
-	/**
-	* Valeur pour le niveau "FATAL"
+	* integer Valeur pour le niveau "FATAL"
 	*/
 	const LOG_NIVEAU_FATAL = 0;
 	/**
-	* Valeur pour le niveau "ERREUR"
+	* integer Valeur pour le niveau "ERREUR"
 	*/
 	const LOG_NIVEAU_ERREUR = 1;
 	/**
-	* Valeur pour le niveau "WARNING"
+	* integer Valeur pour le niveau "WARNING"
 	*/
 	const LOG_NIVEAU_WARNING = 2;
 	/**
-	* Valeur pour le niveau "INFO"
+	* integer Valeur pour le niveau "INFO"
 	*/
 	const LOG_NIVEAU_INFO = 3;
 	/**
-	* Valeur pour le niveau "DEBUG"
+	* integer Valeur pour le niveau "DEBUG"
 	*/
 	const LOG_NIVEAU_DEBUG = 4;
 
 	/**
-	* Valeur pour la sortie en console
+	* string Valeur pour la sortie en console
 	*/
 	const LOG_SORTIE_CONSOLE = "Console";
 
 	/**
-	* Valeur interne pour le type de sortie
+	* string Type SynerGaia de l'objet
+	*/
+	public $typeSG = self::TYPESG;
+	/**
+	* string Valeur interne pour le type de sortie
 	*/
 	public $type;
 	/**
-	* Valeur interne pour le niveau
+	* integer Valeur interne pour le niveau
 	*/
 	public $niveau;
 
@@ -58,11 +62,11 @@ class SG_Log {
 	}
 
 	/**
-	* Ajout d'un message de log
-	*
-	* @param string $pMessage message
-	* @param integer $pNiveau niveau du message
-	*/
+	 * Ajout d'un message de log
+	 *
+	 * @param string $pMessage message
+	 * @param integer $pNiveau niveau du message
+	 */
 	function log($pMessage = "", $pNiveau = self::LOG_NIVEAU_INFO) {
 		static $indent;
 
@@ -78,11 +82,15 @@ class SG_Log {
 			error_log($message, 0);
 		}
 	}
-	/** 1.3.3 ajout ; 2.1 getMessage
-	* Afficher : affiche le dernier fichier log d'Apache (per défaut) ou de CouchDB
-	* @param $pFichier (@Texte) : code du log à afficher
-	* @return (@HTML) : fichier log demandé
-	**/
+
+	/**
+	 * Afficher : affiche le dernier fichier log d'Apache (per défaut) ou de CouchDB
+	 * 
+	 * @since 1.3.3 ajout
+	 * @version 2.1 getMessage
+	 * @param SG_Texte $pFichier code du log à afficher
+	 * @return SG_HTML fichier log demandé
+	 */
 	static function Afficher($pFichier = "a") {
 		$ret = ''; 
 		$fichier = strtolower(SG_Texte::getTexte($pFichier));
