@@ -1,26 +1,36 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* SG_Theme : Classe de gestion d'un theme (onglet)
-**/// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'obje @Theme */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Theme_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Theme_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * @since 2.1.1 
+	 */
 	trait SG_Theme_trait{};
 }
+
+/**
+ * SG_Theme : Classe de gestion d'un theme et de ses menus de
+ * @version 2.6
+ */
 class SG_Theme extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Theme' */
 	const TYPESG = '@Theme';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Code du theme
+	/** string Code du theme */
 	public $code;
 
-	/** 1.0.7 ; correction pour recherche par code
-	* Construction de l'objet
-	*
-	* @param string $pCode code du theme
-	* @param array $pTableau tableau éventuel des propriétés
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @version 1.0.7 correction pour recherche par code
+	 * @param string|SG_Texte|SG_Formule $pCodeTheme code du theme
+	 * @param array $pTableau tableau éventuel des propriétés
+	 */
 	public function __construct($pCodeTheme = '', $pTableau = null) {
 		$tmpCode = new SG_Texte($pCodeTheme);
 		$base = SG_Dictionnaire::getCodeBase(self::TYPESG);
@@ -37,10 +47,13 @@ class SG_Theme extends SG_Document {
 		$this -> setValeur('@Type', self::TYPESG);
 	}
 
-	/** 1.0.6
+	/**
 	* Conversion en code HTML
-	*
+	* @since 1.0.6
+	* @version 2.6 class img
+	* @param string $pThemeGraphique (inutilisé)
 	* @return string code HTML
+	* @uses JS SynerGaia.getMenu()
 	*/
 	function toHTML($pThemeGraphique = '') {
 		$ret = '';
@@ -55,15 +68,16 @@ class SG_Theme extends SG_Document {
 			$themeIcone = $this -> getValeur('@IconeTheme', '');
 		}
 		$style = 'padding-left:18px;';
-		$ret = '<li onclick="SynerGaia.getMenu(event,\'t=' .  $this -> getUUID() . '\')">';
-		if ($themeIcone !== '') { $ret .= ' <img src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/' . $themeIcone . '" alt="" class="ui-li-icon"/>';}
+		$ret = '<li class="sg-menu-ligne" onclick="SynerGaia.getMenu(event,\'t=' .  $this -> getUUID() . '\')">';
+		if ($themeIcone !== '') { $ret .= ' <img class="sg-menu-ligne-img" src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/' . $themeIcone . '" alt="" class="ui-li-icon"/>';}
 		$ret .=  '<span >' . $themeTitre  . '</span></li>' . PHP_EOL;
 		return $ret;
 	}
 
-	/** 1.0.6
+	/**
 	 * Génère la page d'accueil du thème
-	 *
+	 * 
+	 * @since 1.0.6
 	 * @return string code HTML
 	 */
 	function Accueil() {
@@ -79,10 +93,13 @@ class SG_Theme extends SG_Document {
 		return '<span class="champ_Theme">' . $this -> toHTML() . '</span>';
 	}
 
-	/** 1.0.6 ; 1.3.1 param 2
-	* Modification
-	* @param $pRefChamp référence du champ HTML
-	* @param $pListeElements (@Collection) : liste des valeurs possibles (par défaut toutes)
+	/**
+	* Calcul du code html pour la modification comme champ
+	* 
+	* @since 1.0.6
+	* @version 1.3.1 param 2
+	* @param string $pRefChamp référence du champ HTML
+	* @param SG_Collection $pListeElements liste des valeurs possibles (par défaut toutes)
 	* @return string code HTML
 	*/
 	function modifierChamp($pRefChamp = '', $pListeElements = null) {
@@ -127,12 +144,14 @@ class SG_Theme extends SG_Document {
 
 		return $ret;
 	}
-	/** 1.0.6 ; 2.1 supp formule
-	*  Retourne le tableau des modèles d'opération du thème auquel j'ai droit
-	* 
-	* @return @Collection collection des modèles d'opération
-	* @formula : @Moi.@ModelesOperations.@Filtrer(.@Theme.@Code.@Egale(code)).@Trier(.@Position)
-	*/
+
+	/**
+	 *  Retourne le tableau des modèles d'opération du thème auquel j'ai droit
+	 * @since 1.0.6
+	 * @version 2.1 supp formule
+	 * @return SG_Collection collection des modèles d'opération
+	 * @formula : @Moi.@ModelesOperations.@Filtrer(.@Theme.@Code.@Egale(code)).@Trier(.@Position)
+	 */
 	function MesModelesOperation() {
 		$mmo = $_SESSION['@Moi'] -> ModelesOperations();
 		$id = $this -> getUUID();
@@ -160,29 +179,46 @@ class SG_Theme extends SG_Document {
 		}
 		return $ret;
 	}
-	
+
+	/**
+	 * Retourne le titre du thème (sinon le code)
+	 * @since 1.3.1
+	 * @return SG_Texte
+	 */
 	function Titre() {
-		return $this -> getValeur('@Titre');
+		$ret = $this -> getValeur('@Titre','');
+		if($ret === '') {
+			$ret = $this -> getValeur('@Code','');
+		}
+		return $ret;
 	}
-	
-	/** 1.3.1 ajout param ; 1.3.3 ajout id ; perfomance (supp appel @formule); parm event ; titre direct ; 2.0 effacer = true ; 2.2 classes
-	* Affiche un menu de theme (si vide cela dépend du paramètre)
-	* @param (@VraiFaux ou boolean) afficher si vide
-	* @return (@HTML) menu ou vide
-	* @formula : .@MesModelesOperation.@PourChaque(.@LienPourNouvelleOperation)
-	**/
+
+	/**
+	 * Affiche un menu de theme (si vide cela dépend du paramètre)
+	 * @since 1.0
+	 * @version 1.3.1 ajout param
+	 * @version 1.3.3 ajout id ; perfomance (supp appel @formule); parm event ; titre direct
+	 * @version 2.0 effacer = true
+	 * @version 2.2 classes
+	 * @version 2.6 traitement menu à deux niveaux (xxx//yyy)
+	 * @param boolean|SG_VraiFaux|SG_Formule $pMemeSiVide afficher quand même si vide
+	 * @return SG_HTML menu ou vide
+	 * @formula : .@MesModelesOperation.@PourChaque(.@LienPourNouvelleOperation)
+	 * @uses JS SynerGaia.launchOperation()
+	 */
 	function Menu($pMemeSiVide = true) {
 		$mobile = (SG_ThemeGraphique::ThemeGraphique() === 'mobile');
 		$memeSiVide = new SG_VraiFaux($pMemeSiVide);
 		$memeSiVide = $memeSiVide -> estVrai();
-		$cible = '';
 		if ($mobile) {
 			$cible = '\'menuetcorps\'';
-			$classe = 'menu';
+			$classe = 'sg-menu';
 		} else {
 			$cible = '\'centre\'';
-			$classe = 'sous-menu';
+			$classe = 'sg-sous-menu';
 		}
+		$lignes = array();
+		$sousmenu = array();
 		$collection = $this -> MesModelesOperation();
 		$ret = '';
 		if (getTypeSG($collection) === '@Collection') {
@@ -191,10 +227,42 @@ class SG_Theme extends SG_Document {
 					$ret = new SG_Texte(SG_Libelle::getLibelle('0043'));// rien trouvé
 				}
 			} else {
-				$ret.= '<ul class="' . $classe . '">';
-				$cible = ''; // ne fonctionne pas
 				foreach ($collection -> elements as $ope) {
-					$ret.= '<li onclick="SynerGaia.launchOperation(event,\'' . $ope -> code . '\',null,true' .$cible.')">' . $ope -> getValeur('@Titre') . '</li>';
+					$titre = $ope -> getValeur('@Titre', $ope -> code);
+					$ipos = strpos($titre, '//');
+					$ligne = '<li class="sg-menu-ligne" onclick="SynerGaia.launchOperation(event,\'' . $ope -> code . '\',null,true,' .$cible.')">';
+					// si de la forme code//titre on crée un tableau
+					if ($ipos !== false) {
+						$codemenu = substr($titre, 0, $ipos);
+						$ligne.= substr($titre, $ipos + 2) . '</li>';
+						if (isset($lignes[$codemenu]) and is_string($lignes[$codemenu])) {
+							$lignes[$codemenu] = array($lignes[$codemenu], $ligne);
+						} else {
+							$lignes[$codemenu][] = $ligne;
+						}
+					} else {
+						if (isset($lignes[$titre])) {
+							if (! is_array($lignes[$titre])) {
+								$lignes[$titre] = array($lignes[$titre]);
+							}
+							$lignes[$titre][] = $ligne . $titre . '</li>';
+						} else {
+							$lignes[$titre] = $ligne . $titre . '</li>'; 
+						}
+					}
+				}
+				$ret.= '<ul class="sg-sous-menu">';
+				foreach ($lignes as $key => $ligne) {
+					if (is_array($ligne)) {
+						$ret.= '<li class="sg-menu-ligne">' . $key;
+						$ret.= '<ul class="sg-menu-menu">';
+						foreach ($ligne as $sl) {
+							$ret.= $sl;
+						}
+						$ret.= '</ul></li>';
+					} else {
+						$ret.= $ligne;
+					}
 				}
 				$ret.= '</ul>';
 			}
@@ -209,36 +277,53 @@ class SG_Theme extends SG_Document {
 		}
 		return new SG_HTML($ret);
 	}
-	
+
+	/**
+	 * Retourne la valeur du champ description à titre d'aide pour le thème
+	 * @since 1.0.3
+	 * @return SG_HTML
+	 */
 	function Aide() {
 		return $this -> getValeurPropriete('@Description', '') -> Afficher();
 	}
-	
-	/** 1.0.3
+
+	/**
 	 * retourne le code du theme
+	 * @since 1.0.3
 	 * @return string code du thème
 	 */
 	function code() {
 		return $this -> getValeurPropriete('@Code','');
 	}
-	
-	/** 1.0.3
+
+	/**
 	 * retourne l'id du document du theme
+	 * @since 1.0.3
 	 * @return string id du thème
 	 */	
 	function Id() {
 		return $this -> doc -> codeDocument;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Traitement après l'enregistrement d'un thème :
+	 * - vider le cache de la navigation pour forcer le recalcul des menus
+	 * @since 1.1 ajout
+	 * @return boolean true
+	 */
 	function postEnregistrer() {
 		// remettre à jour les menus
 		$ret = $_SESSION['@SynerGaia'] -> ViderCache('n');
+		return true;
 	}
-	
-	/** 2.1. ajout
-	* @formula : .@Afficher(.@Titre,.@Code,.@IconeTheme,.@Position,.@Description)
-	**/
+
+	/**
+	 * Calcule le code html pour l'affichage d'un thème comme document
+	 * Par défaut : champs @Titre,@Code,@IconeTheme,@Position,@Description
+	 * @since 2.1. ajout
+	 * @return SG_HTML
+	 * @formula : .@Afficher(.@Titre,.@Code,.@IconeTheme,.@Position,.@Description)
+	 */
 	function Afficher() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
@@ -248,9 +333,13 @@ class SG_Theme extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* @formula : .@Modifier(.@Titre,.@Code,.@IconeTheme,.@Position,.@Description)
-	**/
+
+	/**
+	 * Calcul le code html pour la modification du documentTHème
+	 * @since 2.1 ajout
+	 * @return SG_HTML
+	 * @formula : .@Modifier(.@Titre,.@Code,.@IconeTheme,.@Position,.@Description)
+	 */
 	function Modifier() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
@@ -260,6 +349,7 @@ class SG_Theme extends SG_Document {
 		}
 		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Theme_trait;	
 }
