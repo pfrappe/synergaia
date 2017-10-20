@@ -1,24 +1,43 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
- * SG_Profil : Classe de gestion d'un profil d'utilisateur
+<?php
+/** fichier contenant les classes de gestion de @Profil
+ * @version 2.6 ajout du trait
+ */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Profil_trait.php')) {
+	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Profil_trait.php';
+} else {
+	/** 
+	 * Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * par défaut trait associé vide 
+	 * @since 2.6
+	 */
+	trait SG_Profil_trait{};
+}
+
+/**
+ * SG_Profil : Classe de gestion d'un profil d'utilisateur 
+ * @version 2.1
  */
 class SG_Profil extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Profil' */
 	const TYPESG = '@Profil';
-	// Type SynerGaia de l'objet
+
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Code du profil
+	/** string Code du profil */
 	public $code = '';
-	// Document du profil
+
+	/** SG_DocumentCouchDB Document du profil */
 	public $doc;
 
-	/** 1.0.7
-	* __construct : Construction de l'objet
-	*
-	* @param indéfini $pCodeProfil code du profil
-	* @param array ou @DocumentCouchDB $pTableau source éventuelle des informations 
-	*/
+	/**
+	 * Construction de l'objet
+	 * @since 1.0.7
+	 * @param indéfini $pCodeProfil code du profil
+	 * @param array|SG_DocumentCouchDB $pTableau source éventuelle des informations 
+	 */
 	function __construct($pCodeProfil = '', $pTableau = null) {
 		$tmpCode = new SG_Texte($pCodeProfil);
 		$base = SG_Dictionnaire::getCodeBase($this -> typeSG);
@@ -30,13 +49,13 @@ class SG_Profil extends SG_Document {
 		$this -> code = $this -> getValeur('@Code');
 		$this -> setValeur('@Type', '@Profil');
 	}
-	/** 1.0.6
-	* Ajoute un utilisateur au profil
-	*
-	* @param indéfini $pUtilisateur
-	*
-	* @return
-	*/
+
+	/**
+	 * Ajoute un utilisateur au profil
+	 * @since 1.0.6
+	 * @param SG_Utilisateur|SG_Texte $pUtilisateur
+	 * @return SG_Profil $this
+	 */
 	public function AjouterUtilisateur($pUtilisateur) {
 		$utilisateur = new SG_Utilisateur($pUtilisateur);
 		$utilisateurUUID = $utilisateur -> getUUID();
@@ -60,13 +79,12 @@ class SG_Profil extends SG_Document {
 		return $this;
 	}
 
-	/** 1.0.6
-	* Supprime un utilisateur du profil
-	*
-	* @param indéfini $pUtilisateur
-	*
-	* @return
-	*/
+	/**
+	 * Supprime un utilisateur du profil
+	 * @since 1.0.6
+	 * @param indéfini $pUtilisateur
+	 * @return
+	 */
 	public function SupprimerUtilisateur($pUtilisateur) {
 		$utilisateur = new SG_Utilisateur($pUtilisateur);
 		$utilisateurUUID = $utilisateur -> getUUID();
@@ -92,9 +110,14 @@ class SG_Profil extends SG_Document {
 		$this -> Enregistrer();
 		return $this;
 	}
-	/** 1.1 ajout ; 2.0 return, SG_Cache
-	* @formula : @Synergaia.@ViderCache("n")
-	*/
+
+	/**
+	 * Après enregistrement, rafraichir les caches et recalculer les thèmes de l'utilisateur
+	 * @since 1.1 ajout
+	 * @version 2.0 return, SG_Cache
+	 * @formula : @Synergaia.@ViderCache("n")
+	 * @return SG_VraiFaux
+	 */
 	function postEnregistrer() {
 		// remettre à jour les menus
 		$ret = SG_Cache::viderCache('n');
@@ -102,9 +125,12 @@ class SG_Profil extends SG_Document {
 		$_SESSION['refresh']['themes'] = $_SESSION['page']['themes'];
 		return $ret;
 	}
-	/** 2.1. ajout
-	* @formula : .@Afficher("Titre : ".@Concatener(.@Titre),"Code : ".@Concatener(.@Code),"Modèles d'opérations : ".@Concatener(.@ModelesOperations),"Utilisateurs : ".@Concatener(.@Utilisateurs))
-	**/
+
+	/**
+	 * Affichage d'un profil
+	 * @since 2.1. ajout
+	 * @formula : .@Afficher("Titre : ".@Concatener(.@Titre),"Code : ".@Concatener(.@Code),"Modèles d'opérations : ".@Concatener(.@ModelesOperations),"Utilisateurs : ".@Concatener(.@Utilisateurs))
+	 */
 	function Afficher() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
@@ -114,9 +140,12 @@ class SG_Profil extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* @formula : .@Modifier(.@Titre,.@Code,.@ModelesOperations,.@Utilisateurs)
-	**/
+
+	/**
+	 * Modification d'un profil
+	 * @since 2.1 ajout
+	 * @formula : .@Modifier(.@Titre,.@Code,.@ModelesOperations,.@Utilisateurs)
+	 */
 	function Modifier() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
@@ -126,5 +155,8 @@ class SG_Profil extends SG_Document {
 		}
 		return $ret;
 	}
+
+	// 2.6 complément de classe créée par compilation
+	use SG_Profil_trait;
 }
 ?>
