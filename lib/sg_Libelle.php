@@ -1,16 +1,43 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
-* SG_Libelle : classe SynerGaia de gestion des libellés standards
-**/
+<?php
+/** 
+ * Fichier contenant les traitements de la classe SG_Libelle
+ * @since 1.1
+ * @version 1.3.2
+ */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Libelle_trait.php')) {
+	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Libelle_trait.php';
+} else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur, via un trait à la fin de la classe */
+	trait SG_Libelle_trait{};
+}
+
+/**
+ * SG_Libelle : classe SynerGaia de gestion des libellés standards
+ * @since 1.1
+ * @version 1.3.2
+ */
 class SG_Libelle extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Libelle' */
 	const TYPESG = '@Libelle';
-	public $typeSG = self::TYPESG;
-	
+
+	/** string code de la base CouchDB */
 	const CODEBASE = 'synergaia_libelles';
-	/** 1.1 ajout ; 1.3.2 parm 3
-	* Recherche un libellé sur la base et le prépare
-	**/
+
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+
+	/**
+	 * Recherche un libellé sur la base et le prépare
+	 * Si le paramètre $pInfos est fourni, son texte vient remplacer le premier %s du libellé orginal du message
+	 * @since 1.1 ajout
+	 * @version 1.3.2 parm 3
+	 * @param string	$pCode	Code du message
+	 * @param boolean	$pAvecNo	Afficher ou non le code du message
+	 * @param string	$pInfos	informations copmplémentaires éventuelles
+	 * @return string le libellé correspondant au numéro
+	 */
 	static function getLibelle($pCode = '', $pAvecNo = true, $pInfos = '') {
 		$ret = '';
 		if ($pCode !== '') {
@@ -26,5 +53,8 @@ class SG_Libelle extends SG_Document {
 
 		return $ret;
 	}
+
+	// Complément de classe spécifique à l'application (créé par la compilation)
+	use SG_Libelle_trait;
 }
 ?>
