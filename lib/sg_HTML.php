@@ -1,37 +1,107 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* Classe SynerGaia de traitement des textes HTML
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier contenant la gestin de l'objet @HTML */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_HTML_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_HTML_trait.php';
 } else {
+	/**
+	 * Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * @since 2.1.1
+	 */
 	trait SG_HTML_trait{};
 }
+
+/**
+ * Classe SynerGaia de traitement des textes HTML
+ * 
+ * @version 2.6 __constuct multiparamètres ; -> Vers
+ * @uses simple_html_dom.php
+ */
 class SG_HTML extends SG_Texte {
-    // Type SynerGaia
-    const TYPESG = '@HTML';
-    public $typeSG = self::TYPESG;
-    
-	// page lue traduite en tableau simple_html_dom
+	/** string Type SynerGaia '@HTML' */
+	const TYPESG = '@HTML';
+
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+   
+	/** string page lue traduite en tableau simple_html_dom */
 	public $dom;
-	// form de la page
+
+	/** array form de la page
+	 * @todo est-ce encore utile ?
+	 */
 	public $forms = array();
-	// 1.3.3 cadre où placer le texte (gauche, centre, droite)
+
+	/**
+	 * @var string cadre où placer le texte (gauche, centre, droite)
+	 * @since 1.3.3
+	 */
 	public $cadre = 'centre';
-	// 2.1.1 rupture avec le bloc HTML suivant dans Navigation (affichage)
+
+	/** boolean rupture avec le bloc HTML suivant dans Navigation (affichage)
+	 * @since 2.1.1 */
 	public $rupture;
-    
-    /** 1.1 ajout
-    */
-    function toHTML() {
+	
+	/** boolean indicateur de champ en saisie
+	 * @since 2.5
+	 */
+	public $saisie = false;
+	
+	/**
+	 * Construction de l'objet ; si plusieurs paramètres, on concatène les objets.
+	 * Si un seul paramètre SG_Collection, on concatene le texte de chaque élément
+	 * Si tableau, on concatene les textes
+	 * 
+	 * @since 2.6
+	 * @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_HTML est créé. Si plusieurs, ils sont concaténés.
+	 */
+	function __construct($pQuelqueChose = null) {
+		$txt = '';
+		if (func_num_args() <= 1) {
+			if ($pQuelqueChose instanceof SG_Collection) {
+				foreach ($pQuelqueChose -> elements as $elt) {
+					$txt.= SG_Texte::getTexte($elt);
+				}
+				$this -> texte = $txt;
+			} else {
+				parent::__construct($pQuelqueChose);
+			}
+		} else {
+			$args = func_get_args();
+			foreach ($args as $arg) {
+				if (is_array($arg)) {
+					foreach ($arg as $a) {
+						$txt.= SG_Texte::getTexte($a);
+					}
+				} elseif($arg instanceof SG_Formule) {
+					$a = $arg -> calculer();
+					$txt.= SG_Texte::getTexte($a);
+				} else {
+					$txt.= SG_Texte::getTexte($arg);
+				}
+			}
+			$this -> texte = $txt;
+		}
+	}
+	
+	/**
+	 * Extrait le texte de l'HTML
+	 * 
+	 * @todo remplcaer par toString() ??
+	 * @since 1.1 ajout
+	 */
+	function toHTML() {
 		return $this -> texte;
 	}
-	/** 1.3.1 ajout
-	* extrait du texte html la première partie html correspondant aux critères fournis
-	* @param suite de triplets (balise, attribut, valeur)
-	* @return (SG_HTML) le noeud demandé ou la collection
-	**/
+
+	/**
+	 * Extrait du texte html la première partie html correspondant aux critères fournis
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string|$pBalise suite de triplets (balise, attribut, valeur)
+	 * @return SG_Collection|SG_HTML le noeud demandé ou la collection des noeuds
+	 */
 	function Extraire($pBalise = '') {
 		$ret = new SG_Collection();
 		if($this -> texte !== '') {
@@ -57,9 +127,14 @@ class SG_HTML extends SG_Texte {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout pour lire les sites internet (@SiteInternet)
-	* décompose les composant principaux de la page HTML
-	**/
+
+	/**
+	 * Décompose les composant principaux de la page HTML pour lire les sites internet (@SiteInternet)
+	 * 
+	 * @since 1.3.1 ajout
+	 * @version 2.6 return
+	 * @return SG_HTML $this
+	 */
 	function analyser() {
 		$this -> forms = array();
 		if ($this -> texte !='') {
@@ -81,12 +156,16 @@ class SG_HTML extends SG_Texte {
 			// recherche de tous les champs
 			$this -> proprietes = array_merge($this -> proprietes, $this -> getChamps($this -> dom));
 		}
+		return $this;
 	}
-	/** 1.3.1 ajout
-	* indique si l'élément est inclus dans une 'form'
-	* @param (simple_html_dom_node) élément à analyser
-	* @return (boolean) true si un 'parent' est un '<form>'
-	**/
+
+	/**
+	 * indique si l'élément est inclus dans une 'form'
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param simple_html_dom_node $pNode élément à analyser
+	 * @return boolean true si un 'parent' est un '<form>'
+	 */
 	function estInclusDansForm($pNode) {
 		if(is_null($pNode)) {
 			$node = $this -> dom;
@@ -107,11 +186,14 @@ class SG_HTML extends SG_Texte {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Recherche de tous les champs de l'element
-	* @param (simple_html_dom_node) élément à examiner
-	* @return (array) tableau des champs
-	**/
+
+	/**
+	 * Recherche de tous les champs de l'element
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param simple_html_dom_node $node élément à examiner
+	 * @return array tableau des champs
+	 */
 	function getChamps($node) {
 		$nodechamps = $node -> find('input');
 		$nodechamps = array_merge($nodechamps, $node -> find('textarea'));
@@ -155,18 +237,26 @@ class SG_HTML extends SG_Texte {
 		}
 		return $champs;
 	}
-	/** 1.3.1 ajout
-	* Enlève un bloc
-	* @param (string) Identifiant
-	**/
+
+	/**
+	 * Enlève un bloc (pas opérationnel)
+	 * 
+	 * @todo à terminer si nécessaire
+	 * @since 1.3.1 ajout
+	 * @param string $pNode Identifiant
+	 */
 	function Enlever($pNode) {
 	}
-	/** 1.3.1 ajout
-	* Compare les champs fournis entre l'@HTML et le @Document. Le modèle d'objet est fourni par le type de la formule côté @Document
-	* @param (string) Document de référence
-	* @param (suite de @formules) (formule donnant un texte nom de champ de @HTML, formule sur @Document)*, etc
-	* @return @Collection(@Texte) la collection des champs HTML différents
-	**/
+
+	/**
+	 * Compare les champs fournis entre l'@HTML et le @Document. Le modèle d'objet est fourni par le type de la formule côté @Document
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string $pDocument Document de référence
+	 * @param SG_Formule : formule donnant un texte nom de champ de @HTML, formule sur @Document)*, etc
+	 * @param idem, etc
+	 * @return SG_Collection collection des SG_Texte des champs HTML différents
+	 */
 	function Comparer($pDocument) {
 		if(getTypeSG($pDocument) === '@Formule') {
 			$doc = $pDocument -> calculer();
@@ -209,7 +299,7 @@ class SG_HTML extends SG_Texte {
 					}
 					// décidément inégal...
 					if (!$egal) {
-						$res = new SG_Texte($arghtml -> formule . '=|' . $rh . '| : ' . $argdoc -> formule . '=|' . $rd . '|');
+						$res = new SG_Texte($arghtml -> formule . '=|' . $rh . '| : ' . $argdoc -> texte . '=|' . $rd . '|');
 					}
 				}
 				if($res !== null) {
@@ -221,11 +311,15 @@ class SG_HTML extends SG_Texte {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* recherche un champ précis (permet de résoudre le problème des noms de champs non réglementaires)
-	* @param (string ou @Texte) $pNom : nom du champ
-	* @return (@Texte) valeur du champ
-	**/
+
+	/**
+	 * Recherche un champ précis (permet de résoudre le problème des noms de champs non réglementaires)
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string|SG_Texte $pNom : nom du champ
+	 * @param any $pDefaut valeur par défaut
+	 * @return SG_Texte valeur du champ
+	 */
 	function Champ($pNom = '', $pDefaut = '') {
 		$nom = SG_Texte::getTexte($pNom);
 		if(isset($this -> proprietes[$nom])) {
@@ -235,12 +329,15 @@ class SG_HTML extends SG_Texte {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* met à jour un champ du texte HTML
-	* @param (@Texte) nom du champ
-	* @param (any) valeur (qui sera transformée en texte
-	* @return (@HTML) ceci
-	**/
+
+	/**
+	 * met à jour un champ du texte HTML
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param SG_Texte $pNomChamp nom du champ
+	 * @param any $pValeur valeur (qui sera transformée en texte)
+	 * @return SG_HTML ceci
+	 */
 	function MettreValeur($pNomChamp = '', $pValeur = '') {
 		if(getTypeSG($pValeur) === '@Formule') {
 			$valeur = $pValeur -> calculer();
@@ -250,12 +347,15 @@ class SG_HTML extends SG_Texte {
 		$this -> proprietes[SG_Texte::getTexte($pNomChamp)] = $valeur;
 		return $this;
 	}
-	/** 1.3.1 ajout
-	* extraire les options d'un champ select sous forme d'une formule SynerGaïa
-	* S'il y a une traduction, la valeur retournée sera xxxxx|X
-	* @param (string) balise du champ à extraire
-	* @return (string) formule donnant la collection des valeurs
-	**/
+
+	/**
+	 * extraire les options d'un champ select sous forme d'une formule SynerGaïa
+	 * S'il y a une traduction, la valeur retournée sera xxxxx|X
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string $pBalise balise du champ à extraire
+	 * @return string formule donnant la collection des valeurs
+	 */
 	function ExtraireOptions ($pBalise = '') {
 		$champ = $this -> Extraire($pBalise);
 		if(getTypeSG($champ) !== '@HTML') {
@@ -286,19 +386,27 @@ class SG_HTML extends SG_Texte {
 		}
 		return $ret;
 	}
-	/** 1.3.1 Ajout ; 2.0 parm ; 2.1 $this
-	* Affiche le teste HTML brut
-	* @return (string) html
-	**/
+
+	/**
+	 * Affiche le teste HTML brut
+	 *
+	 * @since 1.3.1 Ajout
+	 * @version 2.1 return $this
+	 * @param string $pOption inutilisé
+	 * @return (string) html
+	 */
 	function Afficher($pOption = '') {
 		return $this;
 	}
-	/** 1.3.1 ajout
-	* Ajoute une classe pour un effet de décoration. L'action se fait sur l'objet @HTML lui-même
-	* @param (@Texte) $pClasse classe d'effet à ajouter
-	* @param (@VraiFaux) $pAutour entourer par une nouvelle <span> (défaut : @Vrai)
-	* @return (@HTML) l'objet après modification
-	**/
+
+	/**
+	 * Ajoute une classe pour un effet de décoration. L'action se fait sur l'objet @HTML lui-même
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pClasse classe d'effet à ajouter
+	 * @param boolean|SG_VraiFaux|SG_Formule $pAutour entourer par une nouvelle <span> (défaut : true)
+	 * @return SG_HTML l'objet après modification
+	 */
 	function Effet($pClasse = '', $pAutour = true) {
 		$classe = SG_Texte::getTexte($pClasse);
 		if($classe !== '') {
@@ -309,51 +417,75 @@ class SG_HTML extends SG_Texte {
 		}
 		return $this;
 	}
-	/** 1.3.1 ajout
-	* Extrait la valeur d'un attribut du premier neoud (-> dom)
-	* @param (@Texte) code de l'attribut
-	* @return (@Texte) valeur de l'attribut ou vide
-	**/
-	function Attribut($pCode = '') {
+
+	/**
+	 * Extrait la valeur d'un attribut du premier neoud (-> dom)
+	 * 
+	 * @since 1.3.1 ajout
+	 * @version 2.4 met la valeur
+	 * @param string|SG_Texte|SG_Formule code de l'attribut
+	 * @param string|SG_Texte|SG_Formule valeur de l'attribut
+	 * @return SG_Texte valeur de l'attribut ou vide si interro ; $this si maj
+	 */
+	function Attribut($pCode = '', $pValeur = '') {
 		$code = SG_Texte::getTexte($pCode);
-		$ret = '';
-		if($code !== '') {
-			if(is_object($this -> dom)) {
-				$ret = $this -> dom -> $code;
+		if(func_num_args <= 1) {
+			$ret = '';
+			if($code !== '') {
+				if(is_object($this -> dom)) {
+					$ret = new SG_Texte($this -> dom -> $code);
+				}
+			}
+		} else {
+			$pval = SG_Texte::getTexte($pValeur);
+			$ret = $this;
+			if($code !== '') {
+				if(is_object($this -> dom)) {
+					$ret = new SG_Texte($this -> dom -> $code);
+				}
 			}
 		}
-		return new SG_Texte($ret);
+		return $ret;
 	}
-	/** 1.3.1 ajout ; 1.3.3 $cadre ; 2.3 classe
-	* Permet de remplir la partie 'adroite'. Cadre est précisé
-	* @param (SG_Formule) formule donnant ce qu'il faut placer à droite
-	**/
+
+	/**
+	 * Permet de remplir la partie 'adroite'. Cadre est précisé
+	 * @since 1.3.1 ajout
+	 * @version 2.3 classe
+	 * @return SG_HTML $this
+	 */
 	function ADroite () {
 		$this -> cadre = 'droite';
 		$this -> texte = '<div class="adroite noprint">' . $this->texte . '</div>';
 		return $this;
 	}
-	/** 1.3.3 ajout
-	* Permet de remplir la partie 'agauche'. Le Cadre est précisé
-	* @param (SG_Formule) formule donnant ce qu'il faut placer à gauche
-	**/
+
+	/**
+	 * Permet de remplir la partie 'agauche'. Le Cadre est précisé
+	 * @since 1.3.3 ajout
+	 * @version 2.6 sup encadrement par div agauche
+	 * @return SG_HTML $this
+	 */
 	function AGauche () {
 		$this -> cadre = 'gauche';
-		$this -> texte = '<div class="agauche noprint">' . $this->texte . '</div>';
 		return $this;
 	}
-	/* 2.00 ajout
-	* Mettre en forme un lien Internet
-	* @param (SG_Texte) lien visé
-	* @param (SG_Texte) cible : par défaut, même onglet ; 
-	* @return (SG_HTML) balise <a> href
-	**/
+
+	/**
+	 * Mettre en forme un lien Internet
+	 * 
+	 * @since 2.0 ajout
+	 * @param SG_Texte $pLien lien visé
+	 * @param SG_Texte $pCible cible : par défaut, même onglet ; 
+	 * @return SG_HTML html balise <a> href
+	 * @uses SynerGaia.ouvrirLien()
+	 */
 	function LienVers($pLien = '', $pCible = '') {
 		$lien = SG_Texte::getTexte($pLien);
 		$cible = strtolower(SG_Texte::getTexte($pCible));
 		$target = 'target="_blank"';
 		if ($cible === '') {
-			$this -> texte = '<a ' . $target . ' href="' . $lien . '" class="lien">' . $this -> texte . '</a>';
+			$this -> texte = '<a ' . $target . ' href="' . $lien . '" class="sg-lien">' . $this -> texte . '</a>';
 		} else {	
 			switch ($cible) {
 				case 'c' :
@@ -377,31 +509,47 @@ class SG_HTML extends SG_Texte {
 					$target = 'target="' . $cible . '"';
 					break;
 			}
-			$this -> texte = '<span class="lien" title="' . $lien . '" ' . $target .'>' . $this -> texte . '</span>';
+			$this -> texte = '<span class="sg-lien" title="' . $lien . '" ' . $target .'>' . $this -> texte . '</span>';
 		}
 		return $this;
 	}
-	/** 2.3 ajout
-	* ajoute un cadre autour du texte
-	* @param $pCSS : phrase CSS style à mettre
-	* @retrun @HTML : ceci
-	**/
-	function Cadre ($pCSS = '') {
-		$css = SG_Texte::getTexte($pCSS);
-		if ($css !== '') {
-			$css = 'style="' . $css . '"';
+
+	/**
+	 * Ajoute un cadre autour du texte
+	 * 
+	 * @since 2.3 ajout
+	 * @version 2.6 param code ; css => classe(s)
+	 * @param string|SG_Texte|SG_Formule $pTitre : titre du cadre
+	 * @param string|SG_Texte|SG_Formule $pClasse : classes à ajouter à mettre
+	 * @param string|SG_Texte|SG_Formule $pCode : code du cadre (pour servir de cible)
+	 * @return SG_HTML ceci
+	 */
+	function Cadre ($pTitre = '', $pClasse = '', $pCode = '') {
+		$titre = SG_Texte::getTexte($pTitre);
+		$classe = SG_Texte::getTexte($pClasse);
+		$id = SG_Texte::getTexte($pCode);
+		$txt = '<div ';
+		if ($id !== '') {
+			$txt.= 'id="' . $id . '" ';
 		}
-		$this -> texte = '<div class="cadre" ' . $css . '>' . $this -> texte . '</div>';
+		$txt.= 'class="sg-cadre ' . $classe . '">';
+		if ($titre !== '') {
+			$txt.= '<div class="sg-cadre-titre">' . $titre . '</div>';
+		}
+		$txt.= $this -> texte . '</div>';
+		$this -> texte = $txt;
 		return $this;
 	}
-	/** 2.3 ajout
-	* fonction utilitaire pour compacter les tableaux html à raison d'un objet html par cadre.
-	* Cette fonction est appelée à la fin de chaque instruction.
-	* si le résultat n'est que dans un seul cadre, le retur est un html sinon c'est encore un tableau par cadre
-	* @param $pResultat : résultat déjà calculé auquel on agrège éventuellement le dernier calculé
-	* @param $pEntree : soit un objet SG_Texte qui devient html, soit SG_HTML qui reste tel quel, soit un tableau d'HTML.
-	* @return : soit un SG_HTML pour un seul cadre, soit un tableau d'HTML pour plusieurs cadres
-	**/
+
+	/**
+	 * fonction utilitaire pour compacter les tableaux html à raison d'un objet html par cadre.
+	 * Cette fonction est appelée à la fin de chaque instruction.
+	 * si le résultat n'est que dans un seul cadre, le retur est un html sinon c'est encore un tableau par cadre
+	 * 
+	 * @since 2.3 ajout
+	 * @param array|SG_HTML $pResultat : résultat déjà calculé auquel on agrège éventuellement le dernier calculé
+	 * @return SG_HTML|array soit un SG_HTML pour un seul cadre, soit un tableau d'HTML pour plusieurs cadres
+	 */
 	static function condenserResultat($pResultat) {
 		if (is_array($pResultat)) {
 			$ret = array();
@@ -425,6 +573,86 @@ class SG_HTML extends SG_Texte {
 		}
 		return $ret;	
 	}
+
+	/**
+	 * permet d'ajouter du texte javascript provenant d'une page stockée en couchdb. 
+	 * Le texte du javascript est ajouté dans le data d'une div <script>
+	 * 
+	 * @since 2.5 ajout
+	 * @version 2.6 test si document erroné
+	 * @param SG_Texte $pDoc : référence d'un champ d'un document contenant le texte du javascript ("objet/code/champ")
+	 * @return SG_Erreur|SG_HTML erreur ou $this
+	 */
+	function Script($pDoc = null) {
+		$ret = $this;
+		if ($pDoc !== null) {
+			$url = SG_Texte::getTexte($pDoc);
+			$cle = explode('/', $url);
+			if(! isset($cle[2])) {
+				$js = new SG_Erreur('0273');
+			} else {
+				$tr = new SG_TexteRiche();
+				$res = $tr -> getURLInterne($url);
+				if (getTypeSG($res) === SG_Erreur::TYPESG) {
+					$js = $res;
+				} elseif (!isset($res['doc'])) {
+					$js = new SG_Erreur('0274');
+				} else {
+					$js = $res['doc'] -> getValeur($cle[2],'');
+				}
+			}
+		}
+		if (getTypeSG($js) === '@Erreur') {
+			$ret = $js;
+		} else {
+			$this -> texte.= '<script type="text/javascript">//<![CDATA[';
+			$this -> texte.= $js;
+			$this -> texte.= '//]]></script>';
+		}
+		return $ret;
+	}
+
+	/**
+	 * Place le code HTML dans une fenêtre popup
+	 * 
+	 * @since 2.6
+	 * @return SG_HTML cet objet
+	 */
+	function Popup() {
+		$this -> cadre = 'popup';
+		$this -> texte = '<div class="sg-popup-data noprint">' . $this->texte . '</div>';
+		return $this;
+	}
+
+	/**
+	 * Place le code HTML dans le cadre passé en paramètre
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pCible id du cadre ou de la box HTML ou l'html devra être affiché
+	 * @return SG_HTML cet objet
+	 */
+	function Vers($pCible) {
+		$this -> cadre = SG_Texte::getTexte($pCible);
+		return $this;
+	}
+
+	/**
+	 * Insère un bouton avec le javascript pour copier le contenu de l'html
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pTitre titre du bouton (sinon "Copier")
+	 * @return string l'html modifié associé
+	 * @uses JS SynerGaia.copy()
+	 */
+	function BoutonCopier($pTitre = 'Copier') {
+		$id = SG_SynerGaia::idRandom();
+		$titre = SG_Texte::getTexte($pTitre);
+		$txt = '<button type="button" class="sg-bouton" onclick="SynerGaia.copy(event, null, \'' . $id . '\')" title="Copier dans le presse papier">' . $titre . '</button>';
+		$txt.= '<span id="' . $id . '" class="sg-copiable">' . $this -> texte . '</span>';
+		$this -> texte = $txt;
+		return $this;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_HTML_trait;
 }
