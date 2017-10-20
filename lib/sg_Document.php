@@ -1,46 +1,60 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Document : classe SynerGaia de gestion d'un document en base de données
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** fichier contenant la gestion d'un @Document */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Document_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Document_trait.php';
 } else {
+	/**
+	 * Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * trait vide par défaut 
+	 * @since 2.1.1
+	 */
 	trait SG_Document_trait{};
 }
+
+/**
+ * SG_Document : classe SynerGaia de gestion d'un document en base de données
+ * @since 0.0
+ * @version 2.6 traitement de la saisie d'un champ @Collection
+ */
 class SG_Document extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Document' */
 	const TYPESG = '@Document';
 
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Document physique associé (@DocumentCouchDB)
+	/** SG_ DocumentCouchDB Document physique associé */
 	public $doc;
-	
-	/** 1.1 ajout Domino
-	* Construction de l'objet
-	*
-	* @param (string) $pRefenceDocument référence du document (si '' le SG_DocumentCouchDB est créé sans id - gain de performance)
-	* @param indefini $pTableau : si couchdb : tableau éventuel des propriétés du document CouchDB ou SG_DocumentCouchDB ; si domino, doc base ou code base
-	* 		si document mais type d'objet différent, initialise à partir des propriétés
-	*/
-	public function __construct($pRefDocument = null, $pTableau = null) {
-		$code = SG_Texte::getTexte($pRefDocument);
+
+	/**
+	 * Construction de l'objet
+	 * @version 1.1 ajout Domino
+	 * @param string $pQuelqueChose référence du document (si '' le SG_DocumentCouchDB est créé sans id - gain de performance)
+	 * @param array|SG_DocumentCouchDB $pTableau si couchdb : tableau éventuel des propriétés du document CouchDB ou SG_DocumentCouchDB ; si domino, doc base ou code base
+	 * 		si document mais type d'objet différent, initialise à partir des propriétés
+	 */
+	public function __construct($pQuelqueChose = '', $pTableau = null) {
+		$code = SG_Texte::getTexte($pQuelqueChose);
 		if (strpos($code, '.nsf/') !== false or getTypeSG($pTableau) === '@DictionnaireBase') {
 			$this -> initDocumentDominoDB($code, $pTableau);
 		} else {
 			$this -> initDocumentCouchDB($code, $pTableau);
 		}
+		if(method_exists($this, 'initDocument')) {
+			$this -> initDocument();
+		}
 	}
-		
-	/** 1.0.6 ; 1.3.4 copie d'un autre objet via $pTableau ; 2.1 création sans id ; 2.2 cade base d'après @Type
-	* initDocumentCouchDB : crée ou recherche le document CouchDB
-	*
-	* @param string $pRefenceDocument référence du document
-	* @param string $pJson si on fourni directement du JSON on le construit à partir de là
-	*/
-	function initDocumentCouchDB($pRefDocument = null, $pTableau = null) {
+
+	/**
+	 * initDocumentCouchDB : crée ou recherche le document CouchDB
+	 * @version 2.2 cade base d'après @Type
+	 * @version 2.6 force le calcul du @Type
+	 * @param string $pRefDocument référence du document
+	 * @param array|SG_DocumentCouchDB|SG_Document $pTableau si on fourni directement du JSON on le construit à partir de là
+	 */
+	function initDocumentCouchDB($pRefDocument = '', $pTableau = null) {
 		$typeTab = getTypeSG($pTableau);
 		if ($typeTab === '@DocumentCouchDB') {
 			$this -> doc = $pTableau;
@@ -83,9 +97,15 @@ class SG_Document extends SG_Objet {
 				$this -> doc = new SG_DocumentCouchDB($codeBase, $codeDocument, $tableau);
 			}
 		}
+		$this -> setValeur('@Type', getTypeSG($this));
 	}
-	/** 1.1 ajout
-	*/
+
+	/** 
+	 * Initialisation d'un document basé sur Domino
+	 * @since 1.1 ajout
+	 * @param string $pReferenceDocument
+	 * @param string $pBase
+	 */
 	function initDocumentDominoDB ($pReferenceDocument, $pBase) {
 		if (getTypeSG($pBase) === '@DictionnaireBase:') {
 			$this -> doc = new SG_DocumentDominoDB($pBase, $pReferenceDocument);
@@ -97,11 +117,13 @@ class SG_Document extends SG_Objet {
 			$this -> doc = new SG_DocumentDominoDB($codeBase, $unid);
 		}
 	}
-	/** 1.1 : paramètre ; 2.1 correction si Titre rempli
-	* Conversion en chaine de caractères
-	*
-	* @return string texte
-	*/
+
+	/**
+	 * Conversion en chaine de caractères
+	 * @version 2.1 correction si Titre rempli
+	 * @param null|string $pDefaut valeur par defaut
+	 * @return string texte
+	 */
 	function toString($pDefaut = null) {
 		$ret = $this -> getValeur('Titre', null);
 		if($ret === null) {
@@ -132,21 +154,24 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 : paramètre ; 2.0 correction
+	/**
 	 * Conversion en code HTML
-	 *
+	 * @version 2.0 correction
+	 * @param null|string $pDefaut
 	 * @return string code HTML
 	 */
 	function toHTML($pDefaut = null) {
 		return $this -> toString('');
 	}
 
-	/** 1.0.5 ; 2.0 traitement propriétés locales
+	/** 
 	 * Définition de la valeur d'un champ du document. Si une valeur locale existe, c'est celle-là qui est mise à jour.
-	 *
+	 * @since 1.0.5
+	 * @version 2.0 traitement propriétés locales
 	 * @param string $pChamp code du champ
 	 * @param indéfini $pValeur valeur du champ
 	 * @param boolean $forceFormule pour éviter de calculer une formule si c'est une formule qu'on veut stocker
+	 * @return any valeur 
 	 */
 	public function setValeur($pChamp = '', $pValeur = null, $forceFormule = false) {
 		$champ = SG_Texte::getTexte($pChamp);
@@ -156,7 +181,7 @@ class SG_Document extends SG_Objet {
 			if ($forceFormule === false) {
 				$valeur = $pValeur -> calculer();
 			} else {
-				// pour éviter les récursion au json_encode (car si c'est une opération, elle contient la formule...)
+				// pour éviter les récursions au json_encode (car si c'est une opération, elle contient la formule...)
 				$valeur -> objet = null;
 				$valeur -> objetPrincipal = null;
 				$valeur -> formuleparent = null;
@@ -183,13 +208,15 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 $pType
-	* Définition du contenu de type "Fichier" d'un champ du document
-	* @param string $pChamp code du champ
-	* @param string $pEmplacement emplacement du fichier
-	* @param string $pNom nom du fichier
-	* @param strint $pType type du fichier (seuls utilisés : image/jpeg, image/png, image/gif pour créer vignette)
-	**/
+	/**
+	 * Définition du contenu de type SG_Fichier (@Fichier) d'un champ du document
+	 * @version 1.1 ajout du parm $pType
+	 * @param string $pChamp code du champ
+	 * @param string $pEmplacement emplacement du fichier
+	 * @param string $pNom nom du fichier
+	 * @param string $pType type du fichier (seuls utilisés : image/jpeg, image/png, image/gif pour créer vignette)
+	 * @return null|boolean retour du setFichier de SG_DocumentCouchDB
+	 **/
 	public function setFichier($pChamp = null, $pEmplacement = '', $pNom = '', $pType = '') {
 		$ret = null;
 		if ($pEmplacement !== '') {
@@ -198,12 +225,12 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7
+	/**
 	 * Lecture de la valeur d'un champ du document, c'est à dire son contenu brut
 	 * on commence par les propriétés à la volée du @Document puis on va dans le document physique
+	 * @since 1.0.7
 	 * @param string $pChamp code du champ
 	 * @param indéfini $pValeurDefaut valeur si le champ ou le document physique n'existe pas
-	 *
 	 * @return indéfini valeur du champ
 	 */
 	public function getValeur($pChamp = null, $pValeurDefaut = null) {
@@ -217,23 +244,24 @@ class SG_Document extends SG_Objet {
 	}
 	
 	/**
-	 *  Acquisition du contenu d'un champ fichier et stockage dans une destination
-	 * 
-	 *  @param string $pChamp nom du champ dans lequel se trouve le fichier
-	 *  @param string $pFichier nom du fichier à récupérer
-	 *  @param string $pDestination répertoire de destination (par défaut ./tmp)
+	 * Acquisition du contenu d'un champ fichier et stockage dans une destination
+	 * @since 1.0.7
+	 * @param string $pChamp nom du champ dans lequel se trouve le fichier
+	 * @param string $pFichier nom du fichier à récupérer
+	 * @param string $pDestination répertoire de destination (par défaut ./tmp)
+	 * @return boolean
 	 */
 	public function DetacherFichier($pChamp = null, $pFichier = '', $pDestination = '/tmp') {
 		return $this -> doc -> DetacherFichier($pChamp, $pFichier, $pDestination);
 	}
 	
-	/** 1.1 simplification ; 1.3.0 accepte modele null) ; 2.2 categorie ; 2.3 cas texte multiple
+	/**
 	 * Lecture de la valeur d'une propriété du document : retourne un objet SynerGaïa
-	 *
+	 * @since 1.0.7
+	 * @version 2.3 cas texte multiple
 	 * @param string $pChamp code de la propriété (défaut null)
 	 * @param indéfini $pValeurDefaut valeur de la propriété si le champ n'existe pas (défaut null)
 	 * @param string $pModele modele imposé pour la propriété recherchée (défaut null)
-	 *
 	 * @return indéfini valeur de la propriete sous forme d'objet SynerGaïa
 	 */
 	public function getValeurPropriete($pChamp = null, $pValeurDefaut = null, $pModele = '') {
@@ -311,19 +339,24 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.1 creer si null et force
-	* Lecture du code du document
-	* @param (boolean) $pForce : (true) créer l'ID si vide, (false defaut) rendre même si vide
-	* @return string code du document
-	*/
+	/**
+	 * Lecture du code du document
+	 * @since 1.0.7
+	 * @version 2.1 creer si null et force
+	 * @param boolean $pForce : (true) créer l'ID si vide, (false defaut) rendre même si vide
+	 * @return string code du document
+	 */
 	public function getCodeDocument($pForce = false) {
 		return $this -> doc -> getCodeDocument($pForce);
 	}
 
-	/** 1.0.7 ; 2.3 @param 1 et 2
-	 * Document existe ?
-	 *
-	 * @return SG_VraiFaux document existe
+	/**
+	 * Document existe ? soit ce document, soit un document du même type et dont un champ a cette velaur si les paramètres sont fournis
+	 * @since 1.0.7
+	 * @version 2.3 @param 1 et 2
+	 * @param null|string|SG_Texte|SG_Formule $pChamp nom du champ que doit contenir le document recherché, 
+	 * @param null|any $pValeur valeur que le champ doit contenir
+	 * @return SG_VraiFaux|SG_Erreur document existe
 	 */
 	public function Existe($pChamp = null, $pValeur = null) {
 		$ret = new SG_VraiFaux(false);
@@ -346,9 +379,9 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 traite ce qui revient de ChercherVue
+	/** 
 	 * Lecture de l'UUID du document (peut venir des propriétés provisoires)
-	 *
+	 * @version 1.1 traite ce qui revient de ChercherVue
 	 * @return string UUID du document
 	 */
 	public function getUUID() {
@@ -365,11 +398,10 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.3.2 : si valeur numérique, n° de colonne des propriétés du tableau
+	/** 
 	 * Champ du document
-	 *
+	 * @version 1.3.2 : si valeur numérique, n° de colonne des propriétés du tableau
 	 * @param $pCodeChamp indefini code du champ
-	 *
 	 * @return SG_Champ contenu associé
 	 */
 	public function Champ($pCodeChamp = '') {
@@ -389,13 +421,15 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.1 supp test sur doc provisoire ; sup appelmethodesenregistrer (traité dans les méthodes spécifiques des objets) ; php titre
-	* 1.3.1 précalcul de @Titre si méthode Titre ; 1.3.2 $pCalculTitre : 1.3.4 retour $this ou SG_Erreur ; 
-	* Enregistrement du document
-	*
-	* @param $pAppelMethodesEnregistrer boolean appel des méthodes Enregistrer et @Enregistrer
-	* @return SG_VraiFaux résultat de l'enregistrement
-	*/
+	/**
+	 * Enregistrement du document
+	 * @since 0.0
+	 * @version 2.4 $ret = $this si pas de problème
+	 * @version 2.6 init @Type si pas déjà fait
+	 * @param boolean $pAppelMethodesEnregistrer appel des méthodes Enregistrer et @Enregistrer
+	 * @param boolean $pCalculTitre
+	 * @return SG_Dcoument|SG_Erreur résultat de l'enregistrement (@Ceci si ok sinon erreur retournée)
+	 */
 	public function Enregistrer($pAppelMethodesEnregistrer = true, $pCalculTitre = true) {
 		$ret = $this;
 		$ok = null;
@@ -405,10 +439,15 @@ class SG_Document extends SG_Objet {
 		} elseif (method_exists($this, 'preEnregistrer')) {
 			$ok = $this -> preEnregistrer();
 		}
-		if (getTypeSG($ok) === '@Erreur') {
+		if ($ok instanceof SG_Erreur) {
 			$ret = $ok;
 		} else {
+			// mettre type objet si pas fait
 			$typeObjet = $this -> getValeur('@Type', '');
+			if ($typeObjet === '') {
+				$typeObjet = getTypeSG($this);
+				$this -> setValeur('@Type', $typeObjet);
+			}
 			// si l'objet n'a pas de propriété Titre mais une méthode Titre, on la calcule (pour les vues stockées)
 			if ($pCalculTitre === true) {
 				if (!(SG_Dictionnaire::isProprieteExiste($typeObjet,'Titre') or SG_Dictionnaire::isProprieteExiste($typeObjet,'@Titre'))) {
@@ -432,37 +471,36 @@ class SG_Document extends SG_Objet {
 			if ($this -> getValeur('@AuteurCreation', '') === '') {
 				$this -> setValeur('@AuteurCreation', $utilisateur);
 			}
-		}
-		$err = '';
-		if (! $ret -> estErreur()) {
-			$retenr = $this -> doc -> Enregistrer();
-			if ($retenr -> estErreur()) {
-				$ret = $retenr;
-			} else {
-				// exécution de la méthode des classes dérivées sinon classe SynerGaia
-				if (method_exists($this, 'FN_postEnregistrer')) {
-					$ret = $this -> FN_postEnregistrer();
-				} elseif (method_exists($this, 'postEnregistrer')) {
-					$ret = $this -> postEnregistrer();
+			if (getTypeSG($ret) !== '@Erreur') {
+				$retenr = $this -> doc -> Enregistrer();
+				if ($retenr -> estErreur()) {
+					$ret = $retenr;
+				} else {
+					// exécution de la méthode des classes dérivées sinon classe SynerGaia
+					if (method_exists($this, 'FN_postEnregistrer')) {
+						$ret = $this -> FN_postEnregistrer();
+					} elseif (method_exists($this, 'postEnregistrer')) {
+						$ret = $this -> postEnregistrer();
+					}
+				}
+				if (getTypeSG($ret) !== '@Erreur') {
+					if(is_null($ok) or $ok === true) {
+						$ret = $this;
+					} else {
+						$ret = $ok;
+					}
 				}
 			}
 		}
-		if (is_object($ret) and (! $ret -> estErreur())) {
-			$ret = $ok;
-		}
 		return $ret;
 	}
-	/** 1.0.6
-	* preEnregistrer : fonction éventuellement créée et exécutée dans les classes dérivées au début de la méthode SG_Document -> Enregistrer()
-	function preEnregistrer() {
-	}
-	*/
 
-	/** 2.3 ajout @param
-	* Suppression du document
-	* @param $pBase : permet de forcer le code de la base dans les cas où ce code n'aurait pas été correct
-	* @return SG_VraiFaux résultat de la suppression
-	*/
+	/**
+	 * Suppression du document
+	 * @version 2.3 ajout @param
+	 * @param string|SG_Texte|SG_Formule $pBase permet de forcer le code de la base dans les cas où ce code n'aurait pas été correct
+	 * @return SG_VraiFaux résultat de la suppression
+	 */
 	public function Supprimer($pBase = '') {
 		$base = SG_Texte::getTexte($pBase);
 		if ($base !== '' and $this -> doc -> codeBase !== $base) {
@@ -471,14 +509,18 @@ class SG_Document extends SG_Objet {
 		return $this -> doc -> Supprimer();
 	}
 
-	/** 2.1 si parametre est string (donc on est en interne), les fichiers visibles
-	* 1.1 : titre non affiché si vide, <h2> toujours ; 
-	* 1.3.1 isEmpty ; $valeur est object ; 1.3.2 toggle $infosdoc, correction ligne 500 calculerSUR() ; 1.3.3 seulement champs non vides
-	* 1.3.4 test $codedocument existe, condensé $infos ; supp lignes vides
-	* Affichage du document
-	*
-	* @return string contenu HTML affichable
-	*/
+	/**
+	 * Affichage du document
+	 * @since 0.0
+	 * @version 2.1 si parametre est string (donc on est en interne), les fichiers visibles : 
+	 * @version 2.4 getTexte $titre
+	 * @version 1.1 : titre non affiché si vide, <h2> toujours ; 
+	 * @version 1.3.1 isEmpty ; $valeur est object ; 1.3.2 toggle $infosdoc, correction ligne 500 calculerSUR() ; 1.3.3 seulement champs non vides
+	 * @version 1.3.4 test $codedocument existe, condensé $infos ; supp lignes vides
+	 * @param SG_Formule noms de champs ou résultats à afficher (autant que nécessaires ou aucun pour tout afficher)
+	 * @return string contenu HTML affichable
+	 * @uses SynerGaia.montrercacher()
+	 */
 	public function Afficher() {
 		$ret = '';
 		// Traite les parametres passés
@@ -490,7 +532,7 @@ class SG_Document extends SG_Objet {
 			// Aucun paramètre fourni => affiche tous les champs
 			$titre = $this -> toHTML('');
 			if($titre !== '') {
-				$ret .= '<h1>' . $titre . '</h1>';
+				$ret .= '<h1>' . SG_Texte::getTexte($titre) . ' ' . $this -> AfficherLien() -> texte . '</h1>';
 			}
 			$modele = getTypeSG($this);
 			$listeChamps = SG_Dictionnaire::getListeChamps($modele);
@@ -532,7 +574,7 @@ class SG_Document extends SG_Objet {
 								$avant = '';
 								$apres = '';
 							} else {
-								$texte = '<ul class="adresse">';
+								$texte = '<ul class="sg-composite">';
 								$avant = '<li class="sg-lignechamp">';
 								$apres = '</li>';
 							}
@@ -562,11 +604,7 @@ class SG_Document extends SG_Objet {
 				}
 			}
 			if ($autres !== '') {
-				$infos = '<div id="infosdoc" class="autreschamps noprint" style="display:none"><ul data-role="listview">';
-				/* // id du document
-				if (isset($this -> doc -> codeDocument)) {
-					$infos.= '<li class="sg-lignechamp"><span class="sg-titrechamp">_id</span> : ' . $this -> doc -> codeDocument . '</li>';
-				}*/
+				$infos = '<div id="infosdoc" class="sg-infosdoc noprint" style="display:none"><ul data-role="listview">';
 				$infos.= $autres . '</ul></div>';
 			}
 			if($infos !== '') {
@@ -596,7 +634,7 @@ class SG_Document extends SG_Objet {
 						if ($tmpChamp -> isEmpty() === false) {
 							$texte = $tmpChamp -> Afficher();
 						}
-					} elseif(getTypeSG($element) === '@Collection') {
+					} elseif (getTypeSG($element) === '@Collection') {
 						$tmpChamp = new SG_Champ();
 						$tmpChamp -> contenu = $element;
 						$tmpChamp -> libelle = $element -> titre;
@@ -605,8 +643,8 @@ class SG_Document extends SG_Objet {
 							$texte = $tmpChamp -> Afficher();
 						}
 					} else {
-						$texte = $element -> Afficher();
-						if(is_object($texte)) {
+						if(is_object($element) and !($element -> EstVide() -> estVrai())) {
+							$texte = $element -> Afficher();
 							$texte = $texte -> texte;
 						}
 					}
@@ -617,15 +655,16 @@ class SG_Document extends SG_Objet {
 			}
 			$ret .= '</ul>';
 		}
-		SG_Navigation::OperationEnCours() -> setValeur('@Principal', $this -> getUUID());
+		SG_Pilote::OperationEnCours() -> setPrincipal($this);
 		if (getTypeSG($ret) !== '@HTML') {
 			$ret = new SG_HTML($ret);
 		}
 		return $ret;
 	}
-	/** 1.1 : afficher titre si non vide, h2 toujours ; 1.3.1 annulation modif 1.1 (suite à création @Formulaire) ; 1.3.4 @Fichiers _attachments
+	/**
 	 * Affichage du document
-	 *
+	 * @version 1.3.4 @Fichiers _attachments
+	 * @param any liste des champs à afficher
 	 * @return string contenu HTML affichable
 	 */
 	public function AfficherChamps() {
@@ -686,12 +725,15 @@ class SG_Document extends SG_Objet {
 		$ret .= '</ul>';
 		return $ret;
 	}
-	/** 1.1 natcasesort ; 1.3.1 valeurs possibles param 2 ; 2.0 affichage des valeurs sélectées
-	* Modification d'un champ de type @Document (lien vers un ou plusieurs documents)
-	* @param $codeChampHTML (string) : code du champ
-	* @param $pListeElements (@Collection) : liste des valeurs possibles (par défaut toutes)
-	* @return string contenu HTML affichable / modifiable
-	*/
+
+	/**
+	 * Modification d'un champ de type @Document (lien vers un ou plusieurs documents)
+	 * @since 0.0
+	 * @version 2.0 affichage des valeurs sélectées
+	 * @param $codeChampHTML (string) : code du champ
+	 * @param $pListeElements (@Collection) : liste des valeurs possibles (par défaut toutes)
+	 * @return string contenu HTML affichable / modifiable
+	 */
 	function modifierChamp($codeChampHTML = '', $pListeElements = null) {
 		$modele = getTypeSG($this);
 		$codeBase = SG_Dictionnaire::getCodeBase($modele);
@@ -708,7 +750,7 @@ class SG_Document extends SG_Objet {
 				$listeElements = new SG_Collection();
 			}
 		}
-		$idChamp = SG_Champ::idRandom();
+		$idChamp = SG_SynerGaia::idRandom();
 		$choix = array();
 		foreach($listeElements -> elements as $element) {
 			$choix[] = $element -> toString() . '|' . $element -> doc -> codeDocument;
@@ -744,9 +786,9 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.3.1 rien si n'existe pas
+	/**
 	 * Affichage d'un champ de type @Document
-	 *
+	 * @version 1.3.1 rien si n'existe pas
 	 * @return string contenu HTML affichable
 	 */
 	function afficherChamp() {
@@ -758,14 +800,17 @@ class SG_Document extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.1 Champ::txtModifier, parametre->methode , paramètres string ; 2.3 traitement propriétés éloignées ; titre seult si ss parm
-	* 1.1 : titre non affiché si vide, <h2> toujours ; 1.3.1 trim($propriete) ; formule de valeurs possibles ; 1.3.4 @Fichiers
-	* Modification du document
-	* @param (any) liste facultative de paramètres donnant les propriétés ou formules à afficher
-	* @return string contenu HTML affichable / modifiable
-	*/
+	/**
+	 * Modification du document : calcul du html permettat la saisie en modification
+	 * @since 0.0
+	 * @version 2.6 traitement des champs de type @Collection
+	 * @param any liste facultative de paramètres donnant les propriétés ou formules à afficher
+	 * @return SG_HTML contenu HTML affichable / modifiable
+	 * @todo supprimer la pirouette du '.' devant les propriétés
+	 * @todo if ($tmp -> DeriveDeDocument() -> estVrai()) {etc. pour .Contact.@ValeursPossibles(etc) pas au point
+	 */
 	public function Modifier() {
-		$ret = $this -> getChampEnregistrer(); // ajouter un champ pour indiquer qu'on enregistrera la saisie
+		$ret = ''; // 2.5
 		// Traite les parametres passés
 		$listeProprietes = array();
 		$nbParametres = func_num_args();
@@ -779,7 +824,7 @@ class SG_Document extends SG_Objet {
 					if ($parametre -> fonction !== '' or $parametre -> php !== '') {
 						$listeProprietes[] = $parametre;// -> methode; // 2.1
 					} else {
-						$listeProprietes[] = $parametre -> formule;
+						$listeProprietes[] = $parametre -> texte;
 					}
 				} else {
 					$listeProprietes[] = SG_Texte::getTexte($parametre);
@@ -791,7 +836,7 @@ class SG_Document extends SG_Objet {
 			if($titre !== '') {
 				$ret .= '<h2>' . $titre . '</h2>';
 			}
-			// si aucun : recupere la liste complete des champs du document
+			// si aucun : récupère la liste complète des champs du document
 			$listeChamps = SG_Dictionnaire::getListeChamps(getTypeSG($this));
 			// Transforme la liste des champs en formules de propriete
 			foreach($listeChamps as $key => $modele) {
@@ -801,42 +846,47 @@ class SG_Document extends SG_Objet {
 		}
 		$ret .= '<ul data-role="listview">';
 		// affichage des autres champs
-		$proprietesNonModifiables = array('.@Type', '.@Erreur', '.@DateCreation', '.@DateModification', '.@AuteurCreation', '.@AuteurModification');
+		$proprietesNonModifiables = self::nomsChampsSysteme();
 		foreach ($listeProprietes as $propriete) {
+			$valeurspossibles = null;
 			$index = '';
 			$doc = null;
+			$libelle = null;
 			if (getTypeSG($propriete) === '@Formule') {
+				$libelle = $propriete -> titre;
+				$nom = $propriete -> methode;
+				// calcul de l'objet du champ à modifier
 				$tmp = $propriete -> calculerSur($this);
-				$propriete = $propriete -> methode;
-			//	$index = $propriete -> index;
-				$doc = $tmp -> contenant;
+			//	if ($tmp -> DeriveDeDocument() -> estVrai()) { // 2.5 pour .Contact.@ValeursPossibles(etc) pas au point
+			//		$index = $tmp -> index;
+			//		$doc = $tmp;
+			//	} else {
+					$doc = $tmp -> contenant;
+			//	}
+				// cas d'une formule de valeurs possibles de la propriété
+				if(isset($tmp -> proprietes['@vp'])) {
+					$valeurspossibles = $tmp -> proprietes['@vp'];
+				}
+			} else {
+				$nom = $propriete;
 			}
 			// extraction éventuelle du libellé (derrière le ':')
-			$libelle = null;
-			if (strpos($propriete, ':') !== false) {
-				list($propriete, $libelle) = explode(':', $propriete);
+			if (strpos($nom, ':') !== false) {
+				list($nom, $libelle) = explode(':', $nom);
 			}
-			$propriete = trim($propriete);
-			if (!in_array($propriete, $proprietesNonModifiables)) {
+			$nom = trim($nom);
+			if (!in_array($nom, $proprietesNonModifiables)) {
 				// Supprime le '.' au début de la propriété (pirouette)
-				if(substr($propriete, 0, 1) === '.') { // 2.1
-					$propriete = substr($propriete, 1);
+				if(substr($nom, 0, 1) === '.') { // 2.1
+					$nom = substr($nom, 1);
 				}
-				if ($propriete === '@Fichiers') {
+				if ($nom === '@Fichiers') {
 					// cas des fichiers rattachés
 					$tmpChamp = new SG_Fichiers($this -> doc);
 				} else {
-					// cas d'une formule de valeurs possibles derrière la propriété
-					$parenth = strpos($propriete, '(');
-					if($parenth !== false) {
-						$valeurspossibles = new SG_Formule(substr($propriete, $parenth + 1, -1), $this);
-						$propriete = substr($propriete, 0, $parenth);
-					} else {
-						$valeurspossibles = null;
-					}
 					// préparation du champ à modifier
 					if ($index === '') { // c'est le document en cours
-						$index = $this -> getUUID() . '/' . $propriete;
+						$index = $this -> getUUID() . '/' . $nom;
 						$doc = $this;
 					}
 					$tmpChamp = new SG_Champ($index, $doc);
@@ -848,18 +898,15 @@ class SG_Document extends SG_Objet {
 			}
 		}
 		$ret .= '</ul>';
-		$opEnCours = SG_Navigation::OperationEnCours();
-		if ($this -> Existe() -> estVrai()) {
-			$opEnCours -> setValeur('@Principal', $this -> getUUID());
-		} else {
-			$opEnCours -> doc -> proprietes['@Principal'] = $this;
-		}
-		$_SESSION['saisie'] = true;
-		return new SG_HTML($ret);
+		$ret = new SG_HTML($ret);
+		$ret -> saisie = true;
+		$this -> setPrincipal(true);
+		return $ret;
 	}
 
-	/** 1.0.7
+	/**
 	 * Duplication du document
+	 * @since 1.0.7
 	 * @param indefini $pIdDocument liste des champs à reprendre
 	 * @return SG_Document nouveau document
 	 */
@@ -881,7 +928,7 @@ class SG_Document extends SG_Objet {
 			for ($i = 0; $i < $nbParametres; $i++) {
 				$parametre = func_get_arg($i);
 				if (getTypeSG($parametre) === '@Formule') {
-					$listeProprietes[] = $parametre -> formule;
+					$listeProprietes[] = $parametre -> texte;
 				} else {
 					$listeProprietes[] = SG_Texte::getTexte($parametre);
 				}
@@ -890,7 +937,7 @@ class SG_Document extends SG_Objet {
 			// Recupere la liste complete des champs du document
 			$listeChamps = SG_Dictionnaire::getListeChamps($type);
 			// Liste des champs non dupliqués automatiquement
-			$champsNonDupliques = array('@Erreur', '@DateCreation', '@DateModification', '@AuteurCreation', '@AuteurModification');
+			$champsNonDupliques = self::nomsChampsSysteme();
 			// Transforme la liste des champs en proprietes
 			foreach($listeChamps as $key => $modele) {
 				if (! array_key_exists($key, $champsNonDupliques)) {
@@ -915,7 +962,6 @@ class SG_Document extends SG_Objet {
 
 	/**
 	 * Comparaison à un autre document
-	 *
 	 * @param indéfini $pQuelqueChose objet avec lequel comparer
 	 * @return SG_VraiFaux vrai si les deux documents sont identiques
 	 */
@@ -932,12 +978,16 @@ class SG_Document extends SG_Objet {
 		$ret = new SG_VraiFaux($this -> getUUID() === $doc -> getUUID());
 		return $ret;
 	}
-	/*
+
+	/**
 	 * Faire suivre l'affichage d'un document dans un memo
+	 * @since 1.1
 	 * @param indéfini $pDestinataires
 	 * @param indéfini $pObjet objet du message
 	 * @param indéfini $pModele modèle d'opération à utiliser pour le lien vers le document
 	 * @param indéfini $pImmediat : envoi immédiat (vrai) ou non. par défaut non
+	 * @param string|SG_Texte|SG_Formule $pMethode éventuellement, une méthode spécifique pour l'envoi du document
+	 * @return SG_Memo le message préparé
 	 */
 	function FaireSuivre ($pDestinataires = '', $pObjet = '', $pModele = '', $pImmediat = false, $pMethode = '') {
 		$memo = new SG_Memo();
@@ -957,7 +1007,7 @@ class SG_Document extends SG_Objet {
 		} elseif (getTypeSG($pMethode) === '@Formule') {			
 			$pMethode -> objet = $this;
 			$pMethode -> objetPrincipal = $this;
-			$texte = SG_Formule::executer($pMethode -> formule, $this, $this, $pMethode);
+			$texte = $pMethode -> calculerSur($this);
 			if (getTypeSG($texte) !== 'string') {
 				$texte = $texte -> toHTML();
 			}
@@ -972,7 +1022,7 @@ class SG_Document extends SG_Objet {
 		if (getTypeSG($pImmediat) === '@Formule') {
 			$pImmediat ->  objet = $this;
 			$pImmediat ->  objetprincipal = $this;
-			$immediat = $pImmediat -> calculer();
+			$immediat = $pImmediat -> calculerSur($this);
 		}
 		if (getTypeSG($immediat) === '@VraiFaux') {
 			$immediat = $immediat -> estVrai();
@@ -984,15 +1034,19 @@ class SG_Document extends SG_Objet {
 		}
 		return $memo;	
 	}
-	/** 1.1 ajout (= @ObjetsLies) ; 1.2 param $pSens
+
+	/**
 	 * Cette fonction retourne la collection de tous les objets de type Document lié au document en cours.
 	 * La liaison se fait à base des propriétés et non des résultats de méthode.
 	 * La liste est constituée en deux étapes : 
 	 * 	'e' les documents qui pointent vers l'objet.
 	 * 	's' les documents que le document en cours accède
+	 * @since 1.1
+	 * @version 1.2 param $pSens
 	 * @param any $pModele : sélection éventuelle sur un seul modèle d'objet
 	 * @param any $pChamp : sélection éventuelle sur un seul champ
 	 * @param any $pSens : 'e' = entrants seulement, 's' sortant seulement, 'r' = textes riches aussi
+	 * @return SG_Collection
 	 */
 	function Chercher($pModele = '', $pChamp = '', $pSens = 'e') {
 		$ret = new SG_Collection();
@@ -1041,8 +1095,12 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.0.7
+
+	/**
 	 * LienVers : crée un lien hyperttexte vers ce document via l'opération passée en paramètre
+	 * @since 1.0.7
+	 * @param string|SG_Texte|SG_Formule $pTexte
+	 * @param string|SG_Texte|SG_Formule $pModele
 	 */
 	function LienVers($pTexte = '', $pModele= '') {
 		$texte = SG_Texte::getTexte($pTexte);
@@ -1053,15 +1111,25 @@ class SG_Document extends SG_Objet {
 		$html = new SG_HTML($html); // pour la prise en compte correcte dans les vues
 		return $html;
 	}
-	
+
+	/**
+	 * Crée un bouton SG_Bouton donnant la référence du document
+	 * @param string $pNom
+	 * @param string $pFormule
+	 * @return SG_Bouton
+	 */
 	function Bouton ($pNom = '', $pFormule = '') {
 		$bouton = new SG_Bouton($pNom, $pFormule);
 		$bouton -> refdocument = $this -> getUUID();
 		return $bouton;
 	}
-	/** 1.1 gestion du type ; 1.3.4 '0094' ; 2.1.1 exit... ; 2.2 pas err 0094
-	* récupération d'un fichier
-	*/ 
+	/**
+	 * Récupération d'un fichier
+	 * @version 2.2 pas err 0094
+	 * @param string|SG_Texte|SG_Formule $pChamp
+	 * @param string|SG_Texte|SG_Formule $pFichier
+	 * @return string HTML 
+	 */ 
 	function TelechargerFichier($pChamp = null, $pFichier = null) {
 		$fichier = SG_Texte::getTexte($pFichier);
 		$ret = $this -> doc -> getFichier($pChamp, $fichier);
@@ -1081,20 +1149,11 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
-	function getChampEnregistrer() {
-		$ret = '';
-		// coder un champ @Enregistrer pour le retour de la saisie (doc principal)
-		$opEnCours = SG_Navigation::OperationEnCours();
-		if (SG_Operation::isOperation($opEnCours)) {
-			$codeChamp = SG_Champ::codeChampHTML($opEnCours -> reference . '/@Enregistrer');
-			$ret .= '<input  type="hidden" name="' . $codeChamp . '" value="' . $this -> getUUID() . '"/>';
-		}
-		return $ret;
-	}
-	/** 1.2 ajout
+
+	/**
 	* Parcourt l'ensemble des Document.Consulter puis @Document.@Consulter pour chercher la formule à exécuter
+	* @since 1.2 ajout
+	* @return SG_HTML contenant le texte HTML à aficher
 	*/
 	function Consulter() {
 		$code = '';
@@ -1128,8 +1187,13 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.2 ajout ; 1.3.2 n'entoure plus le résultat avec les accolades (permet d'en enchainer plusieurs)
-	*/
+
+	/**
+	 * Extrait le document en JSON
+	 * @since 1.2 ajout
+	 * @version 1.3.2 n'entoure plus le résultat avec les accolades (permet d'en enchainer plusieurs)
+	 * @return string json
+	 */
 	function JSON() {
 		if(func_num_args() == 0) {
 			$ret = '"' . $this -> toString() . '"';
@@ -1144,7 +1208,7 @@ class SG_Document extends SG_Objet {
 			// traitement des paramètres
 			foreach ($args as $parametre) {
 				if (getTypeSG($parametre) === '@Formule') {
-					$texte = $parametre -> formule;
+					$texte = $parametre -> texte;
 				} else {
 					$texte = SG_Texte::getTexte($parametre);
 				}
@@ -1202,8 +1266,14 @@ class SG_Document extends SG_Objet {
 		}
 		return new SG_Texte($ret);
 	}
-	/** 1.2 ajout
-	*/
+
+	/**
+	 * Calcule le voisinage d'un document à partir des liens et des champs liens
+	 * @since 1.2 ajout
+	 * @param integer|SG_Nombre|SG_Formule $pNiveau niveau de profondeur du voidinage (par défaut 1)
+	 * @param string|SG_Texte|SG_Formule $pModeles liste des modèles de documents à retenir
+	 * @return SG_Collection
+	 */
 	function Voisinage($pNiveau = 1, $pModeles = null) {
 		$ret = new SG_Collection();
 		if (!is_numeric($pNiveau)) {
@@ -1226,7 +1296,13 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	// 1.2 ajout
+
+	/**
+	 * url pour consulter le document
+	 * @since 1.2 ajout
+	 * @param string $pModele
+	 * return string
+	 */
 	function URL($pModele= '') {
 		$modele = SG_Texte::getTexte($pModele);
 		if ($modele === '') {
@@ -1235,9 +1311,16 @@ class SG_Document extends SG_Objet {
 		$ret = SG_Navigation::URL_PRINCIPALE . '?d=' . $this -> getUUID() . '&m=' . $modele;
 		return $ret;
 	}
-	/** 1.2 ajout ; 1.3.3 pris en compte niveau ; 2.1.1 titre toString
-	* Afficher les liens de type @Reponses d'un document, de manière récursive
-	*/
+
+	/**
+	 * Afficher les liens de type @Reponses d'un document, de manière récursive
+	 * @since 1.2 ajout
+	 * @version 2.6 modifier pour l'auteur
+	 * @param SG_Texte|SG_Formule $pChampTexte par défaut Texte
+	 * @param SG_Texte|SG_Formule $pChampReponse par défaut 'ReponseA'
+	 * @param SG_Nombre|SG_Formule $pNiveau (par défaut 10)
+	 * @return SG_HTML
+	 */
 	function AfficherForum($pChampTexte = 'Texte', $pChampReponse = 'ReponseA', $pNiveau = 10) {
 		$ret = '';
 		$niveau = new SG_Nombre($pNiveau);
@@ -1256,10 +1339,15 @@ class SG_Document extends SG_Objet {
 		// ligne du document
 		$ret.= '<div class="forum_colgauche">';
 		$auteur = $this -> getValeurPropriete('@AuteurCreation') ;
-		$ret.= '<span class="forum-auteur">' . $this -> getValeurPropriete('@AuteurCreation') -> LienVers() -> texte . '</span><br>';
+		$ret.= '<span class="forum-auteur">' . $auteur -> LienVers() -> texte . '</span><br>';
 		$ret.= '<span class="forum-infos">' . $this -> getValeur('@DateCreation') . '</span>';
 		$bouton = new SG_Bouton('Répondre','@Nouveau("' . getTypeSG($this) . '").@MettreValeur("'.$reponse.'",@OperationEnCours.@Parametre).@Modifier(.'.$champ .')', 'p1=' . $this -> getUUID());
 		$ret.= '<p>' . $bouton -> toHTML() -> texte . '<p/>';
+		// si auteur, bouton modifier
+		if ($auteur -> Egale(SG_Rien::Moi()) -> estVrai()) {
+			$bouton = new SG_Bouton('Modifier','.@Modifier', 'p1=' . $this -> getUUID());
+			$ret.= '<p>' . $bouton -> toHTML() -> texte . '<p/>';
+		}
 		$ret.= '</div>'; // fin col-gauche
 		$ret.= '<div class="forum-page">';
 		// titre
@@ -1285,15 +1373,26 @@ class SG_Document extends SG_Objet {
 		}
 		return new SG_HTML($ret);
 	}
-	/**1.3.1 ajout
-	* Indique que l'objet dérive de @Document
+	
+	/**
+	* Indique que l'objet dérive de SG_Document
+	* @since 1.3.1 ajout
+	* @return SG_VraiFaux
 	*/
 	function DeriveDeDocument () {
 		return new SG_VraiFaux(true);
 	}
-	/** 1.3.1 ajout ; 1.3.2 correction sur $titre ; 1.3.4 correction $titre et $texte
-	* Crée une vignette pour les liste de style apple
-	**/
+
+	/**
+	 * Crée une vignette pour les liste de style apple
+	 * @since 1.3.1 ajout
+	 * @version 1.3.4 correction $titre et $texte
+	 * @param SG_Texte|SG_Formule $pTitre par défaut '.Titre'
+	 * @param SG_Texte|SG_Formule $pTexte par défaut '.Texte.@Texte.@Jusqua(".")'
+	 * @param SG_Texte|SG_Formule $pImage par défaut ''
+	 * @param SG_Texte|SG_Formule $pLien lien utl à activer quand on clique sur la vignette
+	 * @return SG_HTML
+	 */
 	function Vignette($pTitre = '.Titre', $pTexte = '.Texte.@Texte.@Jusqua(".")', $pImage = '', $pLien ='') {
 		$lien = SG_Texte::getTexte($pLien);
 		if($lien === '') {
@@ -1331,11 +1430,14 @@ class SG_Document extends SG_Objet {
 		$ret.= '</a></div>';
 		return new SG_HTML($ret);
 	}
-	/** 1.3.2 ajout
+
+	/**
 	* Affichage d'un arbre horizontal
+	* @since 1.3.2 ajout
 	* @param (@Formule) Formule donnant la collection des voisins
 	* @param (@Nombre) profondeur maximum de l'arbre
 	* @param (@Formule) formules pemettant de créer la vignette à afficher dans chaque feuille sous forme json
+	* @return string json résultant
 	**/
 	function AfficherArbre($pParents = null,$pProfondeur = 1) {
 		$profondeurInitiale = new SG_Nombre($pProfondeur);
@@ -1368,7 +1470,7 @@ class SG_Document extends SG_Objet {
 		$json.= '}';
 		if ($profondeurInitiale > 0) {
 			// profondeur initiale positive = niveau de départ => on sort
-			$idGraphique = 'arbre_' . substr(sha1(mt_rand()), 0, 8); // Identifiant unique du graphique
+			$idGraphique = 'arbre_' . SG_SynerGaia::idRandom(); // Identifiant unique du graphique
 			$ret = '<div id="' . $idGraphique . '" class="arbre"></div>' . PHP_EOL;
 			$_SESSION['script'][]= 'var data_' . $idGraphique . ' = ' . $json . ';' . PHP_EOL . ' afficherArbre("#' . $idGraphique . '",data_' . $idGraphique . ');' . PHP_EOL;
 		} else {
@@ -1376,9 +1478,12 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 ajout
-	* Récupère une série de valeurs du documents dans un tableau
-	**/
+
+	/**
+	 * Récupère une série de valeurs du documents dans un tableau 
+	 * @since 1.3.2 ajout
+	 * @return array
+	 */
 	function getValeurs() {
 		$ret = array();
 		// traitement des paramètres
@@ -1389,7 +1494,7 @@ class SG_Document extends SG_Objet {
 		}
 		foreach ($args as $parametre) {
 			if (getTypeSG($parametre) === '@Formule') {
-				$texte = $parametre -> formule;
+				$texte = $parametre -> texte;
 			} else {
 				$texte = SG_Texte::getTexte($parametre);
 			}
@@ -1412,10 +1517,15 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.3 ajout ; 2.1 param 1
+
+	/**
 	* Un document est vide s'il n'a aucune propriete (Nouveau) ou seulement son type (@Type) et n'a jamais été enregistré 
-	* @return @VraiFaux : le document est vide
-	**/
+	* Si un nom de champ est fourni en paramètre, c'est ce champ dont on teste la vacuité
+	* @since 1.3.3 ajout
+	* @version 2.1 param 1
+	* @param string|SG_Texte|SG_Formule $pChamp nom d'un champ spécifique
+	* @return SG_VraiFaux : le document est vide
+	*/
 	function EstVide($pChamp = null) {
 		$ret = new SG_VraiFaux(true);
 		if ($pChamp === null) {
@@ -1431,28 +1541,41 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;		
 	}
-	/** 1.3.4 AJout
-	* @param $pChamp (@Texte) nom du champ à effacer dans le document
-	* @return @Document le document lui-même (modifié et non enregistré)
-	**/
-	function Effacer($pChamp = '') {
-		$champ = SG_Texte::getTexte($pChamp);
-		if ($champ !== '') {
-			if (SG_Dictionnaire::isLien(getTypeSG($this) . '.' . $champ)) {
-				if (method_exists($pValeur, 'getUUID')) {
-					$this -> setValeur($champ, '');
+
+	/**
+	 * Efface un champ du document
+	 * @since 1.3.4 AJout
+	 * @param SG_Texte $pChamp nom du champ à effacer dans le document
+	 * @return SG_Document le document lui-même (modifié et non enregistré)
+	 */
+	function Effacer() {
+		$args = func_get_args();
+		foreach ($args as $pChamp) {
+			$champ = SG_Texte::getTexte($pChamp);
+			if ($champ !== '') {
+				if (SG_Dictionnaire::isLien(getTypeSG($this) . '.' . $champ)) {
+					if (method_exists($pValeur, 'getUUID')) {
+						$this -> setValeur($champ, '');
+					} else {
+						$this -> setValeur($champ, '');
+					}
 				} else {
-					$this -> setValeur($champ, '');
+					unset($this -> doc -> proprietes[$champ]);
 				}
-			} else {
-				unset($this -> doc -> proprietes[$champ]);
 			}
 		}
 		return $this;
 	}
-	/** 2.1 ajout ; 2.2 sup width et height 100% si pas de style
+
+	/**
 	* Donne l'HTML de l'image passée en paramètre (elle se trouve dans les attachements
-	* @param : nom du fichier de l'image
+	* Si pas de nom fourni, donne une image vide
+	* @since 2.1 ajout
+	* @version 2.2 sup width et height 100% si pas de style
+	* @param string|SG_Texte|SG_Formule $pNom nom du fichier de l'image
+	* @param integer|SG_Nombree|SG_Formule $pTaille taille maximale en pixels de l'image, 
+	* @param string|SG_Texte|SG_Formule $pStyle clause de style CSS (pas défaut '')
+	* @return SG_HTML
 	**/
 	function AfficherImage($pNom = '', $pTaille = 0, $pStyle = '') {
 		$ret = '';
@@ -1468,15 +1591,19 @@ class SG_Document extends SG_Objet {
 			if ($taille -> valeur != 0) {
 				$image = $image -> Redimensionner($pTaille);
 			}
-			$ret .= '<img class="repertoire-photo" src="' . $image -> getSrc() .'" alt="' . $nom . '" style="' . $style . '">';
+			$ret .= '<img class="sg-rep-photo" src="' . $image -> getSrc() .'" alt="' . $nom . '" style="' . $style . '">';
 		} else {
 			$ret .= '<img src="" alt="Image inconnue : ' . $nom . '">';
 		}
 		return new SG_HTML($ret);
 	}
-	/** 2.1 ajout
-	* 
-	**/
+
+	/**
+	 * Affiche les fichiers du document
+	 * @since 2.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pNom nom du fichier si un seul fichier voulu
+	 * @return SG_HTML
+	 */
 	function Fichiers($pNom = '') {
 		$ret = '';
 		$nom = SG_Texte::getTexte($pNom);
@@ -1491,15 +1618,18 @@ class SG_Document extends SG_Objet {
 		}
 		return new SG_HTML($ret);
 	}
-	/** 2.2 ajout
-	* Joindre un fichier aux attachements du document
-	* @param (@Fichier) : objet à joindre. Si tableau : $nomfichier => [type, data]
-	* @return (@Document) : le document ou erreur
-	**/
+
+	/**
+	 * Joindre un fichier aux attachements du document
+	 * @since 2.2 ajout
+	 * @version 2.6 err 0310, 0311
+	 * @param SG_Fichier $pObjet : objet à joindre. Si tableau : $nomfichier => [type, data]
+	 * @return SG_Document|SG_Erreur ce document ou erreur
+	 */
 	function AjouterFichiers($pObjet = null) {
 		$ret = $this;
 		if ($pObjet === null) {
-			$ret = new SG_Erreur('Un paramètre de type fichier est obligatoire');
+			$ret = new SG_Erreur('0310');
 		} else {
 			if (getTypeSG($pObjet) === '@Formule') {
 				$objet = $pObjet -> calculer();
@@ -1518,18 +1648,20 @@ class SG_Document extends SG_Objet {
 					break;
 				}
 			} else {
-				$ret = new SG_Erreur('Le paramètre ne contient pas de fichier');
+				$ret = new SG_Erreur('0311');
 			}
 		}
 		return $ret;
 	}
-	/** 2.2 ajout
-	* On regarde d'abord sur l'objet puis éventuellement dans propriété de l'opération en cours
-	* @param (string) $pNom : le nom de la propriété ou de la méthode
-	* @param (string) $pNomMethode : nom de la méthode terminant l'expression pour rechercher son titre dans le dictionnaire
-	* @param (objet) : inutilisé (voir SG_Operation)
-	* @return : la valeur ou @Erreur(166) ou @Erreur(175)
-	**/
+
+	/**
+	 * On regarde d'abord sur l'objet puis éventuellement dans propriété de l'opération en cours
+	 * @since 2.2 ajout
+	 * @param string $pNom : le nom de la propriété ou de la méthode
+	 * @param string $pNomMethode : nom de la méthode terminant l'expression pour rechercher son titre dans le dictionnaire
+	 * @param SG_Objet : inutilisé (voir SG_Operation)
+	 * @return : la valeur ou @Erreur(166) ou @Erreur(175)
+	 */
 	function getProprieteOuMethode($pNom, $pNomMethode, $pObjet=null) {
 		if (isset($this -> proprietes[$pNom])) {// propriété locale
 			$ret = $this -> propriete($pNom);
@@ -1541,32 +1673,45 @@ class SG_Document extends SG_Objet {
 		}
 		return	$ret;
 	}
-	/** 2.3 ajout
-	* créer un double du document sauf les champs système. 
-	* Si paramètre = @True, on garde les champ système sauf :
-	* - code base 
-	* - code base complet si pas corrects
-	* - _rev
-	* @param (@Vraifaux) : gadrer les infos système
-	* @return : le nouveau document non enregistré
-	**/
+
+	/**
+	 * créer un double du document sauf les champs système. 
+	 * Si paramètre = @True, on garde les champ système sauf :
+	 * - code base 
+	 * - code base complet si pas corrects
+	 * - _rev
+	 * @since 2.3 ajout
+	 * @param SG_Vraifaux $pParmSyst : gadrer les infos système
+	 * @return : le nouveau document non enregistré
+	 */
 	function Cloner ($pParmSyst = false) {
+		$syst = SG_VraiFaux::getBooleen($pParmSyst);
 		$ret = new SG_Document();
 		$ret -> typeSG = $this -> typeSG;
 		$ret -> doc = $this -> doc;
 		$ret -> doc -> codeBase = SG_Dictionnaire::getCodeBase($this -> typeSG);
 		$ret -> doc -> setBase($ret -> doc -> codeBase);
+		$ret -> doc -> proprietes = $this -> doc -> proprietes;
+		unset($ret -> doc -> revision);
+		unset($ret -> doc -> proprietes['_rev']);
+		if ($syst === false) {
+			foreach (self::nomsChampsSysteme() as $elt) {
+				unset($ret -> doc -> proprietes[$elt]);
+			}
+		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* teste si un document ne possède que les champs passés en paramètres (sauf champs système). Seules les propriétés permanentes sont testées
-	* @param (@Texte) : liste des noms de champs qui doivent être présents uniquement
-	* @return : (@VraiFaux) selon le résultat (ou @Erreur)
-	**/
+
+	/**
+	 * teste si un document ne possède que les champs passés en paramètres (sauf champs système). Seules les propriétés permanentes sont testées
+	 * @since 2.3 ajout
+	 * @param SG_Texte|SG_Formule : liste des noms de champs qui doivent être présents uniquement
+	 * @return SG_VraiFaux|SG_Erreur selon le résultat (ou @Erreur)
+	 */
 	function NAQue () {
 		$ret = new SG_VraiFaux (true);
 		$args = func_get_args();
-		$noms = array('_id', '_rev', '@Type', '@DateCreation', '@AuteurCreation', '@DateModification', '@AuteurModification');
+		$noms = self::nomsChampsSysteme();
 		if (func_num_args() != 0) {
 			foreach($args as $arg) {
 				$txt = SG_Texte::getTexte($arg);
@@ -1583,7 +1728,330 @@ class SG_Document extends SG_Objet {
 		}
 		return $ret;
 	}
-	// 2.1.1. complément de classe créée par compilation
+
+	/** 
+	 * Liste des champs système
+	 * @since 2.4 ajout
+	 * @return array
+	 **/
+	static function nomsChampsSysteme() {
+		return array('_id', '_rev', '@Type', '@Erreur', '@DateCreation', '@AuteurCreation', '@DateModification', '@AuteurModification');
+	}
+
+	/**
+	* Met ce document comme principal de l'opération, éventuellement en modif
+	* 
+	* @since 2.4
+	* @version 2.5 setPrincipal()
+	* @version 2.6 abandon parm $pModif
+	* @return SG_Document $this
+	**/
+	function setPrincipal() {
+		$opEnCours = SG_Pilote::OperationEnCours();
+		if ($this -> Existe() -> estVrai()) {
+			// document déjà sur disque => ne mettre que l'UID
+			// @todo vérifier que c'est malin plutôt que tout le document. Vient sans doute de l'ancienne façon de conserver le principal
+			// ou alors c'est pour forcer le rechargement après un enregistrement ?
+			$opEnCours -> setPrincipal($this -> getUUID());
+		} else {
+			$opEnCours -> setPrincipal($this);
+		}
+	}
+
+	/** 
+	* est ou dérive d'un objet dérivant de @Document
+	* @since 2.5
+	* @param SG_Texte $pType le type de l'objet à comparer
+	* @return SG_VraiFaux vrai ou faux
+	**/
+	function DeriveDe($pType = '') {
+		$type = SG_Texte::getTexte($pType);
+		if (substr($type, 0, 1) === '@') {
+			$classe = 'SG_' . substr($type, 1);
+		} else {
+			$classe = $type;
+		}
+		$ret = (get_class($this) === $classe or is_subclass_of($this, $classe));
+		return new SG_VraiFaux($ret);
+	}
+
+	/**
+	 * Affiche le document dans un format deux colonnes (titres de champs, valeurs de champs)
+	 * @param SG_Formule noms de champs ou résultats à afficher (autant que nécessaires ou aucun pour tout afficher)
+	 * @return SG_HTML|SG_Erreur contenu HTML affichable
+	 */
+	public function AfficherEnColonnes() {
+		$ret = '';
+		// Traite les parametres passés
+		$formule = '';
+		$formuleorigine = null;
+		$nbParametres = func_num_args();
+
+		if ($nbParametres === 0) {
+			// Aucun paramètre fourni => affiche tous les champs
+			$titre = $this -> toHTML('');
+			if($titre !== '') {
+				$ret .= '<h1>' . SG_Texte::getTexte($titre) . '</h1>';
+			}
+			$modele = getTypeSG($this);
+			$listeChamps = SG_Dictionnaire::getListeChamps($modele);
+			// 1.3.1 si pas de doc physique, 
+			$ret .= '<ul data-role="listview">';
+			foreach ($listeChamps as $codeChamp => $modeleChamp) {
+				if ($codeChamp !== '_rev') {
+					if($this -> getValeur($codeChamp,'') !== '') {
+						$tmpChamp = new SG_Champ($this -> getUUID() . '/' . $codeChamp, $this);
+						if ($tmpChamp -> isEmpty() === false) {
+							$tmpChamp = $tmpChamp -> Afficher();
+							if ($tmpChamp !== '') {
+								$ret .= '<li class="sg-lignechamp">' . $tmpChamp . '</li>';
+							}
+						}
+					}
+				}
+			};
+			
+			// traitement des champs qui ne sont pas dans le dictionnaire (on ne prend pas les propriétés temporaires) (infos)
+			$autres = '';
+			$infos = '';
+			if (is_array($this -> doc -> proprietes)) {
+				foreach ($this -> doc -> proprietes as $key => $valeur) {
+					$libelle = $key;
+					$texte = '';
+					if (! array_key_exists($key, $listeChamps)) {
+						if($key === '_attachments') {
+							// 1.3.4 attachement des fichiers ; 2.1 dans $ret
+							$libelle = SG_Libelle::getLibelle('0095', false);
+							$objetfichiers = new SG_Fichiers($this -> doc);
+							$ret.= '<li class="sg-lignechamp"><span class="sg-titrechamp">'. $libelle . '</span> :'. $objetfichiers -> afficherChamp() . '</li>';
+						} elseif (is_object($valeur)) {
+							$texte = $valeur -> toString();
+						} elseif (is_array($valeur)) {
+							// objet composite
+							if(sizeof($valeur) <= 1) {
+								$texte = '';
+								$avant = '';
+								$apres = '';
+							} else {
+								$texte = '<ul class="sg-composite">';
+								$avant = '<li class="sg-lignechamp">';
+								$apres = '</li>';
+							}
+							foreach($valeur as $val) {
+								if(is_object($val)) {
+									$texte.= $avant . $val -> toString() . $apres;
+								} elseif (is_array($val)) {
+									try {
+										$texte.= $avant . implode($val, ', ') . $apres;
+									} catch (Exception $e){
+										$texte.= $avant . json_encode($val) . $apres;
+									}
+								} else {
+									$texte.= $avant . $val . $apres;
+								}
+							}
+							if($avant !== '') {
+								$texte .= '</ul>';
+							}
+						} else {
+							$texte = $valeur;
+						}
+						if($texte !== '') {
+							$autres.= '<li><span class="sg-titrechamp">' . $libelle . '</span> : ' . $texte . '</li>';
+						}
+					}
+				}
+			}
+			if ($autres !== '') {
+				$infos = '<div id="infosdoc" class="sg-infosdoc noprint" style="display:none"><ul data-role="listview">';
+				/* // id du document
+				if (isset($this -> doc -> codeDocument)) {
+					$infos.= '<li class="sg-lignechamp"><span class="sg-titrechamp">_id</span> : ' . $this -> doc -> codeDocument . '</li>';
+				}*/
+				$infos.= $autres . '</ul></div>';
+			}
+			if($infos !== '') {
+				$ret.= '<li class="sg-lignechamp"><a class="sg-titrechamp noprint" title="Affiche les informations administratives du document" onclick="SynerGaia.montrercacher(\'infosdoc\', \'infosdoc_triangle\');">';
+				$ret.= 'Administration du document <img id="infosdoc_triangle" src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/nav/next.png"></img></a></li>';
+				$ret.= $infos;
+			}
+			$ret .= '</ul>';
+		} else {
+			// on a une liste de paramètres
+			$ret .= '<ul data-role="listview">';
+			$parametres = func_get_args();
+			$resultats = array();
+			foreach($parametres as $parametre) {
+				// calcule la valeur de chaque paramètre
+				if (is_string($parametre)) {
+					$element = $this -> get($parametre);
+				} elseif (getTypeSG($parametre) === '@Formule') {
+					$element = $parametre -> calculerSur($this);
+				} else {
+					$element = $parametre;
+				}
+				$texte = '';
+				if ($element) {
+					if (isset($element -> contenant)) {
+						$tmpChamp = new SG_Champ($element -> index, $element -> contenant);
+						if ($tmpChamp -> isEmpty() === false) {
+							$texte = $tmpChamp -> Afficher();
+						}
+					} elseif(getTypeSG($element) === '@Collection') {
+						$tmpChamp = new SG_Champ();
+						$tmpChamp -> contenu = $element;
+						$tmpChamp -> libelle = $element -> titre;
+						
+						if ($tmpChamp -> isEmpty() === false) {
+							$texte = $tmpChamp -> Afficher();
+						}
+					} else {
+						if(is_object($texte)) {
+							$texte = $element -> Afficher();
+							$texte = $texte -> texte;
+						}
+					}
+					if ($texte !== '') {
+						$ret .= '<li class="sg-lignechamp">' . $texte . '</li>';
+					}
+				}
+			}
+			$ret .= '</ul>';
+		}
+		SG_Pilote::OperationEnCours() -> setPrincipal($this);
+		if (getTypeSG($ret) !== '@HTML') {
+			$ret = new SG_HTML($ret);
+		}
+		return $ret;
+	}
+
+	/**
+	 * Récupère ou met à jour la valeur brute du champ telle que stockée dans la base physique
+	 * Elle est retournée sous forme de SG_Texte
+	 * Evidemment, cette façon de travailler est dangereuse...
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pCode code du champ
+	 * @param string|SG_Texte|SG_Formule $pValeur valeur éventuelle à mettre
+	 * @return SG_Texte|SG_Document|SG_Erreur document si mise à jour, valeur si recherche, erreur sinon
+	 */
+	function ChampBrut($pCode = null, $pValeur = null) {
+		$ret = new SG_Erreur('0282');
+		$code = SG_Texte::getTexte($pCode);
+		$val = SG_Texte::getTexte($pValeur);
+		if ($code !== '') {
+			if (isset($this -> doc -> proprietes[$code])) {
+				$ret = new SG_Texte($this -> doc -> proprietes[$code]);
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	 * Change le type du document. A manipuler avec précaution car peut complètement modifier le contenu d'une base...
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pModele modèle cible pour le document
+	 * @return SG_Objet le nouvel objet
+	 */
+	function Devient($pModele = '') {
+		$modele = SG_Texte::getTexte($pModele);
+		if ($modele === '') {
+			$ret = $this;
+		} else {
+			$ret = new $modele();
+			$ret -> doc = $this -> doc;
+			$ret -> doc -> proprietes['@Type'] = $modele;
+		}
+		return $ret;
+	}
+
+	/**
+	 * Permet de forcer l'id d'un document (ne modifie pas le _rev s'il existe)
+	 * Ne fait rien si l'uid actuel existe
+	 * Utile dans l'interprétation des paquets pour le chargement du dictionnaire
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pUID le nouvel uid
+	 * @return SG_Document|SG_Erreur
+	 */
+	function setUID($pUID = '') {
+		$uid = SG_Texte::getTexte($pUID);
+		if (is_string($uid) and $uid !== '' and $this -> doc instanceof SG_DocumentCouchDB
+		and !isset($this -> doc -> proprietes['_id'])) {
+			$this -> doc -> codeDocument = $uid;
+			$this -> doc -> proprietes['_id'] = $uid;
+			$ret = $this;
+		} else {
+			$ret = new SG_Erreur('0290');
+		}
+		return $ret;
+	}
+
+	/**
+	 * Permet de mettre une formule dans la propriété indiquée
+	 * A la différence de MettreValeur, la formule est stockée telle quelle sans interprétation
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pChamp champ dans leqel doit être stockée la formule
+	 * @param string|SG_Texte|SG_Formule $pFormule formule à stocker
+	 * @return SG_Document|SG_Erreur ce document ou une erreur
+	 */
+	function MettreFormule ($pChamp = '', $pFormule = '') {
+		$ret = $this;
+		$champ = SG_Texte::getTexte($pChamp);
+		if ($champ instanceof SG_Erreur) {
+			$ret = $champ;
+		} elseif ($champ !== '') {
+			if ($pFormule instanceof SG_Formule) {
+				$formule = $pFormule -> phrase;
+			} else {
+				$formule = SG_Texte::getTexte($pFormule);
+			}
+			$this -> MettreValeur($champ, $formule);
+		}
+		return $ret;
+	}
+
+	/**
+	 * Crée un lien pour une recherche par id sur le document.
+	 * (JS) En cliquant, le lien sera copié dans le presse papier pour insertion dans un texte riche.
+	 * 
+	 * @since 2.6
+	 * @param SG_Document $pDocument le document vers lequel pointera le lien
+	 * @return string html de l'icone à cliquer et de l'appel pour le clic
+	 * @uses SynerGaia.copy()
+	 */
+	function AfficherLien($pDocument = null) {
+		$ret = '';
+		$doc = null;
+		if ($pDocument instanceof SG_Document) {
+			$doc = $pDocument;
+		} elseif (is_null($pDocument)) {
+			$doc = $this;
+		}
+		if (is_null($doc)) {
+			$ret = new SG_Erreur('0310');
+		} else {
+			$ret = '<span class="sg-doc-lien"><img class="sg-raccourci" src="nav/themes/defaut/img/icons/16x16/silkicons/link.png" ';
+			$ret.= 'onclick="SynerGaia.copy(event,\'[[' . $doc -> getUUID() . ']]\')"';
+			$lib = SG_Libelle::getLibelle('0312', false);
+			$ret.= ' title="' . $lib . '"/></span>';
+		}
+		return new SG_HTML($ret);
+	}
+
+	/**
+	 * Fournit l'ID interne d'un document. Cette méthode ne permet pas sa modification.
+	 * 
+	 * @since 2.6
+	 * @return SG_Texte
+	 */
+	function ID() {
+		$ret = new SG_Texte($this -> getUUID());
+		return $ret;
+	}
+
+	/** 2.1.1. complément de classe créée par compilation */
 	use SG_Document_trait;
 }
 ?>
