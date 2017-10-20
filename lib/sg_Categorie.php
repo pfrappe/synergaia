@@ -1,32 +1,46 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.2 (see AUTHORS file)
-* SG_Categorie : Classe de texte pour la gestion de catégorie de classement
-* La différence avec un @Texte ayant des valeurs possibles est que la liste à proposer provient des valeurs existantes et peut être étendue
-* Donc un objet @Categorie est nécessairement stocké dans un @Document et les valeurs sont recherchées par une vue réduite
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Categorie */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Categorie_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Categorie_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Categorie_trait{};
 }
+
+/**
+ * SG_Categorie : Classe de texte pour la gestion de catégorie de classement
+ * La différence avec un @Texte ayant des valeurs possibles est que la liste à proposer provient des valeurs existantes et peut être étendue
+ * Donc un objet @Categorie est nécessairement stocké dans un @Document et les valeurs sont recherchées par une vue réduite
+ * @since 1.3.4
+ * @version 2.2
+ */
 class SG_Categorie extends SG_Texte {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Categorie' */
 	const TYPESG = '@Categorie';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	// type d'objet auquel appartient la catégorie
+	/** string type d'objet auquel appartient la catégorie */
 	public $typeObjet = '';
 	
-	// 2.1 ajout : liste des valeurs
+	/** array liste des valeurs
+	 * @since 2.1
+	 */
 	public $valeurs = array();
 	
-	// 2.2 ajout : choix multiple autorisé
+	/** boolean : choix multiple autorisé
+	 * @since 2.2
+	 */
 	public $multiple = false;
 
-	/** 1.3.4 ajout de l'objet ; 2.1 ajout méthode new
-	* Construction de l'objet : voir SG_Texte, mais texte est stocké sous forme de collection ou de textes séparés par des virgules
-	**/
+	/**
+	 * Construction de l'objet : voir SG_Texte, mais texte est stocké sous forme de collection ou de textes séparés par des virgules
+	 * @since 1.3.4 
+	 * @version 2.1 ajout méthode new
+	 * @param any $pQuelqueChose
+	 */
 	function __construct($pQuelqueChose = null) {
 		parent::__construct($pQuelqueChose);
 		if (is_array($pQuelqueChose)) {
@@ -39,14 +53,18 @@ class SG_Categorie extends SG_Texte {
 		}
 	}
 	
-	/** 1.3.4 ajout ; 2.0 stoppropagation dblclick
-	* Modification
-	* @param string $pRefChamp référence du champ HTML
-	* @param $pObjet (string, @Texte ou @Document ou @DictionnaireObjet)
-	* @return string code HTML
-	*/
+	/**
+	 * Calcul du code html pour la modification comme champ
+	 * @since 1.3.4 
+	 * @version 2.0 stoppropagation dblclick
+	 * @param string $pRefChamp référence du champ HTML
+	 * @param string|SG_Texte|SG_Formule  $pValeursPossibles
+	 * @return string code HTML
+	 * @uses JS SynerGaia.initCategorie()
+	 */
 	function modifierChamp($pRefChamp = '', $pValeursPossibles = '') {
 		$ret = '';
+		// recherche de la liste des valeurs possibles
 		if( is_null($pValeursPossibles) or $pValeursPossibles === '') {
 			$vp = $this -> Choix();
 		} else {
@@ -60,59 +78,35 @@ class SG_Categorie extends SG_Texte {
 		} else {
 			$valActuelle = '';
 		}
-		// Si on a passé une liste de valeurs proposées
 		if (is_array($vp)) {
-			$idTable = SG_Champ::idRandom();
+			// Si on a passé une liste de valeurs proposées
+			$idTable = SG_SynerGaia::idRandom();
 			$valeurs = json_encode($vp, false);
-			$ret .= '<input id="' . $idTable . '" class="champ_Texte categorie" type="text" name="' . $pRefChamp . '" value="' . $valActuelle . '"
+			$ret .= '<input id="' . $idTable . '" class="sg-exte sg-categorie" type="text" name="' . $pRefChamp . '" value="' . $valActuelle . '"
 			 multiple="1"/><script>SynerGaia.initCategorie("' . $idTable . '",'.$valeurs.')</script>';
-/**
-			$nb = sizeof($vp);
-			for ($i = 0; $i < $nb; $i++) {
-				$valeurProposee = $vp[$i];
-				if (is_object($valeurProposee)) {
-					$valeurProposee = $valeurProposee -> toString();
-				}
-				$valeurAffichee = '';
-				// Eclate si un "|" est présent : ValeurAffichée|ValeurEnregistrée
-				if (strpos($valeurProposee, '|') === false) {
-					// Pas de '|'
-					$valeurAffichee = $valeurProposee;
-				} else {
-					$elements = explode('|', $valeurProposee);
-					$valeurAffichee = $elements[0];
-					$valeurProposee = $elements[1];
-				}
-				$select = '';
-				if (in_array($valeurProposee, $this -> valeurs)) {
-					$select = 'selected';
-				}
-				$ret .= '<option value="' . $valeurProposee . '" ' . $select . '>' . $valeurAffichee . '</option>';
-			}
-			$ret .= '</datalist>';
-**/
 		} else {
-			$ret .= '<textarea class="champ_Texte" name="' . $pRefChamp . '">' . $valActuelle . '</textarea>';
+			// sinon rien que de la saisie
+			$ret .= '<textarea class="sg-texte" name="' . $pRefChamp . '">' . $valActuelle . '</textarea>';
 		}
 		return $ret;
 	}
-	/* 1.3.4 ajout ; 2.2 modif js
-	* @param $pTypeObjet (objet ou texte) objet de référence pour chercher les valeurs possibles
-	* @return collection des textes de valeurs possibles
-	*/
+
+	/**
+	 * Calcul du code html pour le choix de l'une des valeurs
+	 * @since 1.3.4
+	 * @version 2.2 modif js
+	 * @param string|SG_Texte|SG_Formule $pTypeObjet objet de référence pour chercher les valeurs possibles
+	 * @return SG_Collection collection des textes de valeurs possibles
+	 */
 	function Choix() {
 		// préparation de la phrase de sélection
 		$objet = getTypeSG($this -> contenant -> document);
 		$nomChamp = $this -> contenant -> codeChamp;
 		$codebase = $this -> contenant -> codeBase;
-		$n = "doc['" . $nomChamp . "']";
-		$jsMap = "function(doc){if(doc['@Type']==='" . $objet . "'){if(" . $n . "!=null){var tags=" . $n . ";for(var i=0;i<tags.length;i++){emit(tags[i],1)}}}}";
-		$jsReduce = "function(keys,values,rereduce) {return 1}";
-		$js = array('all' => array('map' => $jsMap), 'categorie' => array('map' => $jsMap, 'reduce' => $jsReduce));
-		// création de la vue si nécessaire
+		// création de la vue catégories si nécessaire
+		$js = SG_CouchDB::javascript('9', $objet, $nomChamp);
 		$vue = new SG_Vue('', $codebase, $js, true);
 		$rows = $vue -> Categorie();
-
 		// création de la collection des résultats
 		$ret = new SG_Collection();
 		if(! is_null($rows)) {
@@ -122,24 +116,29 @@ class SG_Categorie extends SG_Texte {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.2 parm $p
-	* Cherche si la catégorie contient la chaine ou le @Texte passée en paramètre)
-	* @param $pTexte : le mot recherché
-	* @param $p : inutilisé (compatibilité avec la méthode SG_Texte::Contient)
-	* @return @VraiFaux : vrai si le mot est dans la catégorie
-	**/
+
+	/**
+	 * Cherche si la catégorie contient la chaine ou le @Texte passée en paramètre)
+	 * @since 2.1
+	 * @version 2.2 parm $p
+	 * @param string|SG_Texte|SG_Formule $pTexte : le mot recherché
+	 * @param string|SG_Texte|SG_Formule $p : inutilisé (compatibilité avec la méthode SG_Texte::Contient)
+	 * @return SG_VraiFaux : vrai si le mot est dans la catégorie
+	 */
 	function Contient($pTexte = '', $p = '') {
 		$texte = SG_Texte::getTexte($pTexte);
 		$ret = in_array($texte, $this -> valeurs, true);
 		return new SG_VraiFaux($ret);
 	}
-	/** 2.2 ajout
-	* Met à jour la valeur du champ d'un document (le document n'est pas enregistré)
-	* @param SG_Document : document à mettre à jour
-	* @param string : nom du champ à mettre à jour
-	* @param string : valeur du champ
-	* @return : le document mis à jour
-	**/
+
+	/**
+	 * Met à jour la valeur du champ d'un document (le document n'est pas enregistré)
+	 * @since 2.2 
+	 * @param SG_Document $pDocument : document à mettre à jour
+	 * @param string $pChamp : nom du champ à mettre à jour
+	 * @param string $pValeur : valeur du champ
+	 * @return SG_Document le document mis à jour
+	 */
 	static function setChamp($pDocument, $pChamp, $pValeur) {
 		if (getTypeSG($pValeur) === '@Collection') {
 			$valeur = $pValeur -> elements;
@@ -151,6 +150,7 @@ class SG_Categorie extends SG_Texte {
 		$pDocument -> setValeur($pChamp, $valeur);
 		return $pDocument;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Categorie_trait;
 }
