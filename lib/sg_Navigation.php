@@ -1,77 +1,99 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Navigation : Classe de traitement de la navigation entre les pages
-*/
+<?php
+/** SYNERGAIA fichier contenant les objets nécessaires pour gérer le navigateur, notamment la classe SG_Navigation */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
+ * SG_Navigation : Classe de traitement des éléments du navigateur Internet
+ * Les méthodes de cette classe sont presque toutes statiques et n'est pas un SG_Objet SynerGaïa
+ * @version 2.6 : transfert executerCodeSGGet dans SG_Pilote
+ **/
 class SG_Navigation {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@Navigation';
-	// Type SynerGaia de l'objet
-	public $typeSG = self::TYPESG;
-	// url principale de SynerGaia
+	
+	/** string url principale de SynerGaia */
 	const URL_PRINCIPALE = 'index.php';
-	// 2.1.1 url js
+	/** string url js 
+	 * @since 2.1.1
+	 **/
 	const URL_JS = 'nav/js/';
-	// 2.1.1 url js
+	/** string url themes 
+	 * @since 2.1.1
+	 **/
 	const URL_THEMES = 'nav/themes/';
-	// 2.1.1 url js
+	/** string url images 
+	 * @since 2.1.1
+	 **/
 	const URL_IMG = 'nav/img/';
-	// Code pour la page de connexion (login)
+	/** string Code pour la page de connexion (login) */
 	const URL_LOGIN = 'login';
-	// Code de la page de déconnexion (logout)
+	/** string Code de la page de déconnexion (logout) */
 	const URL_LOGOUT = 'logout';
-	// Code de l'application (pour opération transverse)
+	/** string Code de l'application (pour opération transverse)*/
 	const URL_VARIABLE_APPLI = 'a';
-	// Code du bout de formule d'un bouton
+	/** string Code du bout de formule d'un bouton */
 	const URL_VARIABLE_BOUTON = 'b';
-	// Code du parametre de fonction sgGET()
-	const URL_VARIABLE_CODE = 'c';
-	// Code du parametre d'un document / liste de documents
+	/** string Code du parametre de fonction sgGET() */
+	const URL_VARIABLE_CODE = 'c';																																																																																																																																		
+	/** string Code du parametre d'un document / liste de documents */
 	const URL_VARIABLE_DOCUMENT = 'd';
-	// Code du parametre de l'étape dans l'opération
+	/** string Code du parametre de l'étape dans l'opération */
 	const URL_VARIABLE_ETAPE = 'e';
-	// Code du parametre d'une formule
+	/** string Code du parametre d'une formule */
 	const URL_VARIABLE_FORMULE = 'f';
-	// Code activé pour instruction de secours (vide cache par exemple)
+	/** string Code activé pour instruction de secours (vide cache par exemple) */
 	const URL_VARIABLE_HELP = 'h';
-	// Code du parametre d'un jeton d'identification
+	/** string Index dans une collection (i=codeobjet:indice) si indice vide : tout l'objet */
+	const URL_VARIABLE_INDEX = 'i';
+	/** string Code du parametre d'un jeton d'identification */
 	const URL_VARIABLE_JETON = 'k';
-	// Code du parametre du modèle d'opération
+	/** string Code du parametre du modèle d'opération */
 	const URL_VARIABLE_MODELEOPERATION = 'm';
-	// Code du parametre GET de l'opération
+	/** string Code du parametre GET de l'opération */
 	const URL_VARIABLE_OPERATION = 'o';
-	// parametres de traitement
-	const URL_VARIABLE_PARM = 'p'; // pour utilisation de préfixe dans des boucles
+	/** string parametre de traitement pour utilisation de préfixe dans des boucles */
+	const URL_VARIABLE_PARM = 'p';
+	/** string parametre 1 de traitement */
 	const URL_VARIABLE_PARM1 = 'p1';
+	/** string parametre 2 de traitement */
 	const URL_VARIABLE_PARM2 = 'p2';
+	/** string parametre 3 de traitement */
 	const URL_VARIABLE_PARM3 = 'p3';
-	// Code pour forcer le recalcul d'un panneau sg_Get (on boucle sur l'étape en cours)
+	/** string non vide pour forcer la recompilation préalable de la formule ou de l'opération (en cas de changement de version)
+	 * @since 2.6 */
+	const URL_VARIABLE_RECOMPIL = 'q';
+	/** string Code pour forcer le recalcul d'un panneau sg_Get (on boucle sur l'étape en cours) */
 	const URL_VARIABLE_RECALCUL = 'r';
-	// Code du parametre type de device (screen) s=m : mobile sinon d=defaut ; 'o' = objet json (erquete interapplicatives)
+	/** string Code du parametre type de device (screen) s=m : mobile sinon d=defaut ; 'o' = objet json (requete interapplicative) */
 	const URL_VARIABLE_SCREEN = 's';
-	// Code du parametre GET du thème
+	/** string Code du parametre GET du thème */
 	const URL_VARIABLE_THEME = 't';
-	// Code du parametre GET d'un identifiant utilisateur
+	/** string Code du parametre GET d'un identifiant utilisateur */
 	const URL_VARIABLE_IDENTIFIANT = 'u';
-	// Code exécution d'une url par sg_get
+	/** string Code exécution d'une url par sg_get */
 	const URL_VARIABLE_EXEC = 'x';
-	// 2.0 Code de cible pour l'ouverture de la nouvelle fenêtre ('g' gauche, 'm'=main défaut, 'c' centre, 'd' droite, 'n' nouvelle fenêtre)
+	/** string 2.0 Code de cible pour l'ouverture de la nouvelle fenêtre ('g' gauche, 'm'=main défaut, 'c' centre, 'd' droite, 'n' nouvelle fenêtre ou code box) */
 	const URL_VARIABLE_WINDOW = 'w';
-	// Code du parametre GET d'un id de téléchargement de fichier
+	/** string Code du parametre GET d'un id de téléchargement de fichier */
 	const URL_VARIABLE_FICHIER = 'z';
-	// Code de l'opération
+
+	/** string Type SynerGaia de l'objet */
+	public $typeSG = self::TYPESG;
+	/** string Code de l'opération */
 	public $codeOperation;
-	// Code du modèle d'opération
+	/** string Code du modèle d'opération */
 	public $codeModeleOperation;
-	// Code du thème
+	/** string Code du thème */
 	public $codeTheme;
-	// 2.3 ajout
-	public $proportions = [20, 60, 20];
-	// 2.3 ajout
+	/** array 2.3 ajout */
+	public $proportions = [30, 60, 30];
+	/** array 2.3 ajout */
 	public $elements = array();
 
-	/** 2.3 init elements
-	* Construction de l'objet
-	*/
+	/**
+	 * Construction de l'objet
+	 * @since 2.3 init elements
+	 */
 	function __construct() {
 		$this -> elements['admin'] = new SG_Cadre('admin');
 		$this -> elements['aide'] = new SG_Cadre('aide');
@@ -86,26 +108,27 @@ class SG_Navigation {
 	}
 
 	/**
-	* Renvoie le code du paramètre demandé (via GET)
-	*
-	* @param string $pCodeParametre
-	* @param string $pValeurParDefaut
-	*
-	* @return string valeur du paramètre
-	*/
+	 * Renvoie le code du paramètre demandé (via GET)
+	 *
+	 * @version 2.4 urldecode
+	 * @param string $pCodeParametre
+	 * @param string $pValeurParDefaut
+	 *
+	 * @return string valeur du paramètre
+	 */
 	static function getParametre($pCodeParametre, $pValeurParDefaut = '') {
 		$valeur = $pValeurParDefaut;
 		if (isset($_GET[$pCodeParametre])) {
-			$valeur = $_GET[$pCodeParametre];
+			$valeur = urldecode($_GET[$pCodeParametre]);
 		}
 		return $valeur;
 	}
 
 	/**
-	* Renvoie le préfixe des url de l'environnement SynerGaïa
-	*
-	* @return string prefixe des url
-	*/
+	 * Renvoie le préfixe des url de l'environnement SynerGaïa
+	 *
+	 * @return string prefixe des url
+	 */
 	static function getUrlBase() {
 		$ret = '';
 
@@ -138,20 +161,25 @@ class SG_Navigation {
 		return $ret;
 	}
 
-	/** 1.0.7 ; 1.3.4 indéfini si non trouvé
-	* Determine si une opération est disponible pour un utilisateur
-	*
-	* @param indefini $pCodeModeleOperation
-	* @param indefini $pIdentifiantUtilisateur
-	*
-	* @return boolean
-	*/
+	/**
+	 * Determine si une opération est disponible pour un utilisateur
+	 *
+	 * @since 1.0.7
+	 * @version 1.3.4 indéfini si non trouvé
+	 * @version 2.6 test user erreur
+	 * @param indefini $pModeleOperation
+	 * @param indefini $pUtilisateur
+	 *
+	 * @return boolean
+	 */
 	static function ModeleOperationDisponible($pModeleOperation = '', $pUtilisateur = '') {
 		$ret = new SG_VraiFaux(false);
 		$modeleOperation = SG_Navigation::getModeleOperation($pModeleOperation);
 		if ($modeleOperation !== false) {
 			$utilisateur = SG_Annuaire::getUtilisateur($pUtilisateur);
-			if($utilisateur !== false) {
+			if ($utilisateur instanceof SG_Erreur) {
+				$ret = $utilisateur;
+			} elseif ($utilisateur !== false) {
 				$listeModeles = $utilisateur -> ModelesOperations();
 				$ret = $listeModeles -> Contient($modeleOperation);
 			}
@@ -160,8 +188,11 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.0.7
+
+	/**
 	* getModeleOperation : fournit un objet ModeleOperation à partir du paramètre
+	* 
+	* @since 1.0.7
 	* @param any $pModeleOperation code ou formule donnant un code d'opération
 	* @return SG_ModeleOperation trouvé ou false
 	*/
@@ -193,161 +224,224 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 2.1 php, retour de demander ; 2.3 test erreur
-	* 1.3.0 variables demandées sont dans opération en cours , retour  ; 1.3.4 test retour enregistrer ; 2.0 améliorer 'demander objet'
-	* 1.1 passage de $refdoc dans DocumentPrincipal ; 1.3 récup $refDoc['proprietes']
-	* 1.1 : avant save, si le type n'est pas bon on change de type(cas de retour de @Nouveau.@Modifier
-	* Traitement des paramètres HTTP POST passés
-	* @param : opération ou code de l'opération
-	* @return SG_Operation ou SG_Erreur
-	*/
-	static function traitementParametres_HTTP_POST($paramOperation) {
-		// voir si on a déjà une opération en cours pour terminer éventuellement l'étape précédente
-		$opEnCours = self::obtenirOperation($paramOperation);
-		// si opération en cours, peut-être traitement d'enregistrement à faire ?
+
+	/**
+	 * Traitement des paramètres HTTP POST passés
+	 * Ils peuvent concerner le document en cours, l'opération en cours, d'autres documents ou une collection de documents
+	 * 
+	 * @since 0.5
+	 * @version 2.4 $docPOST, test contrôles
+	 * @param string|SG_Operation $opEnCours opération ou code de l'opération
+	 * @return SG_Operation|SG_Erreur
+	 * @throws Exception si l'enregistrement récupère une SG_Erreur
+	 * @todo la récup des données restent ici ; les controles et l'enregistrement vont dans SG_Pilote
+	 */
+	static function traitementParametres_HTTP_POST($opEnCours) {
+		$objetEnCours = null;
+		$indices = array();
+		$estCollec = false;
+		// si on est dans l'opération en cours, il y a peut-être un traitement d'enregistrement à faire ?
 		if (SG_Operation::isOperation($opEnCours)) {
-			// y a-t-il un @Enregistrer sur le navigateur ?
-			$codeChampEnreg = SG_Champ::codeChampHTML($opEnCours -> reference . '/@Enregistrer');
-			if (isset($_POST[$codeChampEnreg])) {
-				// obtenir le @Principal
-				$objetEnCours = null;
-				$refDoc = $opEnCours -> getValeur('@Principal', '');
-				if ($refDoc !== '') {
-					if (gettype($refDoc) === 'string') {
-						// si seulement une référence, chercher le document dans la base
-						$objetEnCours = $_SESSION['@SynerGaia'] -> getObjet($refDoc);
-						if (!isset($objetEnCours)) { // pas trouvé
-							$ret = new SG_Erreur('0045');
-							$objetEnCours = null;
+			// effacer les erreurs précédentes
+			$opEnCours -> erreurs = array();
+			// obtenir le @Principal
+			$refDoc = $opEnCours -> getPrincipal();
+			if ($refDoc !== '') {
+				if (is_string($refDoc)) {
+					// si seulement une référence, chercher le document dans la base
+					$objetEnCours = $_SESSION['@SynerGaia'] -> getObjet($refDoc);
+					if (!isset($objetEnCours)) { // pas trouvé
+						$ret = new SG_Erreur('0045');
+						$objetEnCours = null;
+					}
+				} else {
+					$objetEnCours = $refDoc;
+				}
+			}
+			// si l'objet en cours est une collection de documents,
+			// on récupère le document d'origine si réduite
+			// et on prépare une table code doc -> indice pour la mise à jour des champs
+			if ($objetEnCours instanceof SG_Collection) {
+				$estCollec = true;
+				if ($objetEnCours -> reduit) {
+					foreach ($objetEnCours -> elements as $key => $objet) {
+						if (getTypeSG($objet) === '@IDDoc') {
+							$doc = $objet -> Document();
+							$doc -> proprietes = $objet -> proprietes;
+							$objetEnCours -> elements[$key] = $doc;
+						} else {
+						//	$objetEnCours -> elements[$key] = $objet; // normalement c'est impossible...
+						}
+					}
+					$objetEnCours -> reduit = false;
+					$opEnCours -> setPrincipal($objetEnCours);
+				}
+				foreach ($objetEnCours -> elements as $key => $objet) {
+					if ($objet -> DeriveDeDocument() -> estVrai()) {
+						$indices[$objet -> getUUID()] = $key;
+					}
+				}
+			}
+			$modif = false ;
+			// mise à jour des champs saisis
+			foreach ($_POST as $nomZoneHTML => $valeurZoneHTML) {
+				// si le champ POST a le bon préfixe (sg-field_)
+				$prefixe = SG_Champ::PREFIXE_HTML;
+				if (substr($nomZoneHTML, 0, strlen($prefixe)) === $prefixe) {
+					// extraire et décoder le nom du champ
+					$nomChamp = SG_Champ::nomChampDecode(substr($nomZoneHTML, strlen($prefixe)));
+					$partiesNomChamp = explode('/', $nomChamp);
+					$uidDoc = $partiesNomChamp[0] . '/' . $partiesNomChamp[1];
+					$tmpChamp = null;
+					// le champ vient-il du @Principal ?
+					$isObjetEnCours = false;
+					if($objetEnCours !== null and ! $objetEnCours instanceof SG_Erreur) {
+						if (method_exists($objetEnCours, 'getUUID')) {
+							if ($uidDoc === $objetEnCours -> getUUID()) {
+								$isObjetEnCours = true;
+							}
+						}
+					}
+					/** ici on recherche où se trouve le document concerné par le champ
+					 * il peut s'agir du document principal (existant, nouveau, ou provisoire), de l'opération en cours, 
+					 * mais aussi d'un document d'une collection principale - dans ce cas il faudra peuit-être enregistrer à chaque fois
+					 **/
+					$isOpEnCours = false;
+					if ($opEnCours -> getUUID() === $uidDoc) { // c'est l'opération en cours (variable saisie par @Demander)
+						$tmpChamp = new SG_Champ();
+						$tmpChamp -> codeChamp = $partiesNomChamp[2];
+						$tmpChamp -> typeObjet = $opEnCours -> proprietes['@Type_' . $tmpChamp -> codeChamp];
+						$tmpChamp -> valeur = $valeurZoneHTML;
+						if(SG_Dictionnaire::isObjetDocument($tmpChamp -> typeObjet)) {
+							$classe = SG_Dictionnaire::getClasseObjet($tmpChamp -> typeObjet);
+							if ($classe !== '') {
+								$doc = new $classe($valeurZoneHTML);
+							} else {
+								$doc = new SG_Erreur('0115',$classe);
+							}
+							$tmpChamp -> document = $doc;
+							$opEnCours -> proprietes[$partiesNomChamp[2]] = $doc; // 2.1
+							$tmpChamp -> contenu = new SG_Texte($valeurZoneHTML);
+						} else {
+							$tmpChamp -> document = $opEnCours;
+							$tmpChamp -> initContenu();
+							$tmpChamp -> contenu -> contenant = ''; // pour éviter les récursions dans le JSON
+							$opEnCours -> proprietes[$partiesNomChamp[2]] = $tmpChamp -> contenu; // 2.1
+						}
+						$isOpEnCours = true;
+					} elseif ($isObjetEnCours) { // c'est le @Principal
+						$tmpChamp = new SG_Champ($nomChamp, $objetEnCours);
+					} elseif ($estCollec and isset($indices[$uidDoc])) { // c'est un document de la collection principale
+						// on teste s'il s'agit d'une propriété du dictionnaire
+						$doc = &$objetEnCours -> elements[$indices[$uidDoc]];
+						$codeChamp = $partiesNomChamp[2];
+						if (SG_Dictionnaire::isProprieteExiste(getTypeSG($doc), $codeChamp)) {
+							$doc -> setValeur($codeChamp, $valeurZoneHTML);
+						} else {
+							// sinon c'est une variable associée au document
+							if (isset($doc -> proprietes['@Type_' . $codeChamp])) {
+								$type = $doc -> proprietes['@Type_' . $codeChamp];
+								$classe = SG_Dictionnaire::getClasseObjet($type);
+								$doc -> proprietes[$codeChamp] = new $classe($valeurZoneHTML);
+							} else  {
+								$doc -> proprietes[$codeChamp] = new SG_Texte($valeurZoneHTML);
+							}
+						}
+					} else {// c'est un autre document
+						if($partiesNomChamp[0] === $opEnCours -> reference) { // 2.1
+							$tmpChamp = new SG_Champ($partiesNomChamp[1], $opEnCours);
+						} else {
+							$tmpChamp = new SG_Champ($nomChamp);
+						}
+					}
+					// on finit le traitement en mettant éventuellement à jour immédiatement les documents impactés
+					if (substr($nomChamp, -4) === '_sup') {// suppression de fichier ou de champ caché
+						// on ne fait rien
+					} elseif (is_object($tmpChamp) and $tmpChamp -> contenu -> toString() !== $valeurZoneHTML) { // ne changer que si valeur différente
+						if (! $isOpEnCours) { // ce n'est pas l'opération
+							if ($isObjetEnCours) {
+								// c'est l'objet en cours : on le met à jour sans écrire sur disque
+								$modif = true;
+								$tmpChamp -> Definir($valeurZoneHTML);
+							} else { // ce n'est pas l'opération if (! $isOpEnCours)
+								// on teste s'il s'agit d'une propriété du dictionnaire
+								if (SG_Dictionnaire::isProprieteExiste(getTypeSG($tmpChamp -> document), $tmpChamp -> codeChamp)) {
+									// propriété mais pas le @Principal : on sauve immédiatement (true)
+									$tmpChamp -> Definir($valeurZoneHTML, true);
+								} else {
+									// sinon c'est une variable associée au document (2ème false)
+									$tmpChamp -> Definir($valeurZoneHTML, false, false);
+								}
+							}
+						}
+					}
+				} // fin si prefixe
+			} // fin boucle sur les variables transmises
+			// à la fin, effectuer les controles (dans étiquette)
+			$enr = false;
+			if ($objetEnCours !== null and $objetEnCours -> DeriveDeDocument() -> estVrai()) {
+				if ($modif or (getTypeSG( $objetEnCours ) !== '@Erreur' and ! $objetEnCours -> Existe() -> estVrai())) {
+					// 2.4 controler ce qui a été envoyé
+					$ok = true;
+					$etape = $opEnCours -> etape;
+					if ($etape === '') {
+						$etape = '1';
+					}
+					$fnctrl =  'ctrl_etape_' . $etape;
+					if (method_exists($opEnCours, $fnctrl)) {
+						$ctl = $opEnCours -> $fnctrl($objetEnCours);
+						if ($ctl !== '') {
+							$ctl -> gravite = SG_Erreur::ERREUR_CTRL;
+							$opEncours -> erreurs[] = $ctl;
+							$ok = false;
+						}
+					}
+					// et sauver si nécessaire
+					if ($ok) {
+						if ($modif) {
+							// enregistrer les données
+							$enr = $objetEnCours -> Enregistrer();
 						}
 					} else {
-						$objetEnCours = $refDoc;
+						$objetEnCours = $ctl;
+						$enr = $ctl;
 					}
 				}
-				$modif = false ;
-				$modifOpe = false ;
-				// mise à jour des champs
-				foreach ($_POST as $nomZoneHTML => $valeurZoneHTML) {
-					if ($nomZoneHTML !== $codeChampEnreg) { // ne pas traiter les champs cachés
-						// si le champ POST a le bon préfixe
-						$prefixe = SG_Champ::PREFIXE_HTML;
-						if (substr($nomZoneHTML, 0, strlen($prefixe)) === $prefixe) {
-							// extraire et décoder le nom du champ
-							$nomChamp = SG_Champ::nomChampDecode(substr($nomZoneHTML, strlen($prefixe)));
-//tracer($nomChamp);
-							$partiesNomChamp = explode('/', $nomChamp);
-							$uidDoc = $partiesNomChamp[0] . '/' . $partiesNomChamp[1];
-							// le champ vient-il du @Principal ?
-							$isObjetEnCours = false;
-							if($objetEnCours !== null and getTypeSG($objetEnCours) !== '@Erreur') {
-								if (method_exists($objetEnCours, 'getUUID')) {
-									if ($uidDoc === $objetEnCours -> getUUID()) {
-										$isObjetEnCours = true;
-									}
-								}
-							}
-							// s'agit-il de l'opération en cours ?
-							$isOpEnCours = false;
-							if ($isObjetEnCours) { // c'est le @Principal
-								$tmpChamp = new SG_Champ($nomChamp, $objetEnCours);
-							} elseif ($opEnCours -> getUUID() === $uidDoc) { // c'est l'opération en cours (variable saisie par @Demander)
-								$tmpChamp = new SG_Champ();
-								$tmpChamp -> codeChamp = $partiesNomChamp[2];
-								$tmpChamp -> typeObjet = $opEnCours -> proprietes['@Type_' . $tmpChamp -> codeChamp];
-								$tmpChamp -> valeur = $valeurZoneHTML;
-								if(SG_Dictionnaire::isObjetDocument($tmpChamp -> typeObjet)) {
-									$classe = SG_Dictionnaire::getClasseObjet($tmpChamp -> typeObjet);
-									if ($classe !== '') {
-										$doc = new $classe($valeurZoneHTML);
-									} else {
-										$doc = new SG_Erreur('0115',$classe);
-									}
-									$tmpChamp -> document = $doc;
-									if (is_object($opEnCours -> formule)) {
-									//	$opEnCours -> formule -> setValeur($partiesNomChamp[2], $doc); // TODO voir si supprimer avec php ?
-									}
-									$opEnCours -> proprietes[$partiesNomChamp[2]] = $doc; // 2.1
-									$tmpChamp -> contenu = new SG_Texte($valeurZoneHTML);
-								} else {
-									$tmpChamp -> document = $opEnCours;
-									$tmpChamp -> initContenu();
-									$tmpChamp -> contenu -> contenant = ''; // pour éviter les récursions dans le JSON
-									/*TODO voir si supprimer avec php ?
-									if (is_object($opEnCours -> formule)) {
-									$opEnCours -> formule -> proprietes[$partiesNomChamp[2]] = $tmpChamp -> contenu; // 
-									}*/
-									$opEnCours -> proprietes[$partiesNomChamp[2]] = $tmpChamp -> contenu; // 2.1
-								}
-								$isOpEnCours = true;
-							} else{ // c'est un autre document
-								if($partiesNomChamp[0] === $opEnCours -> reference) { // 2.1
-									$tmpChamp = new SG_Champ($partiesNomChamp[1], $opEnCours);
-								} else {
-									$tmpChamp = new SG_Champ($nomChamp);
-								}
-							}
-							if (substr($nomChamp, -4) === '_sup') {// suppression de fichier ou de champ caché
-								// on ne fait rien
-							} elseif ($tmpChamp -> contenu -> toString() !== $valeurZoneHTML) {
-								// ne changer que si valeur différente
-								if ($isObjetEnCours) {
-									$modif = true;
-									$tmpChamp -> Definir($valeurZoneHTML);
-								} elseif (! $isOpEnCours) {
-									$tmpChamp -> Definir($valeurZoneHTML, true); // si ce n'est pas le @Principal on sauve immédiatement
-								}
-							}
-						}
-					}
+			}
+			// garder @Principal si nécessaire
+			if (is_object($enr) and get_class($enr) === 'SG_Erreur') {
+				$opEnCours = $enr;
+				if ($enr -> gravite > SG_Erreur::ERREUR_CTRL) {
+					$e = new Exception($enr -> code);
+					$e -> erreur = $enr;
+					throw $e;
 				}
-				// à la fin, sauver @Principal si nécessaire
-				$enr = false;
-				if ($modifOpe) {
-					$enr = $opEnCours -> Enregistrer();
-				}
-				if ($objetEnCours !== null) {
-					if ($modif or (getTypeSG( $objetEnCours ) !== '@Erreur' and ! $objetEnCours -> Existe() -> estVrai())) {
-						$enr = $objetEnCours -> Enregistrer();
-					}
-				}
-				if (is_object($enr) and get_class($enr) === 'SG_Erreur') {
-					$opEnCours = $enr;
-				} else {
-					$_SESSION['principal'][$opEnCours -> reference] = $objetEnCours;
-					if ($enr === false) {
-						$_POST[$codeChampEnreg] = '';
-					}
-				}
-			} else {				
-				// 2.1 par défaut, le principal est peut-être dans @Principal de l'opération ?
-				$objetEnCours = $opEnCours -> Principal();
+			} else {
+				$opEnCours -> setPrincipal($objetEnCours);
 			}
 		}
 		return $opEnCours;
 	}
-	/** 1.3.0 : @param et retour ;1.3.4 @Enregistrer ; suppression fichier ; test $opEnCours is object ; 2.2 err 0180
+
+	/**
 	 * Traitement des paramètres HTTP FILES passés
-	 * @param string ou @Operation : l'opération en cours
-	 * @return boolean
+	 * 
+	 * @version 2.2 err 0180 ; multifichiers
+	 * @param string|SG_Operation : l'opération en cours
+	 * @return SG_Operation|SG_Erreur
+	 * @todo séparer la récup des données : restent ici, les controles et l'enregistrement : dans SG_Pilote
 	 */
-	static function traitementParametres_HTTP_FILES($pOperation) {
-		if(SG_Operation::isOperation($pOperation)) {
-			$opEnCours = $pOperation;
-		} else {
-			$opEnCours = self::obtenirOperation($pOperation);
-		}
-		if ( ! is_object($opEnCours)) {
+	static function traitementParametres_HTTP_FILES($opEnCours) {
+		if (!is_object($opEnCours)) {
 			$ret = new SG_Erreur('0112');
-		} elseif (! array_key_exists($opEnCours -> reference, $_SESSION['principal'])) {
-			$ret = new SG_Erreur('0180');
 		} else {
-			$objetEnCours = $_SESSION['principal'][$opEnCours -> reference];
+			$objetEnCours = $opEnCours -> getPrincipal();
 			$fichiers = $_FILES;
 			$save = false;
 			foreach ($fichiers as $nomZoneHTML => $valeurZoneHTML) {
 				// Si le nom du champ POST commence par le bon prefixe
 				if (substr($nomZoneHTML, 0, strlen(SG_Champ::PREFIXE_HTML)) === SG_Champ::PREFIXE_HTML) {
-					$save = true; // a priori on devra sauvegarder le document à la fin
+					//$save = true; // a priori on devra sauvegarder le document à la fin
 					// Extrait la fin du nom du champ
 					$nomChamp = SG_Champ::nomChampDecode(substr($nomZoneHTML, strlen(SG_Champ::PREFIXE_HTML)));
 					$tmpChamp = explode('/', $nomChamp);
@@ -357,15 +451,19 @@ class SG_Navigation {
 						switch (sizeof($tmp)) {// suppression (on n'a pas trouvé plus astucieux pour faire la boucle...!)
 							case 1 :
 								unset($objetEnCours -> doc -> proprietes[$tmpChamp[2]]);
+								$save = true;
 								break;
 							case 2 :
 								unset($objetEnCours -> doc -> proprietes[$tmp[0]][$tmp[1]]);
+								$save = true;
 								break;
 							case 3 :
 								unset($objetEnCours -> doc -> proprietes[$tmp[0]][$tmp[1]][$tmp[2]]);
+								$save = true;
 								break;
 							case 4 :
 								unset($objetEnCours -> doc -> proprietes[$tmp[0]][$tmp[1]][$tmp[2]][$tmp[3]]);
+								$save = true;
 								break;
 							default :
 								break;
@@ -383,33 +481,44 @@ class SG_Navigation {
 							$opEnCours -> proprietes[$nom] = $fic;
 							$save = false;
 						} else {
-							// document normal
-							if ($tmpChamp[2] === '_attachments') {
-								// stockage dans les fichiers attachés
-								if($valeurZoneHTML['name'] !== '' and (isset($valeurZoneHTML['name'][0]) and $valeurZoneHTML['name'][0] !== '')) {
-									$objetEnCours -> setFichier('', $valeurZoneHTML['tmp_name'], $valeurZoneHTML['name'], $valeurZoneHTML['type']);
+							if ($objetEnCours instanceof SG_Document) { //-> DeriveDeDocument() -> estVrai() === true) {
+								// document normal
+								if ($tmpChamp[2] === '_attachments') {
+									// stockage dans les fichiers attachés (2.4 modif test)
+									if(is_array($valeurZoneHTML['name'])) {
+										$nfic = $objetEnCours -> setFichier('', $valeurZoneHTML['tmp_name'], $valeurZoneHTML['name'], $valeurZoneHTML['type']);
+										if ($nfic > 0) {
+											$save = true;
+										}
+									}
+								} else {
+									$tmpChamp = new SG_Champ($nomChamp, $objetEnCours);
+									$tmpChamp -> DefinirFichier($valeurZoneHTML);
+									$save = true;
 								}
-							} else {
-								$tmpChamp = new SG_Champ($nomChamp, $objetEnCours);
-								$tmpChamp -> DefinirFichier($valeurZoneHTML);
-							}
+							}// c'est une collection ?? une erreur ??
 						}
 					}
 				}
-			}
-			if ($save) {
+			} // end foreach
+			if ($save === true) {
 				$objetEnCours -> Enregistrer();
 			}
 			$ret = $opEnCours;
 		}
 		return $opEnCours;
 	}
-	/** 2.1.1 mobile plus simple ; 2.2 déplace icone boite admin ; mobile
-	* 1.1 déplacé de theme.php ; doc s'ouvre dans nouvel onglet ; 1.3.1 enlevé <admin> (voir @Navigation.@Body), +toggle <admin> ; 1.3.3 parm event
-	* BANNIERE en haut de la page
-	* @param (SG_VraiFaux ou boolean) recalculer la bannière
-	* @return (string) Le texte HTML de la bannière
-	*/
+
+	/**
+	 * BANNIERE du haut de la page
+	 * 
+	 * @since 1.1 déplacé de theme.php
+	 * @version 2.2 déplace icone boite admin ; mobile
+	 * @version 2.6 classes css
+	 * @param boolean|SG_VraiFaux $pRefresh recalculer la bannière
+	 * @return string Le texte HTML de la bannière
+	 * @uses JS SynerGaia.themes(), SynerGaia.launchOperation(
+	 */
 	static function Banniere($pRefresh = false) {
 		$estMobile = self::estMobile();
 		$refresh = SG_VraiFaux::getBooleen($pRefresh);
@@ -417,7 +526,7 @@ class SG_Navigation {
 		if (isset($_SESSION['page']['banniere'])and $_SESSION['page']['banniere'] !== '' and !$refresh) {
 			$ret = $_SESSION['page']['banniere'];
 		} else {
-			$ret = '<div id="banniere-container" class="sg-banniere"><ul>';
+			$ret = '<div id="banniere-container" class="sg-banniere"><div class="sg-banniere-menu">';
 			// Logo et titre de l'application
 			$titre = self::Titre();
 			// cas des mobiles : simple bandeau avec le titre
@@ -433,30 +542,38 @@ class SG_Navigation {
 				}
 				$ret.= $titre;
 				// Lien vers le site SynerGaïa
-				$ret .= '<li class="banniere-menu"><a href="http://docum.synergaia.eu" target="_blanck" title="Cliquez pour aller sur le site officiel de SynerGaïa">SynerGaïa ' . $_SESSION['@SynerGaia']->Version() . '</a></li>' . PHP_EOL;
+				$ret .= '<div class="sg-banniere-ligne"><a class="sg-banniere-icone sg-banniere-lien" href="http://docum.synergaia.eu" target="_blanck" title="Cliquez pour aller sur le site officiel de SynerGaïa">SynerGaïa ' . $_SESSION['@SynerGaia']->Version() . '</a></div>' . PHP_EOL;
 				if(SG_Rien::Moi() -> EstAnonyme() -> estVrai() === true) {
-					$ret .= '<li class="banniere-menu"><a href="' . self::URL_PRINCIPALE . '?' . self::URL_LOGIN . '"><img src="' . $dir . 'accept.png">Me connecter</a></li>' . PHP_EOL;
+					$ret .= '<div class="sg-banniere-ligne"><a class="sg-banniere-lien" href="' . self::URL_PRINCIPALE . '?' . self::URL_LOGIN . '"><img class="sg-banniere-icone" src="' . $dir . 'accept.png">Me connecter</a></div>' . PHP_EOL;
 				} else {
-					$ret.= '<li class="click-pointer banniere-menu" onclick="SynerGaia.launchOperation(event,\'AnnuaireGererMaFiche\', null, true)" title="Ouvrir ma fiche d\'annuaire">' . $informationsUtilisateur . '</li>' . PHP_EOL;
-					$ret.= '<li class="banniere-menu"><a href="' . self::URL_PRINCIPALE . '?' . self::URL_LOGOUT . '" title="Cliquez pour vous déconnecter"><img src="' . $dir . 'cancel.png"></img>';
-					$ret.= '<abbr title="' . SG_SynerGaia::IdentifiantConnexion() . ' (cliquer pour se déconnecter)">Déconnexion</abbr></a></li>' . PHP_EOL;
+					$ret.= '<div class="sg-banniere-ligne click-pointer" onclick="SynerGaia.launchOperation(event,\'AnnuaireGererMaFiche\', null, true)" title="Ouvrir ma fiche d\'annuaire">' . $informationsUtilisateur . '</div>' . PHP_EOL;
+
+					$ret.= '<div class="sg-banniere-ligne"><a class="sg-banniere-lien" href="' . self::URL_PRINCIPALE . '?' . self::URL_LOGOUT . '" title="Cliquez pour vous déconnecter"><img class="sg-banniere-icone" src="' . $dir . 'cancel.png"></img>';
+					$ret.= '<abbr title="' . SG_SynerGaia::IdentifiantConnexion() . ' (cliquer pour se déconnecter)">Déconnexion</abbr></a></div>' . PHP_EOL;
 				}
 			}
-			$ret .= '</ul></div>' . PHP_EOL;
+			$ret .= '</div></div>' . PHP_EOL;
 			$_SESSION['page']['banniere'] = $ret;
 		}
 		return $ret;
 	}
-	/** 1.0.7 ; 2.1.1 simplifiés, url ; 2.2 boite admin
-	* Raccourcis ; calcule les raccourcis de l'utilisateur
-	* @param boolean ou @VraiFaux : forcer le recalcul
-	* @return @Collection collection des raccourcis avec un lien 
-	* @formula : @Moi.@Raccourcis.@PourChaque(@ModeleOperation(.@Code).@LienPourNouvelleOperation)
-	*/
+
+	/**
+	 * Raccourcis ; calcule les raccourcis de l'utilisateur
+	 * 
+	 * @since 1.0.7
+	 * @version 2.2 boite admin
+	 * @version 2.6 classes sg-
+	 * @param boolean ou @VraiFaux : forcer le recalcul
+	 * @return @Collection collection des raccourcis avec un lien 
+	 * @formula : @Moi.@Raccourcis.@PourChaque(@ModeleOperation(.@Code).@LienPourNouvelleOperation)
+	 * @uses JS SynerGaia.print(), SynerGaia.elargir(), SynerGaia.deplacerVers(), SynerGaia.toggle()
+	 * @todo mettre libellés en fichier
+	 */
 	static function Raccourcis($pRecalcul = true) {
 		$estadmin = SG_Rien::Moi() -> EstAdministrateur() -> estVrai();
-		$ret = '<div class="raccourcis noprint">';
-		$pimg = '<img class="raccourci noprint" src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/';
+		$ret = '<div class="sg-raccourcis noprint">';
+		$pimg = '<img class="sg-raccourci noprint" src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/';
 		$ret.= $pimg . 'printer.png" onclick="SynerGaia.print();" title="Imprimer">' . PHP_EOL;
 		$ret.= $pimg . 'application_put.png" onclick="SynerGaia.elargir(98);" title="Pleine largeur">';
 		$ret.= $pimg . 'application_side_contract.png" onclick="SynerGaia.deplacerVers(event,\'gauche\');" title="Mettre à gauche">';
@@ -468,24 +585,51 @@ class SG_Navigation {
 		return $ret;
 	}
 	
-	// 1.1 déplacé depuis theme.php ; 1.3.1 @SynerGaia.@Titre
+	/**
+	 * Met à jour en globales de Session les informations d'entête
+	 * 
+	 * @since 1.1 déplacé depuis theme.php
+	 * @version 1.3.1 @SynerGaia.@Titre
+	 */
 	static function Entete() {		
 		if (!isset($_SESSION['page']['entete'])) {
 			$_SESSION['page']['entete'] = '<title>' . $_SESSION['@SynerGaia'] -> Titre() . '</title>' . PHP_EOL;
 		}
 	}
-	// 1.1 déplacé depuis theme.php
+
+	/**
+	 * Teste si une nouvelle version est à mettre à jour
+	 * 
+	 * @since 1.1 déplacé depuis theme.php
+	 * @version 2.6 f=@SynerGaia.@MettreAJour pour éviter d'utiliser la version obsolète de MO_Update
+	 * @return string HTML pour la boite admin
+	 */
 	static function updateNecessaire() {
 		$ret ='';
-		if (SG_Update::updateDictionnaireNecessaire() === true) {
-			$operationUpdate = new SG_ModeleOperation('Update');
-			$lienOperationUpdate = $operationUpdate -> LienPourNouvelleOperation(false);
+		if (SG_SynerGaia::updateDictionnaireNecessaire() === true) {
+			if (SG_SynerGaia::VERSION === '2.6.0') {
+				$url = SG_Navigation::URL_PRINCIPALE . '?' . SG_Navigation::URL_VARIABLE_FORMULE . '=@SynerGaia.@MettreAJour';
+				$resume = 'Mettre à jour la version';
+				$href = '<a href="' . $url . '" title="' . $resume . '" >';
+				$href.= '<span>' . $resume . '</span>';
+				$href.= '</a>';
+			} else {
+				$operationUpdate = new SG_ModeleOperation('Update');
+				$href = $operationUpdate -> LienPourNouvelleOperation(false) -> texte;
+			}
 			$libelle = SG_Libelle::getLibelle('0010');
-			$ret .= '<span class="message">'. $libelle . ' : ' . $lienOperationUpdate . '</span>' . PHP_EOL;
+			$ret .= '<span class="message">'. $libelle . ' : ' . $href . '</span>' . PHP_EOL;
 		}
 		return $ret;
 	}
-	// 1.1 déplace depuis theme.php ; 1.3.1 SG_TexteFormule
+
+	/**
+	 * Affiche la boite d'exécution d'une formule
+	 * 
+	 * @since 1.1 déplace depuis theme.php
+	 * @version 1.3.1 SG_TexteFormule
+	 * @return string HTML
+	 */
 	static function boiteExecuterFormule() {
 		$ret = '<form id="adminForm" method="get" action=""><fieldset>' . PHP_EOL;
 		$txt = new SG_TexteFormule();
@@ -494,20 +638,32 @@ class SG_Navigation {
 		$ret.= '</fieldset></form>' . PHP_EOL;
 		return $ret;
 	}
-	/** 1.0.7
-	* @return : @Collection
-	* @formula : @Moi.@MesOperationsEnAttente.@PourChaque(.@Lien)
-	*/
+
+	/**
+	 * Collection des opérations en attente de l'utilisateur
+	 * 
+	 * @todo est-ce encore pertinent ??
+	 * @since 1.0.7
+	 * @formula : @Moi.@MesOperationsEnAttente.@PourChaque(.@Lien)
+	 * @param boolean $recalcul
+	 * @return SG_Collection
+	 */
 	static function OperationsEnAttente($recalcul = true) {
 		if ($recalcul || !isset($_SESSION['panels']['opa'])) {
 			$_SESSION['panels']['opa'] = SG_Formule::executer('@MesOperationsEnAttente.@PourChaque(.@Lien)', $_SESSION['@Moi']);
 		}
 		return $_SESSION['panels']['opa'];
 	}
-	/** 1.0.7
-	// retour : @Collection
-	* @formula : @Moi.@MesOperationsSuspendues.@PourChaque(.@Lien)
-	*/
+
+	/**
+	 * Collection des opérations suspendues de l'utilisateur
+	 * 
+	 * @todo est-ce encore pertinent ??
+	 * @since 1.0.7
+	 * @formula : @Moi.@MesOperationsSuspendues.@PourChaque(.@Lien)
+	 * @param boolean $recalcul
+	 * @return SG_Collection
+	 */
 	static function OperationsSuspendues($recalcul = true) {
 		if ($recalcul or !isset($_SESSION['panels']['ops'])) {
 			$_SESSION['panels']['ops'] = SG_Formule::executer('@MesOperationsSuspendues.@PourChaque(.@Lien)', $_SESSION['@Moi']);
@@ -515,11 +671,14 @@ class SG_Navigation {
 		$ret = $_SESSION['panels']['ops'];
 		return $ret;
 	}
-	/** 1.0.7
+
+	/**
 	 * MenuTheme : Retourne le menu html d'un theme (gardé en cache sauf si recalcul forcé)
+	 * 
+	 * @since 1.0.7
 	 * @param any $pTheme code du theme ou theme ou formule donnant un theme ou un code de theme
 	 * @param boolean $pRecalcul : force le recalcul (défaut false)
-	 * @return HTML : le panneau html com
+	 * @return string code HTML : le panneau html com
 	 */
 	static function MenuTheme($pTheme = '', $pRecalcul = false) {
 		$theme = $pTheme;
@@ -555,7 +714,13 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	
+
+	/**
+	 * le menu HTML du theme en cours
+	 * 
+	 * @param boolean $recalcul
+	 * @return string code du menu en cours
+	 **/
 	static function MenuThemeEnCours($recalcul = false) {
 		if ($recalcul || !isset($_SESSION['panels']['mec'])) {
 			$_SESSION['panels']['mec'] = SG_Navigation::MenuTheme('');
@@ -563,20 +728,26 @@ class SG_Navigation {
 		return $_SESSION['panels']['mec'];
 	}
 	
-	/** retour HTML ; 1.3.3 foreach
-	* @formula : @MesThemes.@Afficher
-	**/
+	/** 
+	 * retour le code HTML des thèmes de l'utilisateur
+	 * formule SG : 'MesThemes.Afficher'
+	 * 
+	 * @version 1.3.3 foreach
+	 * @todo vérifier si le true du paramètre est nécessaire ?
+	 * @param boolean $recalcul force le recalcul de la valeur (defaut true)
+	 * @return string html des themes de l'utilisateur en cours
+	 **/
 	static function Themes($recalcul = true) {
 		if ($recalcul or !isset($_SESSION['panels']['thm'])) {
 			$collection = SG_Rien::MesThemes();
 			if (getTypeSG($collection) === '@Erreur') {
 				$ret = $collection;
 			} else {
-				$ret = '<ul class="menu">';
+				$ret = '<div class="sg-menu">';
 				foreach ($collection -> elements as $theme) {
 					$ret .= $theme -> toHtml();
 				}
-				$ret.='</ul>';
+				$ret.='</div>';
 				$_SESSION['panels']['thm'] = $ret;
 			}
 		} else {
@@ -584,13 +755,19 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.1 : ajout ; 1.3.3 debug
-	* retour HTML
-	*/
+
+	/**
+	 * Calcule les informations du pied du navigateur
+	 * 
+	 * @since 1.1 : ajout
+	 * @version 1.3.3 debug
+	 * @param boolean $recalcul
+	 * @return string code HTML
+	 */
 	static function Pied($recalcul = true) {
 		$pied = '';
 		if ($_SESSION['@Moi'] -> EstAdministrateur() -> estVrai()) {
-			$pied .= '<ul>';
+			$pied.= '<ul>';
 			$chrono_total = round(microtime(true) - $_SESSION['timestamp_init'], 3);
 			$pied.= '<li>Page calculée en ' . $chrono_total . 's</li>' . PHP_EOL;
 			if (isset($_SESSION['benchmark'])) {
@@ -621,7 +798,7 @@ class SG_Navigation {
 							<td>' . round($v[1]/$v[2],4) . '</td><td>' . round($v[3], 4) . '</td><td>' . round($v[4], 4) . '</td></tr>' . PHP_EOL;
 					}
 				}
-				$pied .='<table></li>';
+				$pied .='</table></li>';
 				unset($_SESSION['benchmark']);
 			}
 			if (isset($_SESSION['chrono'])) {
@@ -634,14 +811,20 @@ class SG_Navigation {
 				$pied .= '</ul>';
 				unset($_SESSION['chrono']);
 			}
-			$pied .= '</ul>';
+			$pied.= '</ul>';
 		}
 		return $pied;
 	}
-	/** 1.0.7
-	* retour HTML
-	* @formula : @Si(@Moi.@EstAdministrateur,liste vide)
-	*/	
+
+	/**
+	 * Affriche des informations de débogage (actuellemnt ne fait rien...)
+	 * 
+	 * @since 1.0.7
+	 * @todo à terminer ou supprimer ?
+	 * @param boolean $recalcul
+	 * @formula : @Si(@Moi.@EstAdministrateur,liste vide)
+	 * @return string code HTML
+	 */	
 	static function Debogage($recalcul = true) {
 		$ret = '';
 		if ($_SESSION['@Moi'] -> EstAdministrateur() -> estVrai()) {
@@ -649,195 +832,56 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.2 che, mop ; $pOperation ; 2.0 sub ; 2.3 mop interappli
-	* Exécute une fonction connu standard accessible à tous ou une formule contenu dans un bouton pour les seuls administrateurs ou un code de bouton.
-	* @param (string) $paramQuery : code de la fonction à exécuter
-	* @param (boolean) $recalcul : indicateur du forçage de recalcul pour certaines fonctions
-	* @param (string ou SG_Operation) $pOperation : opération en cours
-	* @return (string) : json des différentes parties à afficher
-	**/
-	static function executerCodeSGGet($paramQuery = '', $recalcul = false, $pOperation = null) {
-		$contenu = '';
-		$code = $paramQuery;
-		switch ($code) {
-			// rechercher dans la collection (@AfficherChercher) // TODO Terminer...
-			case 'che' : 
-				$objet = SG_Navigation::OperationEnCours() -> Principal();
-				if(!getTypeSG($objet) === '@Collection') {
-					$contenu = new SG_Erreur('0087', getTypeSG($objet));
-				} else {
-					$contenu = SG_Navigation::OperationEnCours() -> Principal();
-				}
-				break;
-			//accès aux mots du dictionnaire
-			case 'dic' :
-				$mot1 = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM1);
-				//$contenu = SG_Dictionnaire::ajaxMots($mot1);
-				$contenu = json_encode(SG_Dictionnaire::Vocabulaire($mot1) -> elements);
-				break;
-			// au secours ! permet de lancer un code exécutable de secours exécuté via url : synergaia/index.php?c=hlp
-			case 'hlp' :
-				$contenu = SG_Cache::viderCache(); // par défaut
-				break;
-			// menu thème en cours
-			case 'mec' :
-				$contenu = SG_Navigation::MenuThemeEnCours($recalcul);
-				break;
-			// menu thème
-			case 'men' :
-				$contenu = SG_Navigation::MenuTheme(SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_THEME), $recalcul);
-				break;
-			// modele opération (uniquement première étape)
-			case 'mop' :
-				$operation = SG_Pilote::preparerOperationDemandee($pOperation);
-				if (SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_SCREEN) === 'o') {
-					$r = SG_Navigation::declarerOperationEnCours($operation);
-					$r = SG_Navigation::setPrincipal($operation);
-					if (getTypeSG($operation) === '@Erreur') {
-						$contenu = serialize($operation);
-					} else {
-						$res = $operation -> Traiter('', '', '', 'f');
-						ini_set('memory_limit', '512M'); // TODO Supprimer ?
-						$contenu = serialize($res);
-						ini_restore('memory_limit');
-					}
-				} else {
-					$res = SG_Pilote::traiterOperationDemandee($operation);
-					$contenu = json_encode(self::elementsDuBody($res, $operation));
-					if ($contenu === false) {
-						$contenu = '{"erreurs":"<ul><li>Erreur json : '. SG_DocumentCouchDB::jsonLastError('mop') .'</li></ul>"}';
-					}
-				}
-				break;
-			// vider le cache navigation
-			case 'nav' :
-				$contenu = SG_Cache::viderCache("n");
-				break;
-			// nouvelle zone de saisie d'un fichier dans @Fichiers
-			case 'nfi' :
-			case 'nfs' :
-				$objet = self::OperationEnCours() -> Principal();
-				if ($code === 'nfs') {
-					$fic = new SG_Fichiers($objet);
-					$contenu = $fic -> getNouveauFichier($objet);
-				} else {
-					$fic = new SG_Fichier($objet);
-					$contenu = $fic -> modifierChamp($objet -> getUUID() .'/_attachments/');
-				}
-				break;
-			// opérations en attente
-			case 'opa' :
-				$contenu = SG_Navigation::OperationsEnAttente($recalcul) -> toHTML();
-				break;
-			// opérations suspendues
-			case 'ops' :
-				$contenu = SG_Navigation::OperationsSuspendues($recalcul) -> toHTML();
-				break;
-			case 'out' :
-				$r = SG_Connexion::Deconnexion();
-				$contenu = SG_Navigation::pageLogout();
-				break;
-			// raccourcis
-			case 'rac' :
-				$contenu = SG_Navigation::Raccourcis($recalcul) -> toHTML() ;
-				break;
-			// 2.0 submit via Ajax
-			case 'sub':
-				SG_Pilote::initialiserNouvelleEtape();
-				$operation = SG_Pilote::preparerOperationDemandee($pOperation);
-				$res = SG_Pilote::traiterOperationDemandee($operation);
-				$contenu = json_encode(self::elementsDuBody($res, $operation));
-				break;
-			// 1.3.3 : aide du thème fourni
-			case 'thh' :
-				$operation = SG_Navigation::OperationEnCours();
-				$thm = new SG_Theme(SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_THEME));
-				$contenu = $thm -> Aide() -> texte;
-				$_SESSION['operations'][$operation -> reference] = $operation;
-				break;
-			// menu thèmes
-			case 'thm' :
-				$contenu = SG_Navigation::Themes($recalcul);
-				break;
-			// test de développement
-			case 'tst' :
-				$contenu = new SG_Erreur('0048');
-				break;
-			// upload de fichiers multiples (en association avec paramètres p1, p2, p3)
-			case 'upl' :
-				$param = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM1);
-				if ($param === '1') {
-					$contenu = '[umf:'. ini_get('upload_max_filesize').',mfu:'.ini_get('max_file_uploads').',pms:'.ini_get('post_max_size').']';
-				} elseif ($param === '2') {
-					$champ = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM2);
-					//$dir = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM3);
-					$contenu = json_encode(self::upload($champ, 'var/uploads'), true);
-				}
-				break;
-			// recherche de la liste des villes de CouchDB
-			case 'vil' :
-				$param = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM1);
-				$actuel = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM2);
-				$contenu = $_SESSION['@SynerGaia'] -> sgbd -> getVillesAjax($param,$actuel);
-				break;
-			case 'xdi' :
-				$contenu = SG_Dictionnaire::ExporterJSON();
-				$contenu = '{"children":[' . $contenu . ']}';
-				break;
-			default :
-				$operation = self::OperationEnCours();
-				$boutons = $operation -> getValeur('@Boutons', '');
-				if (isset($boutons[$code])) {
-					$formule = new SG_Formule($boutons[$code], $operation);
-					// Si j'ai un document en paramètre	: je le prends en priorité car c'est avec lui que je vais travailler			
-					$paramDoc = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_DOCUMENT);
-					if ($paramDoc !== '') {
-						$formule -> objet = $_SESSION['@SynerGaia'] -> getObjet($paramDoc);
-					}					
-					// passage des paramètres d'url (p1, p2, p3)
-					for ($i = 1; $i <= 3; $i++) {
-						$formule -> proprietes['$' . $i] = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_PARM . $i);
-					}
-					// calcul
-					$contenu = $formule -> calculer();
-				} else {
-					$contenu = new SG_Erreur('0011', $paramQuery);
-				}
-				break;
+
+	/** 
+	 * Affiche une demande de login SynerGaïa
+	 * 
+	 * @since 1.0.7 dans login.php qui est supprimé
+	 * @version 2.4 fusion mobile defaut
+	 * @version 2.6 ajout du bouton pour éviter celui de jQuery
+	 * @param string $erreurLogin
+	 * @param booelan $pBody
+	 * @return string Code HTML de la page de login
+	 */
+	static function pageLogin($erreurLogin = '', $pBody = true) {
+		// préparation de l'url de retour
+		$url = $_SERVER["REQUEST_URI"];
+		if (strpos($url, '?') === false) {
+			$url.= '?login=u';
+		} else {
+			$url.='&login=u';
 		}
-		return $contenu;
-	}
-	/** 1.0.7 ; 1.3.2 repris de login.php qui est supprimé
-	*/
-	static function pageLogin($erreurLogin = '') {
+		$url = str_replace('c=mop&', '', $url); // pour obliger à tout réafficher
+		// formulaire de saisie du login
 		$userid = SG_SynerGaia::IdentifiantConnexion();
 		if ($userid === SG_Connexion::ANONYME) {
 			$userid = '';
 		}
-		$page = '';
-		$page .= SG_Navigation::Header();
-		$page .= '<body>';
-		if (SG_ThemeGraphique::ThemeGraphique() === 'mobilex'){
-			$page .= '<div id="login" data-role="page" ' . SG_ThemeGraphique::dataTheme() . '>
-				<header data-role="header"><h1>SynerGaia Mobile</h1></header>
-				<div data-role="content">';
-		} else {
-			$page.= '<body id="login-body"><div id="login-wrapper" class="png_bg">
-				<div id="login-top"></div>
-				<div id="login-content">';
-		}
-		$page.= '<form id="login-form" method="post" action="' . self::URL_PRINCIPALE . '?' . self::URL_LOGIN . '=u"><p><label>Identifiant</label>
-			<input value="' . $userid . '" name="username" class="text-input text-input-login" type="text" autofocus="autofocus" placeholder="votre identifiant"/></p>
-			<p><label>Mot de passe</label><input name="password" class="text-input text-input-password" type="password" placeholder="votre mot de passe" /></p>
-			<p> <input class="sg-bouton" type="submit" value="Connexion" /></p>';
+		$ret = '<div id="login-logo" class="sg-login-logo"></div><div id="login-content" class="sg-login-content">';
+		$ret.= '<form id="login-form" class="sg-login-form" method="post" action="' . $url . '"><span><label>Identifiant</label>
+			<input value="' . $userid . '" name="username" class="text-input text-input-login" type="text" autofocus="autofocus" placeholder="votre identifiant"/></span>
+			<span><label>Mot de passe</label><input name="password" class="text-input text-input-password" type="password" placeholder="votre mot de passe" /></span>';
 		if ($erreurLogin !== '') { 
-			$page .= '<div class="error">' . $erreurLogin . '</div>';
+			$ret .= '<div class="sg-erreur">' . SG_Texte::getTexte($erreurLogin) . '</div>';
 		}
-		$page .= '</form></div></div></body></html>';
-		return $page;
+		$ret.= '<input type="submit" class="sg-bouton" title="Connexion" value="Connexion"></input>';
+		$ret.= '</form></div>';
+		// éventuellement, insertion dans une page entière
+		if ($pBody) {
+			$ret = SG_Navigation::Header() . '<body class="sg-login-body">' . $ret . '</body></html>';
+		}
+		return $ret;
 	}
-	/** 1.0.7
+
+	/** 
 	 * panneau des raccourcis
+	 * 
+	 * @since 1.0.7
+	 * @param string $back
+	 * @param boolean $header
+	 * @param boolean $pAide
+	 * @param string $pBoutons
+	 * @return string 
 	 */
 	static function panelRaccourcis($back = '', $header = true, $pAide = false, $pBoutons = '') {
 		$panel = '';
@@ -872,13 +916,25 @@ class SG_Navigation {
 		$panel .= '</ul></div></div>';
 		return $panel;
 	}
-	// page d'accueil sur les mobiles
+
+	/**
+	 * page d'accueil sur les mobiles
+	 * 
+	 * @return string HTML
+	 **/
 	static function pageAccueil() {
 		$ret = '<div data-role="content" ' . SG_ThemeGraphique::dataTheme() . '><ul data-role="listview" data-inset="true">' . SG_Navigation::Themes();
 		$ret.= '</ul></div>';
 		return $ret;
 	}
-	// Fabrique le bandeau d'aide de l'opération en cours
+
+	/**
+	 * Fabrique le bandeau d'aide de l'opération en cours
+	 * 
+	 * @param string|SG_Objet $pObjet
+	 * @return string code HTML
+	 * @uses JS SynerGaia.toggle()
+	 **/ 
 	static function pageAide($pObjet = null) {
 		$page = '';
 		$texte = '';
@@ -892,13 +948,20 @@ class SG_Navigation {
 			$texte = $texte -> toString();
 		}
 		if ($texte !== '') {
-			$page = '<div id="aide-toggle" class="noprint" onclick="SynerGaia.toggle(\'aide-contenu\');">';
+			$page = '<div id="aide-toggle" class="sg-aide-toggle noprint" onclick="SynerGaia.toggle(\'aide-contenu\');">';
 			$page.= '<i>' . SG_Libelle::getLibelle('0079') . '</i>';
-			$page.= '<div id="aide-contenu" data-role="page" style="display:none;">' . $texte . '</div></div>' . PHP_EOL;
+			$page.= '<div id="aide-contenu" data-role="page" class="sg-aide-contenu" style="display:none;">' . $texte . '</div></div>' . PHP_EOL;
 		}
 		return $page;
 	}
-	// 1.3.2 repris de logout.php qui est abandonné
+
+	/**
+	 * Affiche une page de logout
+	 * 
+	 * @since 1.3.2 repris de logout.php qui est abandonné
+	 * @param string $pTitre
+	 * @return strng code HTML
+	 */
 	static function pageLogout($pTitre = '') {
 		$page = '';
 		$page .= self::Header($pTitre);
@@ -908,128 +971,75 @@ class SG_Navigation {
 		$page .= PHP_EOL . '</body></html>';
 		return $page;
 	}
-	/** 1.0.5 ; 1.3.0 regarde dans $_SESSION ; 2.1 cherche operation dans $_SESSION
-	 * retourne le document d'opération dont le code est passé
-	 * @formula : retour=@Operation(code);	@Si(retour.@EstUn("@Erreur");@ModeleOperation(code);retour)
-	 */
-	static function obtenirOperation($pOperation = null) {
-		$operation = null;
-		if ($pOperation !== null) {
-			$type = getTypeSG($pOperation);
-			if ($type === '@Operation') {
-				$operation = $pOperation;
-			} elseif ($type === 'string') {
-				if (isset($_SESSION['operations'][$pOperation])) {
-					// opération active ?
-					$operation = $_SESSION['operations'][$pOperation];
-				} elseif (isset($GLOBALS['operationencours'])){
-					if (is_object($GLOBALS['operationencours']) and $GLOBALS['operationencours'] -> reference === $pOperation) {
-						$operation = $GLOBALS['operationencours'];
-					} else {
-						$operation = new SG_Erreur('0168', $pOperation); // TODO
-					}
-				} else {
-					// Cherche les éléments de l'opération en cours
-	// TODO traiter les opérations dérivées => chercher directement une opération par son code
-					$collecDocOperation = SG_Rien::Chercher('@Operation', $pOperation);
-					// Vérifie qu'on a bien trouvé une et une seule opération
-					$n = $collecDocOperation -> Compter() -> toInteger();
-					if ($n === 1) {
-						$operation = $collecDocOperation -> Premier();
-					} elseif ($n === 0) { // opération non trouvée
-						$operation = new SG_Erreur('0018', $pOperation);
-					} else { // ou non unique...
-						$operation = new SG_Erreur('0019', $pOperation . ' ' . $n);
-					}
-				}
-			} elseif ($type === '@ModeleOperation') {
-				if (SG_Navigation::ModeleOperationDisponible($pOperation) -> estVrai()) {
-					$operation = SG_Operation::CreerDuModele($pOperation);
-					$_SESSION['operations'][$operation -> reference] = $operation;
-				} else {
-					// TODO Mettre un message clair pour l'utilisateur : "Cette opération n'est pas autorisée"
-					$operation = new SG_Erreur('0014', $pOperation . ' : ' . $_Session['@Moi'] -> identifiant);
-				}
-			}
-		}
-		return $operation;
-	}
-	/** 1.1 AJout (remplace SG_Navigation.MettreAJourLeContexte) ; 1.3.0 $collec via .reduire pour Choisir
+
+	/**
 	* Met à jour le principal de l'étape de l'opération passée en paramètre
 	* Le principal provient, dans l'ordre, de l'url d=, des champs modifiés du masque (doc ou collec), du champ @Principal de l'opération
 	* Si on ne trouve pas, on reste sur le principal de l'étape précédente dans la variable globale de session
-	* @param $pDocument string ou @Document : opération en cours
+	* 
+	* @since 1.1 AJout (remplace SG_Navigation.MettreAJourLeContexte)
+	* @version 1.3.0 $collec via .reduire pour Choisir
+	* @param string|SG_Operation $pOperation opération en cours
 	* @return boolean on a modifié le principal
 	*/
 	static function setPrincipal($pOperation) {
 		$modif = false;
+		$principal = null;
 		// Si j'ai un document en paramètre	: je le prends en priorité car c'est avec lui que je vais travailler			
 		$paramDoc = SG_Navigation::getParametre(SG_Navigation::URL_VARIABLE_DOCUMENT);
 		if ($paramDoc !== '') {
 			$doc = $_SESSION['@SynerGaia'] -> getObjet($paramDoc);
 			if(is_object($pOperation)) {
-				$_SESSION['principal'][$pOperation -> reference] = $doc;
-				$pOperation -> setValeur('@Principal', $doc);
+				$principal = $doc;
 			}
 			$modif = true;
 		} elseif ( ! SG_Operation::isOperation($pOperation)) {
 			// je n'ai pas d'opération concernée : ce n'est pas possible
 			$modif = new SG_Erreur('0042', getTypeSG($pOperation));
 		} else {
-			// j'ai une opération en cours
-			$codeChamp = SG_Champ::codeChampHTML($pOperation -> reference . '/@Enregistrer');
-			// on a enregistré un document ?
-			if (isset($_POST[$codeChamp])) {
-				// récupérer le document enregistré : il est dans le principal de l'opération
-				$refDoc = $_POST[$codeChamp];
-				// si la référence est vide, c'est qu'on n'a pas eu d'enregistrement physique : on reste sur le principal en cours
-				if ($refDoc !== '') {
-					$doc = $_SESSION['@SynerGaia'] -> getObjet($refDoc);
-					$_SESSION['principal'][$pOperation -> reference] = $doc;
-					$pOperation -> setValeur('@Principal', $doc);
-					$modif = true;
-				}
-			} else {
-				$champDocPrincipal = SG_Champ::codeChampHTML($pOperation -> reference . '/@Principal');
-				if (isset($_POST[$champDocPrincipal])) {
-					$docprincipal = $_POST[$champDocPrincipal];
-					if(is_array($docprincipal)) {
-						// c'est une collection de données choisies dans une liste
-						if (isset($_SESSION['principal'][$pOperation -> reference]) 
-						and getTypeSG($_SESSION['principal'][$pOperation -> reference]) === '@Collection') {
-							// on a la collection d'origine et on la réduit
-							$collec = $_SESSION['principal'][$pOperation -> reference] -> reduire($docprincipal);
-						} else {
-							// sinon on la crée (ce qui pose problème si les doc sont nouveaux non enregistrés ou ont été modifiées)
-							$collec = new SG_Collection();
-							foreach ($docprincipal as $ref) {
-								$objet = $_SESSION['@SynerGaia'] -> getObjet($ref);
-								$collec -> Ajouter($objet);
-							}
-						}
-						$pOperation -> doc -> proprietes['@Principal'] = $collec;
-						$_SESSION['principal'][$pOperation -> reference] = $collec;
-						$modif = true;
+			$champDocPrincipal = SG_Champ::codeChampHTML($pOperation -> reference . '/@Principal');
+			if (isset($_POST[$champDocPrincipal])) {
+				// cas du retour de @Choisir
+				$docprincipal = $_POST[$champDocPrincipal];
+				if(is_array($docprincipal)) {
+					$principal = $pOperation -> getPrincipal();
+					// c'est une collection de données choisies dans une liste
+					if (getTypeSG($principal) === '@Collection' and sizeof($principal -> elements) > 0) {
+						// si la collection est vide, c'est qu'on a la collection d'origine et on la réduit
+						$collec = $principal -> reduire($docprincipal);
 					} else {
-						// c'est une référence de document unique qui doit exister
-						$doc = $_SESSION['@SynerGaia'] -> getObjet($docprincipal);
-						if(is_object($doc)) {						
-							$_SESSION['principal'][$pOperation -> reference] = $doc;
-							$pOperation -> setValeur('@Principal', $doc);
-							$modif = true;
+						// sinon on la crée (ce qui pose problème si les doc sont nouveaux non enregistrés ou ont été modifiées)
+						$collec = new SG_Collection();
+						foreach ($docprincipal as $ref) {
+							$objet = $_SESSION['@SynerGaia'] -> getObjet($ref);
+							$collec -> Ajouter($objet);
 						}
+					}
+					$principal = $collec;
+					$modif = true;
+				} else {
+					// c'est une référence de document unique qui doit exister
+					$doc = $_SESSION['@SynerGaia'] -> getObjet($docprincipal);
+					if(is_object($doc)) {						
+						$principal = $doc;
+						$modif = true;
 					}
 				}
 			}
 		}
+		if ($principal !== null) {
+			$pOperation -> setPrincipal($principal);
+		}
 		return $modif;
-	}	
-	/** 2.1.1 /nav ; 2.2 css spécifiques
-	* 1.1 AJout (déplacé de SG_Navigation.MettreAJourLeContexte) ; 1.3.2 test sur les bibliothèques js ; 1.3.4 var/defaut.css ; multidatepicker
-	* Met la référence du document principal dans l'opération
-	* Si cette référece n'est pas identique à document principal de la navigation, met à jour la navigation
-	* @param $pDocument string ou @Document
-	*/
+	}
+
+	/**
+	 * Met la référence du document principal dans l'opération
+	 * Si cette référece n'est pas identique à document principal de la navigation, met à jour la navigation
+	 * @since 1.1 AJout (déplacé de SG_Navigation.MettreAJourLeContexte)
+	 * @version 2.2 css spécifiques
+	 * @param string|SG_Formule $pTitre titre de l'application 
+	 */
 	static function Header($pTitre = '') {
 		//$lib = $_SESSION['libs'];
 		$ret = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -1077,9 +1087,11 @@ class SG_Navigation {
 		$ret .= '<script type="text/javascript" src="' . self::URL_JS . 'editablegrid-2.0.1/editablegrid-2.0.1.js"></script>
 		<script type="text/javascript" src="' . self::URL_JS . 'editablegrid.js"></script>';
 
-		$ret.= '<script src="' . self::URL_JS . 'tinymce/tinymce.min.js"></script>';//tinymce 4.1.0	
-		$ret.= '<link rel="stylesheet" type="text/css" href="' . self::URL_JS . 'fullcalendar/fullcalendar.css" />';
-		$ret.= '<script src="' . self::URL_JS . 'fullcalendar/fullcalendar.min.js"></script>';
+		$ret.= '<script src="' . self::URL_JS . 'tinymce/tinymce.min.js"></script>';//tinymce 4.1.0
+		//$ret.= '<script src="' . self::URL_JS . 'moment/moment.min.js"></script>'; seulement si fullcalendar 3.4.0
+		$v = 'fullcalendar';//-3.4.0';
+		$ret.= '<link rel="stylesheet" type="text/css" href="' . self::URL_JS . $v . '/fullcalendar.css" />';
+		$ret.= '<script src="' . self::URL_JS . $v .'/fullcalendar.min.js"></script>';
 		
 		// scripts SynerGaïa
 		$ret.= '<script src="' . self::URL_JS . 'synergaia.js"></script>';
@@ -1094,10 +1106,18 @@ class SG_Navigation {
 		if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/css/defaut.css')) {
 			$ret.= '<link rel="stylesheet" href="var/css/defaut.css"></link>';
 		}
+		if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/css/mobile.css')) {
+			$ret.= '<link rel="stylesheet" href="var/css/mobile.css"></link>';
+		}
 		$ret.= '</head>';
 		return $ret;
 	}
 
+	/**
+	 * URL de lancement sur une autre page du navigateur
+	 * @param string $url
+	 * @return string code html
+	 */
 	static function url($url='') {
 		$ret = '';
 		if($url !== '') {
@@ -1106,37 +1126,32 @@ class SG_Navigation {
 		return $ret;
 	}
 
+	/**
+	 * adresse IP du serveur vu de l'extérieur
+	 * @return string
+	 * 
+	 */
 	static function AdresseIP() {
 		return $_SERVER['SERVER_ADDR'];
 	}
-	/** 1.1 AJout
-	* Met à jour l'opération en cours pour @Navigation.@OperationEnCours
-	*/
-	static function declarerOperationEnCours($pOperation) {
-		if ($pOperation === null) {
-			unset($GLOBALS['operationencours']);
-		} else {
-			$GLOBALS['operationencours'] = $pOperation;
-			// Passe l'opération au statut "en cours"
-			$pOperation -> setValeur('@Statut', SG_Operation::STATUT_ENCOURS);
-			// thème en cours
-			$_SESSION['page']['theme'] = $pOperation -> getValeur('@Theme', '');
-		}
-	}
-	/** 1.1 Déplacé (était avant dans SG_Rien) ; 1.2 création si n'existe pas
-	* Renvoie l'opération en cours
-	* @return SG_Operation opération en cours
-	*/
-	static function OperationEnCours() {
-		if (!isset($GLOBALS['operationencours'])) {
-			$GLOBALS['operationencours'] = SG_Operation::Creer('');
-		}
-		return $GLOBALS['operationencours'];
-	}
-	/**  2.0 sup menupied, abandon drag drop ; 2.1 raccourcis, sup menu contextuel, 2.1.1 favori ; 2.3 récup erreur ; correct form droite
-	* 1.3.3 proportions ; réorganisation pour droite et gauche et mobile ; context menu ; 1.3.4 elementsDuBody() ;
-	* 1.1 repris de template.php périmé ; 1.3.1 <admin> déplacé au dessus du <corps> ; section 'adroite' ; 1.3.2 => lehaut()
-	* BODY = theme defaut
+
+	/**
+	* BODY = mise en place des éléments html pour le theme defaut
+	* 
+	* @version 1.1 repris de template.php périmé
+	* @version 1.3.1 <admin> déplacé au dessus du <corps> ; section 'adroite'
+	* @version 1.3.2 => lehaut()
+	* @version 1.3.3 proportions ; réorganisation pour droite et gauche et mobile ; context menu
+	* @version 1.3.4 elementsDuBody() ;
+	* @version 2.0 sup menupied, abandon drag drop
+	* @version 2.1 raccourcis, sup menu contextuel
+	* @version 2.1.1 favori
+	* @version 2.3 récup erreur ; correct form droite
+	* @version 2.4 classe corps
+	* @version 2.6 supp proportions en pixels : géré par des classes spécifiques
+	* @param array $resultat liste des résultats calculés de l'étape
+	* @param SG_Operation $operation opération en cours
+	* @return string code HTML 
 	*/
 	static function Body($resultat, $operation) {
 		$estMobile = self::estMobile();
@@ -1148,10 +1163,8 @@ class SG_Navigation {
 			$proportions = [30, 60, 30];
 		}
 		// corpsligne
-		//$ret = '<div id="corpsligne">';
 		//== PARTIE GAUCHE
-		$ret.= '<div id="gauche" data-role="page" class="noprint box" style="width:' . $proportions[0] . '%;" '; //2.1 2.3 onclick="SynerGaia.devantderriere(event)" 
-		$ret.= 'onmouseover="SynerGaia.devantderriere(event,true)" onmouseout="SynerGaia.devantderriere(event,false)" draggable="true">';
+		$ret.= '<div id="gauche" tabindex="-1" data-role="page" class="sg-box sg-gauche noprint">';
 		// résultat d'opération dans <form> si SG_HTML à gauche
 		if (isset($elements['gauche'])) {
 			$ret.= '<form id="formgauche">' . $elements['gauche'] . '</form>'; //2.0 onmouseup="SynerGaia.lacher(event)
@@ -1159,29 +1172,32 @@ class SG_Navigation {
 		$ret.= '</div>'; // fin gauche
 		//== PARTIE CENTRALE
 		$ml = ((100 - $proportions[1])/2);
-		$pct = 'style="margin-left: ' . $ml . '%;width:' . $proportions[1] . '%;"';
-		$ret.= '<div id="centre" ' . $pct . ' class="box">';
+		$pct = ''; //'style="margin-left: ' . $ml . '%;width:' . $proportions[1] . '%;"';
+		$ret.= '<div id="centre" ' . $pct . ' class="sg-box sg-centre">';
 		// --- boutons raccourcis ---
 		if(!$estMobile) {
 			$ret.= self::Raccourcis();
 			// Boite Admin
-			$ret.= self::boiteAdmin();
+			$ret.= self::boiteAdmin($elements['pied']);
 		}
 		// Corps
-		$ret.= '<div id="corps" data-role="page">';
+		$ret.= '<div id="corps" class="corps" data-role="page">';
 		// entête 
 		if (isset($elements['op-entete'])) {
-			$ret.= '<div id="op-entete" class="operationEntete noprint">' . $elements['op-entete']. '</div>' . PHP_EOL;
+			$ret.= '<div id="op-entete" class="sg-ope-entete noprint">' . $elements['op-entete']. '</div>' . PHP_EOL;
 		}
+		// Aide
+		$aide = '';
 		if (!$estMobile and isset($elements['aide'])) {
-			$ret.= $elements['aide'];
+			$aide = $elements['aide'];
 		}
+		$ret.= '<div id="aide" class="sg-aide noprint">' . $aide . '</div>';
 		// erreurs
 		if (isset($elements['erreurs'])) {
-			$ret.= '<div id="erreurs" class="erreurs noprint" >' . $elements['erreurs'] . '</div>' . PHP_EOL;
+			$ret.= '<div id="erreurs" class="sg-erreurs noprint" >' . $elements['erreurs'] . '</div>' . PHP_EOL;
 		}
 		// contenu principal
-		$ret.= '<div id="operation" class="sg-operation-contenu" data-role="content">' . PHP_EOL;
+		$ret.= '<div id="operation" class="sg-ope-contenu">' . PHP_EOL;
 		if (isset($elements['operation'])) {
 			if (getTypeSG($elements['operation']) === '@Erreur') {
 				$ret.= $elements['operation'] -> toString();
@@ -1189,50 +1205,67 @@ class SG_Navigation {
 				$ret.= $elements['operation'];
 			}
 		}
-		$ret .= '</div>'; // operation
-		$ret .= '</div>'; // corps
+		$ret.= '</div>'; // operation
+		$ret.= '</div>'; // corps
 		$ret.='</div>'; // fin centre
+
 		//== A DROITE
 		$ml = 100 - $proportions[2];
 		$pct = 'style="margin-left: ' . $ml . '%;width:' . $proportions[2] . '%;"';
-		$ret.='<div id="droite" ' . $pct . ' class="noprint" draggable="true">';
+		$ret.= '<div id="droite" ' . $pct . ' class="sg-box noprint sg-droite" draggable="" data-role="page" tabindex="-1">';
 		if (isset($elements['droite'])) {
-			$ret.= '<div id="adroite" data-role="page" class="adroite noprint" onclick="SynerGaia.devantderriere(event)">' . $elements['droite'] . '</div>';
+			$ret.= $elements['droite'];
+			//$ret.= '<form id="formdroite" >' . $elements['droite'] . '</form>';
 		}
 		$ret.= '</div>';
+		// entourer de sg-grandcorps
+		$ret = '<div id="menuetcorps" class="sg-grandcorps">' . $ret . '</div>';
 		return $ret;
 	}
-	/** 2.2 si $resligne array ; 2.3 supp <br> ; pas effacer si centre vide
-	* 2.1 correction refresh, debug , test html, correction centre, retour ligne, test resultat array
-	* 1.3.3 ajout ; 1.3.4 'debug' ; 2.0 prise en compte de refresh ;
-	* construction d'un body en tableau associatif.
-	* Cette fonction est utilisée dès que la page complète a été affichée, pour mettre à jour uniquement les parties recalculées
-	* C'est le cas notamment pour les appels sg_get
-	**/
+
+	/**
+	 * Construction d'un body en tableau associatif qui sera envoyé en JSON.
+	 * Cette fonction est utilisée dès que la page complète a été affichée, pour mettre à jour uniquement les parties recalculées
+	 * C'est le cas notamment pour les appels sg_get
+	 * 
+	 * @since 1.3.3 ajout
+	 * @version 2.3 supp <br> ; pas effacer si centre vide
+	 * @version 2.6 rassembler traitement gauche droite popup ; mutualiser $btntxt au début
+	 * @version 2.7 correct erreur sur test $tmp->saisie
+	 * @param array $resultat Résultats calculés de l'étape en cours
+	 * @param SG_Operation $operation Opération courante
+	 * @return array tableau des résultats pour chaque cadre du navigateur
+	 */
 	static function elementsDuBody($resultat, $operation) {
 		$ret = array();
-		// entête  
+		if (!is_array($resultat)) {
+			$resultat = array('centre' => $resultat);
+		}
+		// texte d'un éventuel bouton de soumission
+		$btntxt = 'Enregistrer';
+		if (isset($resultat['submit'])) {
+			$btntxt = $resultat['submit'];
+		}
+		//=== ENTETE de l'opération ===  
 		$ret['op-entete'] = $_SESSION['page']['entete'] . self::favori($operation);
-		$ret['aide'] = '<div id="aide" class="noprint">' . $_SESSION['page']['aide'] . '</div>';
-		// erreurs
-		$e = '<ul>';
-		if (getTypeSG($resultat) === '@Erreur') {
-			$e.= '<li>' . $resultat -> getMessage() . '</li>';
+		$ret['aide'] = $_SESSION['page']['aide'];
+		//=== ERREURS ===
+		$e = '';
+		if ($resultat instanceof SG_Erreur) {
+			$e.= $resultat -> toHTML() -> texte ;
 		} elseif (isset($resultat['erreurs']) and $resultat['erreurs'] !== '') {
 			if (is_string($resultat['erreurs'])) {
-				$e.= '<li>'.$resultat['erreurs'].'</li>';
+				$e.= '<div class="sg-erreur1">'.$resultat['erreurs'].'</div>';
 			} else {
-				$e.= '<li>'.$resultat['erreurs'] -> toString().'</li>';
+				$e.= $resultat['erreurs'] -> toString();
 			}
-			unset($resultat['erreurs']);
 		}
-		if ($_SESSION['page']['erreurs'] !== '') {
-			$e.= '<li>' . $_SESSION['page']['erreurs'] . '</li>';
-		}
-		$ret['erreurs'] = $e . '</ul>';
-		// y aura-t-il quelque chose au centre ?
+		unset($resultat['erreurs']);
+		$ret['erreurs'] = $e;
+		// === CENTRE ===
 		$centre = '';
 		$centrevide = true;
+		$submit = false;
 		if(is_array($resultat)) { // examiner ['n° operation']['submit']
             foreach($resultat as $key => $resligne) {
                 if (!is_array($resligne)) {
@@ -1249,14 +1282,41 @@ class SG_Navigation {
 									} else {
 										$centre .= $res -> texte;
 									}
+									if ($res -> saisie === true) {
+										$submit = true;
+									}
+								}
+							} elseif ($res instanceof SG_Collection) {
+								foreach ($res -> elements as $e) {
+									$tmp = $e -> toHTML();
+									if ($tmp instanceof SG_HTML) {
+										$tmp = $tmp -> texte;
+										if ($tmp -> saisie === true) {
+											$submit = true;
+										}
+									}
+									if ($tmp !== '') {
+										$centrevide = false;
+										$centre .= $tmp;
+									}
 								}
 							} else {
 								$centrevide = false;
-								$centre .= $res -> toHTML();
+								$tmp = $res -> toHTML();
+								if ($tmp instanceof SG_HTML) {
+									if ($tmp -> saisie === true) {
+										$submit = true;
+									}
+									$tmp = $tmp -> texte;
+								}
+								$centre .= $tmp;
 							}
+						} elseif (is_array($res)) {
+							$centrevide = false;
+							$centre.= implode('', $res);
 						} else { // sinon texte au centre
 							$centrevide = false;
-							$centre .= $res;
+							$centre.= $res;
 						}
 					}
 				}
@@ -1265,32 +1325,13 @@ class SG_Navigation {
 			$centrevide = false;
 			$centre = $resultat;
 		}
-		// cadre de gauche
-		$idForm = 'formgauche';
-		$agauche = '';
-		if(is_array($resultat)) {
-			foreach($resultat as $texte) {
-				if (is_object($texte) and $texte -> estHTML() and $texte -> cadre === 'gauche') {
-					$agauche.= $texte -> toHTML();
-				}
-			}
-			if ($agauche !== '' and $agauche !== '<ul></ul>') {
-				if(isset($resultat['submit']) and $centrevide) {
-					$ret['gauche'] = self::genererBaliseForm($operation, $idForm) . '<div id="agauche" class="agauche noprint">' . $agauche;
-					$ret['gauche'].= '<br>' . self::genererBoutonSubmit($resultat['submit'], $idForm);
-					$ret['gauche'].= '</div></form>';
-				} else {
-					$ret['gauche'] = $agauche;
-				}
-			}
-		}
 		// centre
 		//  - operation
 		$idForm = 'formcentre';
 		$texte = '';
 		if(is_null($operation)) {
 			$texte = $centre;
-		} elseif (getTypeSG($operation) === '@Erreur') {
+		} elseif ($operation instanceof SG_Erreur) {
 			$texte = $operation -> toHTML();
 			if (is_object($texte) and $texte -> estHTML()) {
 				$texte = $texte -> texte;
@@ -1300,8 +1341,8 @@ class SG_Navigation {
 			// bouton submit haut et bas, seulement si quelque chose au centre
 			if(is_array($resultat)) {
 				$bouton = '';
-				if(isset($resultat['submit']) and !$centrevide) {
-					$bouton = '<br>' . self::genererBoutonSubmit($resultat['submit'], $idForm). '<br>';
+				if( ($submit or isset($resultat['submit'])) and !$centrevide) {
+					$bouton = '<br>' . self::genererBoutonSubmit($btntxt, $idForm);
 				}
 				if ($centre !== '' or $bouton !== '') {
 					$texte .= $bouton . $centre . $bouton;
@@ -1314,27 +1355,35 @@ class SG_Navigation {
 		if ($centre !== '') {
 			$ret['operation'] = $texte;
 		}
-		//======== droite
-		$adroite = '';
-		$idForm = 'formdroite';
-		// résultat d'opération si SG_HTML à droite
-		if(is_array($resultat)) {
-			foreach($resultat as $key => $texte) {
-				if (is_object($texte) and $texte -> estHTML() and $texte -> cadre === 'droite') {
-					$adroite.= $texte -> toHTML();
+		//========== GAUCHE, DROITE, POPUP =====
+		$boites = array('gauche','droite', 'popup');
+		foreach ($boites as $boite) {
+			$idForm = 'form' . $boite;
+			$html = '';
+			$submit = false; // 2.6 isset($resultat['submit']) and $centrevide;
+			if(is_array($resultat)) {
+				foreach($resultat as $texte) {
+					if ($texte instanceof SG_HTML and $texte -> cadre === $boite) {
+						$html.= $texte -> toHTML();
+						if ($texte -> saisie === true) {
+							$submit = true;
+						}
+					}
+				}
+				if ($html !== '' and $html !== '<ul></ul>') {
+					if($submit) {
+						$ret[$boite] = self::genererBaliseForm($operation, $idForm) . '<div id="f-' . $boite . '" class="sg-boite noprint">' . $html;
+						$ret[$boite].= '<br>' . self::genererBoutonSubmit($btntxt, $idForm);
+						$ret[$boite].= '</div></form>';
+					} else {
+						$ret[$boite] = $html;
+					}
 				}
 			}
-			if ($adroite !== '' and $adroite !== '<ul></ul>') {
-				if(isset($resultat['submit']) and $centrevide) {
-					$ret['droite'] = self::genererBaliseForm($operation, $idForm) . '<div id="adroite" class="adroite noprint">' . $adroite;
-					$ret['droite'].= '<br>' . self::genererBoutonSubmit($resultat['submit'], $idForm);
-					$ret['droite'].= '</div></form>';
-				} else {
-					$ret['droite'] = $adroite;
-				}
-			}
-
 		}
+		// pied avec les infos de calcul
+		$ret['pied'] = self::Pied(); // benchmarck
+		// et le debug
 		if (isset($_SESSION['debug']['texte'])) {
 			$ret['debug'] = $_SESSION['debug']['texte'];
 		}
@@ -1350,9 +1399,15 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.3 ajout ; 2.2 SynerGaia.initOnLoad
-	* Scripts de fin de body
-	**/
+
+	/**
+	 * Scripts de fin de body
+	 * 
+	 * @since 1.3.3 ajout
+	 * @version 2.2 SynerGaia.initOnLoad
+	 * @return string code html
+	 * @uses SynerGaia.initOnLoad()
+	 */
 	static function finBody() {
 		$ret = '<script>SynerGaia.initOnLoad()</script>' . PHP_EOL . '<script>';
 		foreach ($_SESSION['script'] as $code => $script) {
@@ -1361,12 +1416,22 @@ class SG_Navigation {
 		$ret .= '</script></body>';
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Renvoie le chemin complet des icones 16x16 sur le serveur
+	 * 
+	 * @since 1.1 ajout
+	 * @return string
+	 */
 	static function repertoireIcones() {
 		return self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/';
 	}
-	// 1.1 ajout (source originale : http://www.inserthtml.com/2012/08/file-uploader/)
+
+	/**
+	 * Code HTML fixe pour demander l'upload de fichier
+	 * @since 1.1 ajout (d'apres source originale : http://www.inserthtml.com/2012/08/file-uploader/) 
+	 * @return string code HTML
+	 **/
 	static function fileUploader() {
 		$ret = '';
 		$ret .= '<div id="drop-files" ondragover="return false">Lâchez les fichiers ici !</div>';
@@ -1378,7 +1443,11 @@ class SG_Navigation {
 		$ret .= '<div id="file-name-holder"><ul id="uploaded-files"><h1>Uploaded Files</h1></ul></div>';
 		return $ret;
 	}
-	// 1.1 ajout
+
+	/**
+	 * Code HTML pour demander l'upload de fichier
+	 * @since 1.1 ajout
+	 */
 	static function UploaderFichiers() {
 		// We're putting all our files in a directory called images.
 		$uploaddir = 'images/';
@@ -1410,14 +1479,22 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.0 ajout
-	*/
+
+	/**
+	 * Affiche un bouton pour le retour à l'accueil
+	 * @since 1.3.0 ajout
+	 * @return string code HTML
+	 */
 	static function btnAccueil() {
 		$ret = '<li><a href="' . SG_Navigation::URL_PRINCIPALE . '" data-icon="home" data-iconpos="notext" data-direction="reverse" data-transition="slide">Accueil</a></li>';
 		return $ret;
 	}
-	/** 1.3.1 ajout
+
+	/**
 	* retourne la phrase de Logo du navigateur
+	* @since 1.3.1 ajout
+	* @param string $pLogo chemin du fichier pour le logo de l'application
+	* @return string HTML
 	*/
 	static function Logo($pLogo = '') {
 		$logo = $_SESSION['@SynerGaia'] -> Logo($pLogo);
@@ -1428,20 +1505,24 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
+
+	/**
 	* cadre pour les suggestions (menus déroulants)
+	* @since 1.3.1 ajout
 	* @return html
 	**/
 	static function autosuggestions() {
-		$ret = '<div id="autosuggestions" class="autosuggestions">';
-		$ret.= '<div id="autosuggestions-liste"></div>';
-		$ret.= '<img src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/cancel.png" onclick="$(\'#autosuggestions\').hide()"></img>';
+		$ret = '<div id="autosuggestions" class="sg-suggestions">';
+		$ret.= '<div id="autosuggestions-liste" class="sg-suggestions-liste"></div>';
+		$ret.= '<img class="sg-suggestions-img" onclick="$(\'#autosuggestions\').hide()"></img>';
+//		$ret.= '<img src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/cancel.png" onclick="$(\'#autosuggestions\').hide()"></img>';
 		$ret.= '</div>'.PHP_EOL;
 		return $ret;
 	}
+
 	/** 1.3.1 ajout ; 1.3.2 rien si null ; 1.3.3 'd'
 	* Permet de remplir la partie 'adroite' à droite. Le cadre est 'droite'
-	* @param (SG_Formule) formule donnant ce qu'il faut placer à droite
+	* @param SG_Formule $pFormule formule donnant ce qu'il faut placer à droite
 	**/
 	static function ADroite ($pFormule = '') {
 		$ret = new SG_Rien();
@@ -1457,16 +1538,27 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
+
+	/**
 	* Titre de l'application
-	*/
+	* @since 1.3.1 ajout
+	**/
 	static function Titre() {
 		$ret ='<div class="sg-banniere-logo">' . self::Logo() . '</div>';
 		$ret.= '<div class="sg-banniere-titre">' . $_SESSION['@SynerGaia'] -> Titre() . '</div>';
 		return $ret;
 	}
-	/** (1.3.1) déplacé de themes.php ; 1.3.3 montremenu ; 2.1.1 test @Erreur ; 2.3 correction boucle
+
+	/**
 	* calcule les onglets des themes standards
+	* 
+	* @since 1.3.1 déplacé de themes.php
+	* @version 1.3.3 montremenu
+	* @version 2.1.1 test @Erreur
+	* @version 2.3 correction boucle
+	* @param string $themeEnCours code du thème en cours
+	* @return string code HTML
+	* @uses SynerGaia.getMenu()
 	**/
 	static function composerThemesDefaut($themeEnCours) {
 		$ret = '';
@@ -1496,7 +1588,7 @@ class SG_Navigation {
 				$ongletsHTML .= $message . PHP_EOL;
 			}
 
-			$ongletsHTML .= '<ul id="themes-liste" class="menu">' . PHP_EOL;
+			$ongletsHTML .= '<div id="themes-liste" class="sg-menu">' . PHP_EOL;
 			$nbOnglets = sizeof($themes);
 			for ($i = 0; $i < $nbOnglets; $i++) {
 				$themeCode = $themes[$i][0];
@@ -1514,29 +1606,32 @@ class SG_Navigation {
 				$id = 'menu_' . $themeCode;
 				if ($mobile) {
 					// afficher le menu
-					$ligneTheme .= '<li onclick="SynerGaia.getMenu(event,\'c=men&' . SG_Navigation::URL_VARIABLE_THEME . '=' . $themeCode . '\')">' . PHP_EOL;
+					$ligneTheme .= '<div class="sg-menu-ligne" onclick="SynerGaia.getMenu(event,\'c=men&' . SG_Navigation::URL_VARIABLE_THEME . '=' . $themeCode . '\')">' . PHP_EOL;
 				} else {
 					// afficher la page de présentation
-					$ligneTheme .= '<li onclick="SynerGaia.getMenu(event,\'c=thh&' . SG_Navigation::URL_VARIABLE_THEME . '=' . $themeCode . '\')">' . PHP_EOL;
+					$ligneTheme .= '<div class="sg-menu-ligne" onclick="SynerGaia.getMenu(event,\'c=thh&' . SG_Navigation::URL_VARIABLE_THEME . '=' . $themeCode . '\')">' . PHP_EOL;
 				}
 				// TODO : icone du thème : gérer le thème graphique
 				if ($themeIcone !== '') {
-					$ligneTheme .= ' <img src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/' . $themeIcone . '" alt="' . htmlentities($themeTitre, ENT_QUOTES, 'UTF-8') . '"/>' . PHP_EOL;
+					$ligneTheme .= ' <img class="sg-menu-ligne-img" src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/' . $themeIcone . '" alt="' . htmlentities($themeTitre, ENT_QUOTES, 'UTF-8') . '"/>' . PHP_EOL;
 				}
 				$ligneTheme.= $themeTitre;
 				$ligneTheme.= self::MenuTheme($themeCode);
-				$ligneTheme.= '</li>' . PHP_EOL;
+				$ligneTheme.= '</div>' . PHP_EOL;
 
 				$ongletsHTML.= $ligneTheme . PHP_EOL;
 			}
-			$ongletsHTML .= ' </ul>' . PHP_EOL;
+			$ongletsHTML .= ' </div>' . PHP_EOL;
 		}
 		$_SESSION['page']['themes'] = $ongletsHTML;
 	}
-	/** 1.3.1 déplacé
-	*
-	**/
-	static function boiteAdmin() {
+
+	/**
+	 * Calcule l'HTML du pied de navigateur (temps de calculs et autres infos techniques)
+	 * @since 1.3.1 déplacé
+	 * @param string $pied texte à mettre en pied
+	 **/
+	static function boiteAdmin($pied) {
 		$ret = '';
 		// si administrateur, div admin
 		if (SG_Rien::Moi() -> EstAdministrateur() -> estVrai() === true) {
@@ -1548,64 +1643,88 @@ class SG_Navigation {
 				$ret .= '<li>' . $upd . '</li>';
 			}
 			$ret.= '<li>' . self::boiteExecuterFormule() . '</li>' . PHP_EOL;
-			$ret .= '</ul>' . PHP_EOL;			
-			$ret.= '<div id="debug" class="debug noprint" style="margin-left: 0%;width:100%;">';
+			$ret.= '</ul>' . PHP_EOL;
+			$ret.= '<div id="pied" class="sg-pied noprint">' . $pied . '</div>';// benchmarch et temps d'exécution
+			$ret.= '<div id="debug" class="debug noprint">';
 			if (isset($_SESSION['debug']['texte']) and $_SESSION['debug']['texte'] !== '') {
 				$ret.= $_SESSION['debug']['texte'];
 			}
-			$ret .= '</div></div>';// debug, admin
+			$ret.= '</div></div>';// debug, admin
 		}
 		return $ret;
 	}
-	/** 1.3.2 déplace de Body() ; 2.3 loader
-	* affiche Bannière et Thèmes
-	*/
+
+	/** 
+	 * affiche Bannière et Thèmes
+	 * 
+	 * @since 0.0 dans fichier theme.php
+	 * @version 1.0 déplacé dans Body()
+	 * @version 1.3.2 déplace de Body()
+	 * @version 2.3 loader
+	 * @uses SynerGaia.popup()
+	 **/
 	static function LeHaut() {
 		$ret = '<body>';
-		$ret.='<div id="media" style="display:none;" class="noprint">' . SG_ThemeGraphique::ThemeGraphique() . '</div>'; // pour tester dans js
+		$ret.='<div id="media" style="display:none;" class="noprint">' . SG_ThemeGraphique::ThemeGraphique() . '</div>'; // pour tester dans js;
 		// Fenêtres cachées au chargement
 		$ret.= self::autosuggestions() . PHP_EOL;
-		$ret.= '<div id="popup_window" class="popup_block noprint" onclick="SynerGaia.popupClick(event,\'popup_window\')"></div>'.PHP_EOL;
-		$ret.= '<div id="loader" class="loader-div noprint" style="display:none"></div>'.PHP_EOL;
+		// popup (fond et popup sont séparés à cause du problème d'opacité
+		$ret.= '<div class="sg-popup">';
+		$ret.= '<div id="popup-fond" class="sg-popup-fond noprint" onclick="SynerGaia.popup(event,\'popup\',false)"></div>
+			<div id="popup" class="sg-popup-block noprint"></div>'.PHP_EOL;
+		$ret.= '</div>';
+		// image loader
+		$ret.= '<div id="loader" class="sg-loader noprint" style="display:none"></div>'.PHP_EOL;
+		// menu contextuel pour les formules
 		$ret.= self::contextMenu() . PHP_EOL;
 		//#### HAUT
 		// Bannière
 		$ret.= '<div id="banniere" class="noprint">' . self::Banniere() . '</div>';
 		// Themes (préparé dans self::composerThemesDefaut())
-		$ret.= '<div id="themes" class="noprint">' . $_SESSION['page']['themes'] . '</div>';
+		$ret.= '<div id="themes" class="sg-themes noprint">' . $_SESSION['page']['themes'] . '</div>';
+		// pour les menus et sous-menus quand mobile
+		$ret.= '<div id="menu" class="sg-menu noprint"></div>';
+		$ret.= '<div id="sous-menu" class="sg-sous-menu noprint"></div>';
+		$ret.= '<div id="points" class="sg-points"><img id="ptmenu"/><img id="ptsous-menu"/><img id="ptgauche"/><img id="ptcentre"/><img id="ptoperation"/><img id="ptdroite"/></div>';
 		return $ret;
 	}
+
 	/** ajout 1.3.3 ; 1.3.4 $pMode ; 2.1 $element peut être string
-	* @param (string ou @Document) : element visé
-	* @param (boolean) $pMode : lien html ou lien Ajax
+	* @param string|SG_Document $element element visé
+	* @param boolean $pMode : lien html ou lien Ajax
+	* @param string $pIndex
 	* @return html : lien
 	**/
-	static function getUrlEtape($element, $pMode = true) {
+	static function getUrlEtape($element, $pMode = true, $pIndex = '') {
 		$uid = '';
 		if (is_string($element)) {
 			$uid = $element;
 		} elseif (method_exists($element,'getUUID')) {
 			$uid = $element -> getUUID();
 		}
-		$ret = self::URL_VARIABLE_OPERATION . '=' . self::OperationEnCours() -> reference;
-		$ret .= '&' . self::URL_VARIABLE_ETAPE . '=' . $_SESSION['page']['etape_prochaine'];
+		$op = SG_Pilote::OperationEnCours();
+		$ret = self::URL_VARIABLE_OPERATION . '=' . $op -> reference;
+		$ret .= '&' . self::URL_VARIABLE_ETAPE . '=' . $op -> prochaineEtape;
 		// si lien réel
 		if ($uid !== '') {
-			$ret .= '&' . self::URL_VARIABLE_DOCUMENT . '=' . $uid;
+			$ret.= '&' . self::URL_VARIABLE_DOCUMENT . '=' . $uid;
+		} elseif ($pIndex !== '') {
+			$ret.= '&' . SG_Navigation::URL_VARIABLE_INDEX . '=' . $pIndex;
 		}
 		if ($pMode) {
 			$ret = self::calculerURL($ret);
 		}
 		return $ret;
 	}
+
 	/** 1.3.3 ajout
-	* Etablit les largeurs en pourcentage des trois parties du corps du navigateur (par défaut 20% 60% 20%)
-	* Ceci est valable pour l'opération en cours
-	* @param $pGauche (@Nombre) défaut 0
-	* @param $pCentre (@Nombre) défaut 0
-	* @param $pDroite (@Nombre) défaut 0
-	* @return @Navigation
-	**/
+	 * Etablit les largeurs en pourcentage des trois parties du corps du navigateur (par défaut 20% 60% 20%)
+	 * Ceci est valable pour l'opération en cours
+	 * @param integer|SG_Nombre|SG_Formule $pGauche défaut 0
+	 * @param integer|SG_Nombre|SG_Formule $pCentre défaut 0
+	 * @param integer|SG_Nombre|SG_Formule $pDroite défaut 0
+	 * @return SG_Navigation
+	 **/
 	function Diviser($pGauche = 0, $pCentre = 0, $pDroite = 0) {
 		$g = new SG_Nombre($pGauche);
 		$g = $g -> toFloat();
@@ -1620,11 +1739,14 @@ class SG_Navigation {
 		}
 		return $this;
 	}
-	/** 1.3.3 ajout
-	* Permet de remplir la partie 'gauche' à droite. Le cadre est 'd'
-	* @param (SG_Formule) formule donnant ce qu'il faut placer à droite
-	* @return le résultat
-	**/
+
+	/** 
+	 * Permet de remplir la partie 'gauche' à droite. Le cadre est 'd'
+	 * 
+	 * @since 1.3.3
+	 * @param SG_Formule $pFormule formule donnant ce qu'il faut placer à droite
+	 * @return SG_HTML HTML du résultat
+	 */
 	static function AGauche ($pFormule = '') {
 		$ret = new SG_Rien();
 		if ($pFormule !== '' and getTypeSG($pFormule) === '@Formule') {
@@ -1639,22 +1761,34 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.3 ajout
+
+	/**
 	* Pour compatibilité. Toujours @Vrai
+	* @since 1.3.3 ajout
+	* @return SG_VraiFaux true
 	**/
 	static function EstVide () {
 		return new SG_VraiFaux(true);
 	}
-	/** 1.3.3 ajout
-	**/ 
+
+	/**
+	 * Détermine si on est dans le cadre d'un thème mobile ou non
+	 * @since 1.3.3 ajout
+	 * @return boolean oui ou non
+	 */ 
 	static function estMobile() {
 		return SG_ThemeGraphique::ThemeGraphique() === 'mobile';
 	}
-	/** 1.3.3 ajout ; 2.0 effacer = true
-	* calcul une url à lancer ou cliquer selon le thème graphique
-	* @param $pURL (string) url à lancer
-	* @param $pMode (boolean) true (défaut) : par http:// ; false : par sg_getLanchOperation()
-	**/
+
+	/**
+	 * calcul une url à lancer ou cliquer selon le thème graphique
+	 * @since 1.3.3
+	 * @version 2.0 effacer = true
+	 * @param string $pURL url à lancer
+	 * @param boolean $pMode true (défaut) : par http:// ; false : par sg_getLanchOperation()
+	 * @return string html
+	 * @uses SynerGaia.launchOperation()
+	 */
 	static function calculerURL($pURL = '', $pMode = true) {
 		if ($pMode) {
 			$ret = self::URL_PRINCIPALE . '?' . $pURL;
@@ -1663,9 +1797,14 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
-	/** 1.3.3 ajout
-	* prépare un context menu masqué (clic droit)
-	**/
+
+	/**
+	 * Prépare un context menu masqué (clic droit)
+	 * @since 1.3.3 ajout
+	 * @return string code html
+	 * @uses SynerGaia.contextMenu, SynerGaia.print(), SynerGaia.elargir(), SynerGaia.retrecir()
+	 * @todo libellés en fichier
+	 */
 	static function contextMenu() {
 		$ret = '<div id="contextMenuCorps" style="display:none" class="noprint"><ul>';
 		$ret.= '<li onclick="SynerGaia.contextMenu.hide(\'contextMenuCorps\');SynerGaia.print();" id="ctxmenu_print">Imprimer</li>';
@@ -1675,63 +1814,86 @@ class SG_Navigation {
 		$ret.= '</ul></div>';
 		return $ret;
 	}
-	/** 1.3.4 ajout
-	* pour tous les objets : false sauf SG_Erreur et dérivés
-	**/
+
+	/**
+	 * pour tous les objets : false sauf SG_Erreur et dérivés
+	 * @since 1.3.4 ajout
+	 * @return false
+	 **/
 	function estErreur() {
 		return false;
 	}
-	/** 2.0 ajout ; 2.1 getValeurPropriete au lieu de getValeur
-	* génère une balise <form>
-	* @param (SG_Operation) : operation encours
-	* @param (string) : id de la form
-	* @return (string) texte html
-	**/
+
+	/**
+	 * génère une balise <form>
+	 * @since 2.0 
+	 * @version 2.1 getValeurPropriete au lieu de getValeur
+	 * @param (SG_Operation) : operation encours
+	 * @param (string) : id de la form
+	 * @return (string) texte html
+	 **/
 	static private function genererBaliseForm($pOperation, $pID) {		
 		$urlProchaineEtape = htmlentities($pOperation -> urlProchaineEtape(), ENT_QUOTES, 'UTF-8'); // index.php?o=operation&e=derniereetape
 		$ret = '<form method="post" action="' . $urlProchaineEtape . '" enctype="multipart/form-data" id="'. $pID . '">' . PHP_EOL;
 		// si affichage d'un document, mettre champ /@Principal pour identifier au retour
 		// (si checkbox sur collection, est déjà présent dans la collection)
-		$principal = $pOperation -> Principal();
+		$principal = $pOperation -> getPrincipal();
 		if(getTypeSG($principal) === 'string' and $principal !== '') {
 			$tmpChamp = SG_Champ::codeChampHTML($pOperation -> reference . '/@Principal');
 			$ret.= '<input type="hidden" name="' . $tmpChamp . '" value="' . $principal . '"/>';
 		}
 		return $ret;
 	}
-	/** 2.0 ajout ; 2.3 suppr <br>
-	* génère un bouton dans une <form>
-	* @param texte ou html : texte du bouton
-	* @param id de la <form> à soumettre
-	* @return texte html du bouton
-	*/
+
+	/**
+	 * génère un bouton dans une <form>
+	 * @since 2.0
+	 * @version 2.3 suppr <br>
+	 * @param texte ou html : texte du bouton
+	 * @param id de la <form> à soumettre
+	 * @return texte html du bouton
+	 * @uses SynerGaia.submit()
+	 */
 	static private function genererBoutonSubmit ($pTexte, $pID) {
-		$ret = '<span class="sg-bouton" onclick="SynerGaia.submit(event, \'' . $pID . '\')">' . $pTexte . '</span>';
+		$ret = '<button type="button" class="sg-bouton" onclick="SynerGaia.submit(event, \'' . $pID . '\')">' . $pTexte . '</button>';
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 htmlentities
-	* crée l'étoile de mise en favori de l'opération en cours
-	**/
+
+	/**
+	 * crée l'étoile de mise en favori de l'opération en cours sauf si elle est erronée ou ne correspond pas à un modèle
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.3 htmlentities
+	 * @version 2.6 classe sg-
+	 * @param SG_Operation $pOperation
+	 * @return string html : le texte
+	 * @uses SynerGaia.favori()
+	 */
 	static function favori($pOperation) {
-		if ($pOperation === null) {
-			$ret = '';
-		} else {
-			$pimg = '<img class="raccourci noprint" src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/';
-			$favoriURL = 'm=' . $pOperation -> getValeur('@Code');
-			$favoriJeton = 'k=' . $_SESSION['@Moi'] -> Jeton() -> texte;
-			$favoriID = 'u=' . $_SESSION['@Moi'] -> identifiant;
-			$key = 'http://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '?' . $favoriURL . '&' . $favoriJeton . '&' . $favoriID;
-			$titre = $_SESSION['@SynerGaia'] -> Titre() . ' : ' . $pOperation -> Titre();
-			$ret = $pimg . 'star.png" onclick="SynerGaia.favori(event,\''. $key . '\', \'' . htmlentities($titre) . '\');" title="Mettre en favori :' . htmlentities($pOperation -> Titre()) . '">' . PHP_EOL;
+		$ret = '';
+		if ($pOperation !== null) {
+			$m = $pOperation -> getValeurPropriete('@ModeleOperation', '');
+			if(getTypeSG($m) === '@ModeleOperation') {
+				$pimg = '<img class="sg-raccourci noprint" src="' . self::URL_THEMES . 'defaut/img/icons/16x16/silkicons/';
+				$mop = 'm=' . $m -> getValeur('@Code');
+				$jeton = 'k=' . $_SESSION['@Moi'] -> Jeton() -> texte;
+				$userid = 'u=' . $_SESSION['@Moi'] -> identifiant;
+				$url = 'http://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '?' . $mop . '&' . $jeton . '&' . $userid;
+				$titre = $_SESSION['@SynerGaia'] -> Titre() . ' : ' . $pOperation -> Titre();
+				$ret = $pimg . 'star.png" onclick="SynerGaia.favori(event,\''. $url . '\', \'' . htmlentities($titre) . '\');" title="Mettre en favori :' . htmlentities($pOperation -> Titre()) . '">' . PHP_EOL;
+			}
 		}
 		return $ret;
 	}
-	/** 2.2 ajout
-	* uploader des fichiers vers un répertoire temporaire
-	* @param string $pChamp : nom du champ dans lequel les images sont stockées
-	* @param string $pDir : nom du répertoire temporaire
-	* @return
-	**/
+
+	/**
+	 * uploader des fichiers vers un répertoire temporaire
+	 * 
+	 * @since 2.2 ajout
+	 * @param string $pChamp : nom du champ dans lequel les images sont stockées
+	 * @param string $pDir : nom du répertoire temporaire
+	 * @return
+	 */
 	static function upload($pChamp, $pDir) {
 		$ret = array();
 		if (!is_dir($pDir)) {
@@ -1748,11 +1910,126 @@ class SG_Navigation {
 		}
 		return $ret;
 	}
+
 	/** 2.3 ajout
 	* ceci n'est pas un SG_HTML
 	**/
 	function estHTML() {
 		return false;
+	}
+
+	/** 2.4 ajout
+	 * met en forme les erreurs de l'opération
+	 * @param $pOperation
+	 * @return : array du texte des erreurs
+	 **/
+	static function erreursOperation($pOperation) {
+		$ret = '';
+		if (!is_null($pOperation) and getTypeSG($pOperation) !== '@Erreur' and is_array($pOperation -> erreurs)) {
+			foreach($pOperation -> erreurs as $key => $erreur) {
+				if (getTypeSG($erreur) === '@Erreur') {
+					$ret.= $erreur -> toHTML() -> texte;
+				}
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	 * Met le résultat des formules dans des onglets
+	 * Le titre de l'onglet est recherché succéssivement dans le texte de l'argument ou dans le titre du html de l'onglet
+	 * 
+	 * @since 2.5
+	 * @param SG_Formule premier onglet : formule donnant un SG_HTML affecté ou non d'un titre
+	 * @param SG_Formule onglets suivants
+	 * @return SG_HTML le texte entouré d'un cadre et affecté d'un titre
+	 * @uses SynerGaia.onglet()
+	 */
+	static function Onglets () {
+		$ret = new SG_HTML();
+		if (func_num_args() > 0) {
+			$id = SG_SynerGaia::idRandom();
+			$args = func_get_args();
+			$no = 1;
+			$titres = '';
+			$pages = '';
+			$select = ' data-selecte="1"';
+			foreach ($args as $arg) {
+				// calculer l'argument
+				$res = $arg;
+				if (getTypeSG($arg) === SG_Formule::TYPESG) {
+					$res = $arg -> calculer();
+				}
+				// titre de l'onglet (priorité à l'argument, puis calculé, puis fixe)
+				// 1. valeur du titre
+				$titre = 'Onglet ' . $no;
+				if (isset($arg -> titre)) { // arg
+					$titre = SG_Texte::getTexte($arg -> titre);
+				} elseif (isset($arg -> proprietes['titre'])) {
+					$titre = SG_Texte::getTexte($arg -> proprietes['titre']);
+				} elseif (isset($res -> titre)) { // res
+					$titre = SG_Texte::getTexte($res -> titre);
+				} elseif (getTypeSG($res) === '@HTML' and isset($res -> proprietes['titre'])) { // res
+					$titre = SG_Texte::getTexte($res -> proprietes['titre']);
+				}
+				// 2. remplissage de la div
+				$titres.= '<div id="' . $id . '-titre-' . $no . '" class="sg-onglets-titre"' . $select;
+				$titres.= ' onClick="SynerGaia.onglet(event,\'' . $id . '\',\'' . $no . '\')"';
+				$titres.= ' data-no="'.$no.'">' . $titre . '</div>';
+				// contenu de l'onglet
+				$pages.= '<div id="' . $id . '-page-' . $no . '" class="sg-onglets-page" data-no="' . $no . '"' . $select . '>';
+				if (is_array($res)) {
+					foreach ($res as $r) {
+						$pages.= $r -> toString();
+					}
+				} elseif (! is_null($res)) {
+					$pages.= $res -> toString();
+				}
+				$pages.= '</div>';
+				// onglet suivant
+				$no++;
+				$select = '';
+			}
+			$txt = '<div id="' . $id . '" class="sg-onglets">';
+			$txt.= '<div class="sg-onglets-titres">' . $titres . '</div>';
+			$txt.= '<div class="sg-onglets-pages">' . $pages . '</div>';
+			$txt.= '</div>';
+			$ret -> texte = $txt;
+		}
+		return $ret;
+	}
+
+	/**
+	 * Transforme le résultat de l'opération en un tableau de SG_HTML trié par cadre du navigateur
+	 * Tout ce qui n'est pas une instance de SG_HTML ou une SG_Collection de SG_HTML est abandonné
+	 * 
+	 * @since 2.6
+	 * @param array $pResultat résultat de l'étape de l'opération en cours
+	 * @return array tableau des HTML
+	 */
+	static function classerResultat($pResultat) {
+		$ret = array();
+		if (!is_array($pResultat)) {
+			$resultat = array($resultat);
+		}
+		foreach($resultat as $key => $elt) {
+			
+		}
+		return $ret;
+	}
+
+	/**
+	 * Efface le contenu d'un cadre
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pCadre code du cadre à effacer
+	 * @return SG_HTML cadre vide
+	 */
+	static function Effacer($pCadre = '') {
+		$cadre = SG_Texte::getTexte($pCadre);
+		$ret = new SG_HTML();
+		$ret -> cadre = $cadre;
+		return $ret;
 	}
 }
 ?>
