@@ -1,23 +1,34 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
- * SG_DictionnairePropriete : Classe de gestion d'une propriété du dictionnaire
- */
+<?php
+/** SynerGaia fichier traitant l'objet @DictionnairePropriete */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_DictionnairePropriete_trait.php')) {
+	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_DictionnairePropriete_trait.php';
+} else {
+	/** trait vide par défut pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
+	trait SG_DictionnairePropriete_trait{};
+}
+
+/**  2.4 (see AUTHORS file)
+* SG_DictionnairePropriete : Classe de gestion d'une propriété du dictionnaire
+*/
 class SG_DictionnairePropriete extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@DictionnairePropriete' */
 	const TYPESG = '@DictionnairePropriete';
 
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 	
-	// Code de la propriété du dictionnaire
+	/** string Code de la propriété du dictionnaire */
 	public $code;
 
-	/** 1.0.7
-	* Construction de l'objet
-	*
-	* @param string $pCodePropriete code de la propriété demandée
-	* @param array $pTableau tableau éventuel des propriétés du document physique
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @since 1.0.7
+	 * @param string $pCodePropriete code de la propriété demandée
+	 * @param array $pTableau tableau éventuel des propriétés du document physique
+	 */
 	public function __construct($pCodePropriete = null, $pTableau = null) {
 		$tmpCode = new SG_Texte($pCodePropriete);
 		$base = SG_Dictionnaire::CODEBASE;
@@ -29,28 +40,46 @@ class SG_DictionnairePropriete extends SG_Document {
 		$this -> code = $this -> getValeur('@Code');
 		$this -> setValeur('@Type', '@DictionnairePropriete');
 	}
-	/** 1.1 : ajout
-	* texte de la formule
-	*/
+
+	/**
+	 * texte de la formule de valeurs possibles
+	 * 
+	 * @since 1.1 : ajout
+	 * @return string
+	 */
 	function Formule() {
 		return $this -> getValeur('@ValeursPossibles');
 	}
-	/** 2.1 ajout
-	* Prépare la valeur de @Code (seulement les objets non système car les objets système ne sont traités que par la programmation PHP)
-	* @formula : .@Code=.@Objet.@Texte.@Concatener(".",.@Propriete);
-	*/
+
+	/**
+	 * Prépare la valeur de @Code (seulement les objets non système car les objets système ne sont traités que par la programmation PHP)
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.6 test si $objet erreur
+	 * @formula : .@Code=.@Objet.@Texte.@Concatener(".",.@Propriete);
+	 * @return SG_VraiFaux
+	 */
 	function preEnregistrer() {
 		$objet = $this -> getValeurPropriete('@Objet');
-		$codeObjet = $objet -> getValeur('@Code');
-		if (substr($codeObjet, 0,1) !== '@') { // seulement les objets non système
-			$this -> setValeur('@Code', $codeObjet . '.' . $this -> getValeur('@Propriete'));
+		if (! is_object($objet) or $objet instanceof SG_Rien) {
+			$ret = new SG_Erreur('0301');
+		} else {
+			$codeObjet = $objet -> getValeur('@Code');
+			if (substr($codeObjet, 0,1) !== '@') { // seulement les objets non système
+				$this -> setValeur('@Code', $codeObjet . '.' . $this -> getValeur('@Propriete'));
+			}
+			$ret = new SG_VraiFaux(true);
 		}
-		return new SG_VraiFaux(true);
+		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 maj dictionnaire ; return
-	* Recompilation de l'objet en entier (seulement les objets non système car les objets système ne sont traités que par la programmation PHP)
-	* return : true ou SG_Erreur
-	*/
+
+	/**
+	 * Recompilation de l'objet en entier (seulement les objets non système car les objets système ne sont traités que par la programmation PHP)
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.3 maj dictionnaire ; return
+	 * @return boolean|SG_Erreur
+	 */
 	function postEnregistrer() {
 		$ret = true;
 		$objet = $this -> getValeurPropriete('@Objet');
@@ -61,11 +90,15 @@ class SG_DictionnairePropriete extends SG_Document {
 		SG_Dictionnaire::isProprieteExiste($codeObjet, $this -> getValeur('@Propriete'), true); // maj dictionnaire
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Modification dans un ordre préparé
-	* @param : 
-	* @formula : .@Modifier(.@Titre,.@Objet,.@Propriete,.@Modele,.@Multiple,.@ValeurDefaut,.@ValeursPossibles,.@Description)
-	**/
+
+	/**
+	 * Modification dans un ordre préparé
+	 * 
+	 * @since 2.1 ajout
+	 * @param : 
+	 * @formula : .@Modifier(.@Titre,.@Objet,.@Propriete,.@Modele,.@Multiple,.@ValeurDefaut,.@ValeursPossibles,.@Description)
+	 * @return SG_GTML
+	 */
 	function Modifier () {
 		$args = func_get_args();
 		if (sizeof($args) === 0) { 
@@ -75,10 +108,15 @@ class SG_DictionnairePropriete extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* @param : liste des formules à afficher
-	* @formula : .@Afficher(.@Titre,.@Objet,.@Code,.@Modele,.@Multiple,.@ValeurDefaut,.@ValeursPossibles,.@Description)
-	**/
+
+	/**
+	 * Code HTML pour l'affichage propre
+	 * 
+	 * @since 2.1 ajout
+	 * @param : liste des formules à afficher
+	 * @formula : .@Afficher(.@Titre,.@Objet,.@Code,.@Modele,.@Multiple,.@ValeurDefaut,.@ValeursPossibles,.@Description)
+	 * @return SG_HTML
+	 */
 	function Afficher() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) { 
@@ -88,5 +126,8 @@ class SG_DictionnairePropriete extends SG_Document {
 		}
 		return $ret;
 	}
+
+	// 2.4 complément de classe créée par compilation
+	use SG_DictionnairePropriete_trait;
 }
 ?>
