@@ -1,39 +1,48 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Utilisateur : Classe de gestion d'un utilisateur
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/**  SynerGaia fichier contenant la gestion de l'objet @Utilisateur */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Utilisateur_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Utilisateur_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * @since 2.1.1 
+	 */
 	trait SG_Utilisateur_trait{};
 }
 
+/**
+* SG_Utilisateur : Classe de gestion d'un utilisateur
+* @version 2.3
+*/
 class SG_Utilisateur extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Utilisateur' */
 	const TYPESG = '@Utilisateur';
 	
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 	
-	// Identifiant de l'utilisateur
+	/** string Identifiant de l'utilisateur */
 	public $identifiant = '';
 	
-	//1.1 ajout
-	// est administrateur (@VraiFaux)
+	/** SG_VraiFaux : est administrateur ?
+	 * @since 1.1 ajout
+	 */
 	public $admin;
 	
-	// 2.3 ajout
-	// code application si gestion multiple
+	/** string code application si gestion multiple
+	 * @since 2.3 ajout
+	 */
 	public $appli = '';
 
-	/** 1.1 getUtilisateur pour le cache
-	* Construction de l'objet
-	*
-	* @param indéfini $pQuelqueChose indentifiant de l'utilisateur
-	* @param string $pTableau tableau éventuel des propriétés du document CouchDB
-	* @param boolean $pCreerSiInexistant créer l'utilisateur si non trouvé
-	*/
+	/**
+	 * Construction de l'objet à partir de son code identifiant
+	 * 
+	 * @version 1.1 getUtilisateur pour le cache
+	 * @param indéfini $pQuelqueChose indentifiant de l'utilisateur
+	 * @param string $pTableau tableau éventuel des propriétés du document CouchDB
+	 * @param boolean $pCreerSiInexistant créer l'utilisateur si non trouvé
+	 */
 	public function __construct($pQuelqueChose = '', $pTableau = null, $pCreerSiInexistant = false) {
 		$codeBase = SG_Dictionnaire::getCodeBase($this -> typeSG);
 		if($pTableau !== null) {
@@ -82,12 +91,13 @@ class SG_Utilisateur extends SG_Document {
 
 			if ($this -> identifiant !== '') {
 				$tmpUser = SG_Annuaire::getUtilisateur($this -> identifiant);
-				if ($tmpUser !== false) {
+				if ($tmpUser instanceof SG_Utilisateur) {
+					// reprise des données de l'utilisateur
 					$this -> doc = $tmpUser -> doc;
 					$this -> appli = $tmpUser -> getValeur('@Application',''); // 2.3
 				} else {
 					// Si je dois créer l'utilisateur
-					if ($pCreerSiInexistant === true) {
+					if ($pCreerSiInexistant === true and $tmpUser === false) {
 						$this -> initDocumentCouchDB($codeBase . '/' . $this -> identifiant);
 						$this -> setValeur('@Type', $this -> typeSG);
 						$this -> setValeur('@Identifiant', $this -> identifiant);
@@ -104,18 +114,21 @@ class SG_Utilisateur extends SG_Document {
 		}
 	}
 
-	/** 2.0 parm
+	/**
 	 * Conversion en chaine de caractères
-	 *
+	 * @version 2.0 parm
+	 * @param string $pDefaut non utilisé
 	 * @return string texte
 	 */
 	function toString($pDefaut = NULL) {
 		return $this -> toHTML();
 	}
 
-	/** 1.0.6 ; 2.0 parm
+	/**
 	 * Conversion en code HTML
-	 *
+	 * @since 1.0.6
+	 * @version 2.0 parm
+	 * @param string $pDefaut non utilisé
 	 * @return string code HTML
 	 */
 	function toHTML($pDefaut = NULL) {
@@ -167,7 +180,7 @@ class SG_Utilisateur extends SG_Document {
 
 	/**
 	 * Détermine la liste des profils de l'utilisateur
-	 *
+	 * @param boolean $pForce
 	 * @return SG_Collection collection des profils de l'utilisateur
 	 */
 	function Profils($pForce = true) {
@@ -196,7 +209,6 @@ class SG_Utilisateur extends SG_Document {
 
 	/**
 	 * Affichage
-	 *
 	 * @return string code HTML
 	 */
 	function afficherChamp() {
@@ -204,12 +216,13 @@ class SG_Utilisateur extends SG_Document {
 		return '<span class="champ_Utilisateur">' . $lien -> toString() . '</span>';
 	}
 
-	/** 1.3.1 param 2 ; 2.1 php7
-	* Modification d'un champ @Utlisateur
-	* @param $pRefChamp référence du champ HTML
-	* @param $pListeUtilisateurs (@Collection ou @Formule) liste des valeurs possibles (sinon tous)
-	* @return string code HTML
-	*/
+	/**
+	 * Modification d'un champ @Utlisateur
+	 * @version 2.1 php7
+	 * @param string $codeChampHTML référence du champ HTML
+	 * @param array|SG_Collection|SG_Formule $pListeElements (@Collection ou @Formule) liste des valeurs possibles (sinon tous)
+	 * @return string code HTML
+	 */
 	function modifierChamp($codeChampHTML = '', $pListeElements = null) {
 		$ret = '<select class="champ_Utilisateur" type="text" name="' . $codeChampHTML . '">';
 
@@ -246,12 +259,12 @@ class SG_Utilisateur extends SG_Document {
 	}
 
 	/**
-	* Compare à un autre utilisateur
-	*
-	* @param quelquechose $pUtilisateur autre utilisateur
-	*
-	* @return SG_VraiFaux identiques ?
-	*/
+	 * Compare à un autre utilisateur
+	 *
+	 * @param string|SG_Texte|SG_Formule|SG_Utilisateur $pUtilisateur autre utilisateur
+	 *
+	 * @return SG_VraiFaux identiques ?
+	 */
 	public function Egale($pUtilisateur= '') {
 		$tmpUtilisateur = new SG_Utilisateur($pUtilisateur);
 		$autre_utilisateur = $tmpUtilisateur -> getUUID();
@@ -260,29 +273,28 @@ class SG_Utilisateur extends SG_Document {
 		if ($autre_utilisateur === $this -> getUUID()) {
 			$tmpBool = true;
 		}
-
-		$ret = new SG_VraiFaux($tmpBool);
-		return $ret;
+		return new SG_VraiFaux($tmpBool);
 	}
 
-	/** 1.3.4 return ; 2.1 'D' majuscule, pas enregistrer
-	* Définition du mot de passe pour l'utilisateur
-	*
-	* @param string $pMotDePasse nouveau mot de passe
-	*/
+	/**
+	 * Définition du mot de passe pour l'utilisateur
+	 * @version 2.1 'D' majuscule, pas enregistrer
+	 * @param string $pMotDePasse nouveau mot de passe
+	 * @return SG_Utilisateur
+	 */
 	public function DefinirMotDePasse($pMotDePasse = '') {
 		$hash = SG_MotDePasse::chiffrerMotDePasse(SG_Texte::getTexte($pMotDePasse));
 		$this -> setValeur('@MotDePasse', $hash);
 		return $this;
 	}
 
-	/** 1.3.2 traite si tout vide
-	* Test du mot de passe pour l'utilisateur
-	*
-	* @param string $pMotDePasse mot de passe proposé
-	*
-	* @return SG_VraiFaux mot de passe accepté
-	*/
+	/**
+	 * Test du mot de passe pour l'utilisateur
+	 * @version 1.3.2 traite si tout vide
+	 * @param string $pMotDePasse mot de passe proposé
+	 *
+	 * @return SG_VraiFaux mot de passe accepté
+	 */
 	public function VerifierMotDePasse($pMotDePasse = '') {
 		$reference = $this -> getValeur('@MotDePasse', '');
 		if ($reference === '' and $pMotDePasse === '') {
@@ -294,11 +306,12 @@ class SG_Utilisateur extends SG_Document {
 		return $ret;
 	}
 
-	/** 1.0.2 ; 2.1 MOP ; 2.3 foreach
-	* Liste des modèles d'opérations disponibles pour l'utilisateur
-	*
-	* @return SG_Collection liste de modèles d'opérations
-	*/
+	/**
+	 * Liste des modèles d'opérations disponibles pour l'utilisateur
+	 * @since 1.0.2
+	 * @version 2.3 foreach
+	 * @return SG_Collection liste de modèles d'opérations
+	 */
 	public function ModelesOperations() {
 		$identifiantCompletUtilisateur = $this -> getUUID();
 		$codeCache = 'MOP(' . $this -> identifiant . ')';
@@ -308,21 +321,26 @@ class SG_Utilisateur extends SG_Document {
 			$jsSelection  = "function(doc) {if ((doc['@Type']==='@Profil')&&(doc['@Utilisateurs'].indexOf('" . $identifiantCompletUtilisateur . "')!==-1)){";
 			$jsSelection .= "for (var i in doc['@ModelesOperations']){emit(null,doc['@ModelesOperations'][i]);}}}";
 			$vue = new SG_Vue('', SG_Dictionnaire::CODEBASE, $jsSelection, true);
-			$collectionCodesModelesOperations = $vue -> ChercherValeurs() -> Unique();
-			$mesModelesOperations = new SG_Collection();
-			foreach ($collectionCodesModelesOperations -> elements as $codeModeleOperation) {
-				$modeleOperation = new SG_ModeleOperation($codeModeleOperation);
-				$mesModelesOperations -> Ajouter($modeleOperation);
+			$v = $vue -> ChercherValeurs();
+			if (getTypeSG($v) === '@Erreur') {
+				$ret = $v;
+			} else {
+				$collectionCodesModelesOperations = $v -> Unique();
+				$mesModelesOperations = new SG_Collection();
+				foreach ($collectionCodesModelesOperations -> elements as $codeModeleOperation) {
+					$modeleOperation = new SG_ModeleOperation($codeModeleOperation);
+					$mesModelesOperations -> Ajouter($modeleOperation);
+				}
+				$ret = $mesModelesOperations;
+				SG_Cache::mettreEnCache($codeCache, $mesModelesOperations);
 			}
-			$ret = $mesModelesOperations;
-			SG_Cache::mettreEnCache($codeCache, $mesModelesOperations);
 		}
 		return $ret;
 	}
 
-	/** 1.1 initialisé dans -> admin
+	/**
 	 * Determine si l'utilisateur est administrateur SynerGaïa
-	 *
+	 * @version 1.1 initialisé dans -> admin
 	 * @return SG_VraiFaux administrateur
 	 * @formula : .Profils.@Contient(@Profil("ProfilAdministrateur"))
 	 */
@@ -334,9 +352,9 @@ class SG_Utilisateur extends SG_Document {
 		return $this -> admin;
 	}
 
-	/** 1.0.7
+	/**
 	 * Renvoie le jeton de l'utilisateur, si l'utilisateur en cours est celui demandé (ou s'il est admin)
-	 *
+	 * @since 1.0.7
 	 * @return SG_Texte jeton utilisateur
 	 */
 	public function Jeton() {
@@ -348,8 +366,11 @@ class SG_Utilisateur extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.0	 * 
+
+	/**
 	 * VerifierJeton : retourne True ou False selon que le jeton en paramèetre est celui de l'utiliisateur connecté
+	 * @since 1.0
+	 * @param string $pJeton  
 	 */
 	public function VerifierJeton($pJeton = '') {
 		$ret = false;
@@ -359,8 +380,10 @@ class SG_Utilisateur extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.0.6
+
+	/**
 	 * EstAnonyme : @Vrai ou Faux selon que l'utilisateur est 'anonyme' ou non
+	 * @since  1.0.6
 	 * @return @VraiFaux 
 	 */
 	 function EstAnonyme() {
@@ -370,43 +393,56 @@ class SG_Utilisateur extends SG_Document {
 		 }
 		 return $ret;
 	 }
-	 /** 1.1
+
+	/**
 	 * corrige le code document comme identifiant si nécessaire (en principe uniquement à la création !)
+	 * éventuellement, si le document est le principal, il faut penser à modifier aussi la référence du principal
+	 * @since 1.1
+	 * @return boolean true
 	 */
-	 function preEnregistrer() {
-		 if (isset($this -> doc)) {
-			 if($this-> getValeur('_id', '') === '') {
-				 $this->setValeur('_id', $this -> getValeur('@Identifiant'));
-			 }
-			 if($this-> getValeur('_rev', '') === '') {
-				 // nouveau : préparer les identifiants
-				 $this->setValeur('_id', $this -> getValeur('@Identifiant'));
-				 $this->identifiant = $this -> getValeur('@Identifiant');
-				 $this -> doc -> revision = '1-0123465789';
-				 $this-> doc -> proprietes['_rev'] = $this -> doc -> revision;
-			 }
-			 if ($this -> doc -> codeDocument !== $this -> identifiant and $this -> identifiant !== '') {
-				 $this -> doc -> codeDocument = $this -> identifiant;
-			 }
-		 }
-		 unset($_SESSION['users'][$this -> identifiant]);
-		 return true;
-	 }
-	/** 2.1. ajout
-	* @formula : .@Afficher(.@Identifiant,.Nom,.Prenom,.Email,.@Jeton)
-	**/
+	function preEnregistrer() {
+		if (isset($this -> doc)) {
+			if($this-> getValeur('_id', '') === '') {
+				$this->setValeur('_id', $this -> getValeur('@Identifiant'));
+			}
+			if($this-> getValeur('_rev', '') === '') {
+				// nouveau : préparer les identifiants
+				$this->setValeur('_id', $this -> getValeur('@Identifiant'));
+				$this->identifiant = $this -> getValeur('@Identifiant');
+				$this -> doc -> revision = '1-0123465789';
+				$this-> doc -> proprietes['_rev'] = $this -> doc -> revision;
+			}
+			if ($this -> doc -> codeDocument !== $this -> identifiant and $this -> identifiant !== '') {
+				$this -> doc -> codeDocument = $this -> identifiant;
+			}
+		}
+		// si l'utilisateur est le principal, changer la référence du principal
+		unset($_SESSION['users'][$this -> identifiant]);
+		return true;
+	}
+
+	/**
+	 * Affiche un utilisateur
+	 * @since  2.1. ajout
+	 * @param any liste de paramètres
+	 * @formula : .@Afficher(.@Identifiant,.Nom,.Prenom,.Email,.@Jeton)
+	 **/
 	function Afficher() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
-			$ret = parent::Afficher('@Identifiant','Nom','Prenom','Email','@Jeton');
+			$ret = parent::Afficher('@Identifiant','Nom','Prenom','Email','@Jeton','@Infos');
 		} else {
 			$ret = call_user_func_array(array('SG_Document', 'Afficher'), $args);
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* @formula : .@Modifier(.@Identifiant,.Nom,.Prenom,.Email,.@Raccourcis,.@MotDePasse)
-	**/
+
+	/**
+	 * Modifier
+	 * @since 2.1 ajout
+	 * @param any liste de paramètres
+	 * @formula : .@Modifier(.@Identifiant,.Nom,.Prenom,.Email,.@Raccourcis,.@MotDePasse)
+	 **/
 	function Modifier() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
@@ -416,23 +452,31 @@ class SG_Utilisateur extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Recrée un clone de l'utilisateur avec le nouvel identifiant et supprime l'ancien
-	**/
+
+	/**
+	 * Recrée un clone de l'utilisateur avec le nouvel identifiant et supprime l'ancien
+	 * @since 2.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pNouveau
+	 * @return SG_Utilisateur : retourne le nouvel utilisateur
+	 */
 	function ChangerIdentifiant($pNouveau = '') {
-		$ret = new SG_Erreur('Changement d\'identifiant non fait');
+		$ret = new SG_Erreur('0218');
 		$nouveau = SG_Texte::getTexte($pNouveau);
 		if ($nouveau === '') {
 			$nouveau = $this -> getValeur('@Identifiant');
 		}
 		if ($nouveau !== $this -> doc -> codeDocument) {
-			$ret = new SG_Utilisateur($nouveau, $this -> doc -> proprietes);
+			$ret = $this -> Cloner();
+			$ret -> mettreValeur('@Identifiant', $nouveau);
+			$ret -> mettreValeur('@Type','@Utilisateur');
 			$ok = $ret -> Enregistrer();
 			if ($ok == true) {
 				$this -> Supprimer();
 			}
 		}
+		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Utilisateur_trait;
 }
