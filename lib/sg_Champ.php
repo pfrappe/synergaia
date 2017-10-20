@@ -1,61 +1,67 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
+<?php
+/** fichier contenant la gestion d'un objet SG_Champ */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * Classe SynerGaia de traitement des champs des documents
+ * @since 0.0
+ * @version 2.6
  */
 class SG_Champ extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Champ' */
 	const TYPESG = '@Champ';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Préfixe des noms HTML des champs
+	/** string Préfixe des noms HTML des champs */
 	const PREFIXE_HTML = 'sg_field_';
 
-	// Référence du champ
+	/** string Référence du champ */
 	public $refChamp;
 
-	// CodeBase associé
+	/** string CodeBase associé */
 	public $codeBase;
 
-	// CodeDocument associé
+	/** string CodeDocument associé */
 	public $codeDocument;
 
-	// CodeChamp associé
+	/** string CodeChamp associé */
 	public $codeChamp;
 
-	// Le champ est-il un lien
+	/** string Le champ est-il un lien */
 	public $typeLien = '';
 
-	// Objet @Document associé dans lequel se trouve le champ. 
+	/** SG_Document Objet @Document associé dans lequel se trouve le champ. */
 	public $document;
 
-	// typeSG du document
+	/** string typeSG du document */
 	public $typeDoc;
 	
-	// Type d'objet du document associé
+	/** string Type d'objet du document associé */
 	public $typeObjet;
-	// Modele (type SG) de la valeur du champ
+	/** string Modele (type SG) de la valeur du champ */
 	public $modele;
 
-	// Valeur brute du champ
+	/** any Valeur brute du champ */
 	public $valeur;
 
-	// Contenu associé
+	/** any Contenu associé */
 	public $contenu;
 
-	// Libellé associé
+	/** string Libellé associé */
 	public $libelle;
 
-	// Champ multiple ?
+	/** boolean Champ multiple ? */
 	public $multiple = false;
 
-	/** 2.1 
-	* 1.1 : uuid ; 1.3.0 ; 1.3.2 correction si $pRefChamp en 1 seul morceau ; 2.0 parm3, ajout modele (= typeObjet), typeDoc
-	* Construction de l'objet
-	*
-	* @param string $pRefChamp référence complète du champ (base/doc/champ) ou (doc/champ) ou (champ)
-	* @param @indéfini $pObjet : objet @Document ou système : si fourni, on prend directement les informations de ce document (sans lecture de la base)
-	* @param string $pModele : modele du champ (typeobjet.champ)
-	*/
+	/**
+	 * Construction de l'objet
+	 * @since 0.0
+	 * @version 2.6 $valinit via méthode xxx_defaut ; foreach au lieu de for ; contrôle si doc (err 0276)
+	 * @param string $pRefChamp référence complète du champ (base/doc/champ) ou (doc/champ) ou (champ)
+	 * @param SG_Objet $pObjet : objet @Document ou système : si fourni, on prend directement les informations de ce document (sans lecture de la base)
+	 * @param string $pModele : modele du champ (typeobjet.champ)
+	 */
 	public function __construct($pRefChamp = '', $pObjet = null, $pModele = '') {
 		$refChamp = SG_Texte::getTexte($pRefChamp);
 		$this -> refChamp = $refChamp;
@@ -98,12 +104,13 @@ class SG_Champ extends SG_Objet {
 				$this -> refChamp = $this -> codeBase . '/' . $this -> codeDocument . '/' . $this -> codeChamp;
 			}
 
-			// Cherche le type d'objet du contenant associé
+			// Cherche l'objet du contenant associé
 			if($pObjet !== null) {
 				$this -> document = $pObjet;
 			} else {
-				$this -> document = $_SESSION['@SynerGaia']->getObjet($codeBase . '/' . $codeDocument);
+				$this -> document = $_SESSION['@SynerGaia'] -> getObjet($codeBase . '/' . $codeDocument);
 			}
+
 			// Cherche le modele (type) de contenu du champ, le libellé du champ et s'il peut être multiple
 			$ccs = $this -> codeChampStrict();
 			$this -> typeDoc = getTypeSG($this -> document);
@@ -122,9 +129,24 @@ class SG_Champ extends SG_Objet {
 					$this -> typeObjet = $this -> document -> proprietes[$ccs]['modele'];
 				}
 			}
+
 			// Cherche la valeur du champ;
-			$valeurChamp = $this -> document -> getValeur($codeChamp,'');
-			$this -> valeur = $valeurChamp;
+			$vi = $codeChamp . '_defaut';
+			if (is_null($this -> document)) {
+				SG_Pilote::OperationEnCours() -> STOP('0276', $this -> codeChamp);
+			} else {
+				if (method_exists($this -> document, $vi)) {
+					$valinit = $this -> document -> $vi();
+				} else {
+					$valinit = '';
+				}
+				if ($this -> document instanceof SG_Rien) {
+					$valeurChamp = '';
+				} else {
+					$valeurChamp = $this -> document -> getValeur($codeChamp, $valinit);
+				}
+				$this -> valeur = $valeurChamp;
+			}
 			// Crée le contenu
 			// - Si on a un champ multiple
 			if ($this -> multiple === true) {
@@ -139,19 +161,19 @@ class SG_Champ extends SG_Objet {
 						$this -> contenu -> UUId = $this -> refChamp;
 						// Pour chaque élément
 						$nbValeurs = sizeof($this -> valeur);
-						for ($i = 0; $i < $nbValeurs; $i++) {
+						foreach ($this -> valeur as $key => $elt) { //$i = 0; $i < $nbValeurs; $i++) {
 							$tmpElement = null;
 							// Si on a un modèle SynerGaïa
 							if (SG_Dictionnaire::isObjetSysteme($this -> typeObjet)) {
 								// On le crée directement
 								$codeObjet = SG_Dictionnaire::getClasseObjet($this -> typeObjet);
-								$tmpElement = new $codeObjet($this -> valeur[$i]);
+								$tmpElement = new $codeObjet($elt);
 							} else {
 								// Sinon on cherche l'objet associé
 								if ($valeurChamp !== '') {
 									$codeBase = SG_Dictionnaire::getCodeBase($this -> typeObjet);
 									if ($codeBase !== '') {
-										$tmpElement = new SG_Document($this -> valeur[$i]);
+										$tmpElement = new SG_Document($elt);
 									} else {
 										$tmpElement = new SG_Texte('');
 									}
@@ -160,7 +182,7 @@ class SG_Champ extends SG_Objet {
 								}
 							}
 							$tmpElement -> contenant = $this;
-							$tmpElement -> UUId = $this -> contenu -> UUId . '.' . $i;
+							$tmpElement -> UUId = $this -> contenu -> UUId . '.' . $key;
 							$this -> contenu -> Ajouter($tmpElement);
 						}
 					}
@@ -168,33 +190,46 @@ class SG_Champ extends SG_Objet {
 					$this -> initContenu();
 				}
 			} else {
+				// pas de champ multiple
 				$this -> initContenu();
 			}
 		}
 	}
-	/** 1.1 ajout ; 1.3.4 test erreur ; 2.3 test contenu
-	* initialise les propriétés 'contenu'
-	* Si c'est un objet système SynerGaïa, on crée cet objet directement à partir de la classe SG_xxx
-	* Sinon, on cherche la classe SynerGaïa support que l'on crée, et on ajoute une propriété @Type
-	* Dans le cas d'un document, 
-	*/
+
+	/**
+	 * initialise les propriétés 'contenu'
+	 * Si c'est un objet système SynerGaïa, on crée cet objet directement à partir de la classe SG_xxx
+	 * Sinon, on cherche la classe SynerGaïa support que l'on crée, et on ajoute une propriété @Type
+	 * Dans le cas d'un document, 
+	 * Si le contenu calculé est null, on met une erreur 0096
+	 * @since 1.1 ajout
+	 * @version 2.3 test contenu
+	 */
 	function initContenu() {
 		$this -> contenu = $this -> document -> getValeurPropriete($this -> codeChamp, $this -> valeur, $this -> typeObjet);
 		if(! is_null($this -> contenu)) {
-			if (! is_object($this -> contenu)) $this -> contenu = new stdClass();
+			if (! is_object($this -> contenu)) {
+				$this -> contenu = new stdClass();
+			}
 			$this -> contenu -> contenant = $this;
 			$this -> contenu -> UUId = $this -> refChamp;
 		} else {
 			$this -> contenu = new SG_Erreur('0096',$this -> codeChamp);
 		}
-	} 
+	}
+
 	/**
 	 * Conversion en chaine de caractères
-	 *
+	 * @since 2.4 récup erreur
 	 * @return string texte
 	 */
 	function toString() {
-		return $this -> contenu -> toString();
+		if (is_object($this -> contenu)) {
+			$ret = $this -> contenu -> toString();
+		} else {
+			$ret = $this -> contenu;
+		}
+		return $ret;
 	}
 
 	/**
@@ -205,9 +240,25 @@ class SG_Champ extends SG_Objet {
 	function toHTML() {
 		return $this -> contenu -> toHTML();
 	}
-	// 1.1 ajout
+
+	/**
+	 * calcule la section html contenant le titre 
+	 * @since 1.1 ajout
+	 * @version 2.5 title
+	 * @param string $sep séparateur derrière le libellé du champ
+	 * @return string html
+	 **/
 	function titreChampHTML ($sep = '') {
-		return '<span class="sg-titrechamp">' . $this -> libelle . $sep . ' </span>';
+		$ret = '';
+		if (! (is_null($this -> libelle) or $this -> libelle === '')) {
+			if (isset($_SESSION['admin']) and $_SESSION['admin'] === true) {
+				$title = 'title="' . $this -> codeChamp .'"';
+			} else {
+				$title = '';
+			}
+			$ret = '<span class="sg-titrechamp" ' . $title . '>' . $this -> libelle . $sep . ' </span>';
+		}
+		return $ret;
 	}
 
 	/** 
@@ -231,9 +282,11 @@ class SG_Champ extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7 ; 1.3.1 prise en compte de la traduction via les valeurs possibles ("texte en clair | code")
+	/**
 	 * Affichage du champ
-	 *
+	 * prise en compte de la traduction via les valeurs possibles ("texte en clair | code")
+	 * @since 1.0.7 ; 
+	 * @version 2.5 champ_possibles
 	 * @return string contenu HTML affichable
 	 */
 	public function Afficher() {
@@ -244,11 +297,20 @@ class SG_Champ extends SG_Objet {
 			}
 		} else {
 			$contenu = $this -> contenu;
-			$formuleValeursPossibles = SG_Dictionnaire::getFormuleValeursPossibles($this -> typeDoc . '.' . $this -> codeChamp);
-			if ($formuleValeursPossibles !== '') {
-				// traduction éventuelle des valeurs brutes
-				$tmpFormule = new SG_Formule($formuleValeursPossibles, $this -> document);
-				$listeElements = $tmpFormule -> calculer();
+			// recherche des valeurs possibles éventuelles pour la traduction
+			$listeElements = null;
+			if (method_exists($this -> document, $this -> codeChamp . '_possibles')) { // voir si une méthode "nomchamp_possibles" existe dans l'objet
+				$listeElements = call_user_func_array(array($this -> document, $this -> codeChamp . '_possibles') , array());
+			} else {
+				// sinon voir une formule qui aurait "échappé" à la compilation... (ne devrait pas exister !)
+				$formuleValeursPossibles = SG_Dictionnaire::getFormuleValeursPossibles($this -> typeDoc . '.' . $this -> codeChamp);
+				if ($formuleValeursPossibles !== '') {
+					// traduction éventuelle des valeurs brutes
+					$tmpFormule = new SG_Formule($formuleValeursPossibles, $this -> document);
+					$listeElements = $tmpFormule -> calculer();
+				}
+			}
+			if ($listeElements !== null) {
 				if (getTypeSG($listeElements) === '@Collection') {
 					foreach($listeElements -> elements as $elt) {
 						if (is_object($elt)) {
@@ -264,7 +326,7 @@ class SG_Champ extends SG_Objet {
 					}
 				}
 			}
-			$texte = $contenu -> afficherChamp($this -> codeChamp);
+			$texte = $contenu -> afficherChamp(); // 2.5 $this -> codeChamp);
 			if (is_object($texte)) {
 				$texte = $texte -> toString();
 			}
@@ -275,26 +337,38 @@ class SG_Champ extends SG_Objet {
 		}
 		return $ret;
 	}
-	// 2.1 appel txtModifier
+
+	/**
+	 * Préparer le texte HTML pour modifier un champ de document
+	 * @version 2.1 appel txtModifier ; 
+	 * @version 2.5 variable 'saisie'
+	 * @param SG_Formule $formuleValeursPossibles formule éventuelle donnant la liste des valeurs possibles pour le champ
+	 * @return SG_HTML
+	 */
 	function Modifier($formuleValeursPossibles = null) {
-		return new SG_HTML($this -> txtModifier($formuleValeursPossibles));
+		$ret = new SG_HTML($this -> txtModifier($formuleValeursPossibles));
+		$ret -> saisie = true;
+		return $ret;
 	}
 
-	/** 1.1 paramètre, natcasesort ; 1.3.1 correction sur calcul $i ; 2.0 affichage des valeurs sélectées ; 2.1 test erreur, => txtModifier
-	* Modification du champ
-	* @param (SG_Collection) formuleValeursPossibles
-	* @return (string) contenu HTML affichable / modifiable
-	*/
+	/**
+	 * Modification du champ
+	 * @since 1.1
+	 * @version 2.6 champs multiple Date, DateHeure, Heure, Nombre, Texte, ObjetComposite, Periode
+	 * @param SG_Collection $formuleValeursPossibles
+	 * @return string code HTML affichable / modifiable
+	 * @uses SynerGaia.changeSelected()
+	 */
 	function txtModifier($formuleValeursPossibles = null) {
 		$ret = '';
 		// Calcule le code du champ HTML
 		$codeChampHTML = $this -> monCodeChampHTML();
-		$idChamp = SG_Champ::idRandom();
+		$idChamp = SG_SynerGaia::idRandom();
 
 		// Détermine la liste des valeurs proposées
 		$listeElements = null;
 		// on privilégie la formule de valeurs possibles
-		if ($formuleValeursPossibles !== null) {
+		if ($formuleValeursPossibles !== null and $formuleValeursPossibles !== '') {
 			$listeElements = $formuleValeursPossibles -> calculer();
 		} else {
 			$methode = $this -> codeChamp . '_possibles';
@@ -313,8 +387,13 @@ class SG_Champ extends SG_Objet {
 						$tmpFormule = new SG_Formule($formuleValeursPossibles, $this -> document);
 						$listeElements = $tmpFormule -> calculer();
 					} else {
-						// sinon si c'est un lien et qu'on n'a pas une méthode spécifique, on récupère la liste des documents
-						if ($this -> typeLien !== '' and ! method_exists($this -> contenu, 'modifierChamp')) {
+						/**
+						 * sinon si c'est un lien et qu'on n'a pas une méthode spécifique modifierChamp
+						 * (sauf SG_Collection car à partir de la version 2.6 elle a une méthode modifierChamp...),
+						 * on récupère la liste des documents
+						 */
+						if ($this -> typeLien !== '' and 
+						(! method_exists($this -> contenu, 'modifierChamp') or getTypeSG($this -> contenu) === SG_Collection::TYPESG)) {
 							// code de la base du lien
 							$codeBase = SG_Dictionnaire::getCodeBase($this -> typeObjet);
 							// Calcule la liste des documents du modèle et trie le tableau
@@ -329,8 +408,11 @@ class SG_Champ extends SG_Objet {
 		// Si on a un champ multiple
 		$js = ' onclick="SynerGaia.changeSelected(event, \'' . $idChamp . '\', \'f\');"';
 		if ($this -> multiple === true) {
-			if ($this -> typeObjet === '@Date') {
-				$contenu = SG_Date::modifierChampMultiple($codeChampHTML, $listeElements);
+			if (($this -> typeObjet === SG_Texte::TYPESG and $listeElements == null)
+			or in_array($this -> typeObjet, array('@Date', '@DateHeure', '@Heure', '@Nombre', '@ObjetComposite', '@Periode'))) {
+				$coll = new SG_Collection($this -> valeur);
+				$coll -> type = SG_Dictionnaire::getClasseObjet($this -> typeObjet);
+				$contenu = $coll -> modifierChamp($codeChampHTML);
 			} elseif ($this -> typeObjet === '@Categorie') {
 				$champ = new SG_Categorie();
 				$champ -> multiple = true;
@@ -438,27 +520,33 @@ class SG_Champ extends SG_Objet {
 		$ret = $this -> titreChampHTML('') . '<div id="' . $idChamp .'">' . SG_Texte::getTexte($contenu) . '</div>';
 		return $ret;
 	}
-	/** 1.0.7 ; 1.3.0 ; 2.2 test si setChamp ; return doc
+
+	/**
 	 * Modification de la valeur du champ
-	 *
-	 * @param indéfini $pValeur nouvelle valeur
-	 * @param boolean $save forcer l'enregistrement du document
-	 *
-	 * @return : document sauf si erreur
+	 * @since 1.0.7 
+	 * @version 2.5 : parm $prop
+	 * @param any $pValeur nouvelle valeur
+	 * @param boolean $save forcer l'enregistrement du document (sauf si propriété temporaire)
+	 * @param boolean $prop : indique s'il s'agit d'une vraie propriété du document ou une variable temporaire (par utilisé si setChamp)
+	 * @return SG_Document document sauf si erreur
 	 */
-	public function Definir($pValeur = '', $save = false) {
+	public function Definir($pValeur = '', $save = false, $prop = true) {
 		$ret = $this -> document;
-		// Si on a un mot de passe
+		// Si on a un mot de passe ou une méthode spécifique de mise à jour
 		$classe = SG_Dictionnaire::getClasseObjet($this -> typeObjet);
 		if (method_exists($classe, 'setChamp')) {
 			$classe::setChamp($this -> document, $this -> codeChamp, $pValeur);
 		} else {
-			$r = $this -> document -> setValeur($this -> codeChamp, $pValeur);
-			if (getTypeSG($r) === '@Erreur') {
-				$ret = $r;
+			if ($prop) {
+				$r = $this -> document -> setValeur($this -> codeChamp, $pValeur);	
+				if (getTypeSG($r) === '@Erreur') {
+					$ret = $r;
+				}
+			} else {
+				$this -> document -> proprietes[$this -> codeChamp] = $pValeur;
 			}
 		}
-		if ($save) {
+		if ($save and $prop) {
 			$r = $this -> document -> Enregistrer();
 			if (getTypeSG($r) === '@Erreur') {
 				$ret = $r;
@@ -467,12 +555,13 @@ class SG_Champ extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 parm type ; 1.3.4 plus @Enregistrer (fait dans @Navigation.traitementParametres_HTTP_FILES)
-	* Modification de la valeur du champ de type "Fichier"
-	*
-	* @param array $pFichier nouveau fichier (issu de $_FILES)
-	* @return
-	*/
+	/**
+	 * Modification de la valeur du champ de type "Fichier"
+	 * @since 1.0.7 
+	 * @version 1.3.4 plus @Enregistrer (fait dans @Navigation.traitementParametres_HTTP_FILES)
+	 * @param array $pFichier nouveau fichier (issu de $_FILES)
+	 * @return SG_VraiFaux
+	 */
 	public function DefinirFichier($pFichier = '') {
 		$ret = null;
 		if ($pFichier !== '') {
@@ -484,9 +573,12 @@ class SG_Champ extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7
-	* extractCodeDocument : récupère la partie code de la fin d'un lien document
-	*/
+	/**
+	 * extractCodeDocument : récupère la partie code de la fin d'un lien document
+	 * @since 1.0.7
+	 * @param string $pUUID
+	 * @return string
+	 */
 	static function extractCodeDocument ($pUUID = '') {
 		$ret = $pUUID;
 		$i = strpos($pUUID, '/');
@@ -495,44 +587,64 @@ class SG_Champ extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.0.7
+
+	/**
 	 * idIdentiques : recherche si les liens pointent sur le même objet
-	*/
+	 * @since 1.0.7
+	 * @param string $pUid1
+	 * @param string $pUid2
+	 * @return boolean 
+	 */
 	static function idIdentiques ($pUid1, $pUid2) {
 		return SG_Champ::extractCodeDocument($pUid1) === SG_Champ::extractCodeDocument($pUid2);
 	}
-	/** 1.1
+
+	/**
+	 * Code un code de champ pour l'html
+	 * @since 1.1
+	 * @param string $refChamp référence interne du champ
+	 * @return string
 	*/
 	static function codeChampHTML($refChamp) {
 		return self::PREFIXE_HTML . self::nomChampEncode($refChamp);
 	}
-	/** 1.1
+
+	/** Code mon propre code de champ pour l'html
+	 * @since 1.1
+	 * @return string
 	 */
 	function monCodeChampHTML() {
 		return self::codeChampHTML($this -> refChamp);
 	}
-	/** 1.1 ajout
-	*/
+	
+	/**
+	 * Code de champ sans le code de document
+	 * @since 1.1 ajout
+	 * @return array
+	 */
 	function codeChampStrict() {
 		$noms = explode('.', $this -> codeChamp);
 		return $noms[sizeof($noms) - 1];
 	}
-	/** 1.1 ajout ; 1.3.1 estVide => isEmpty pour éviter conflit
-	*/
+
+	/**
+	 * indique si ce champ est vide
+	 * @since 1.1
+	 * @version 1.3.1 estVide => isEmpty pour éviter conflit
+	 * @return boolean
+	 */
 	function isEmpty() {
 		return $this -> contenu -> EstVide() -> estVrai();
 	}
-	/** 1.2 ajout
-	*/
+
+	/**
+	 * retourne la valeur interne du champ
+	 * @since 1.2 ajout
+	 * @return SG_Texte
+	 */
 	function ValeurInterne() {
 		$ret = new SG_Texte($this -> valeur);
 		return $ret;
-	}
-	/** 1.3.2 ajout
-	* donne un id aléatoire
-	**/
-	static function idRandom() {
-		return substr(sha1(mt_rand()), 0, 8);
 	}
 }
 ?>
