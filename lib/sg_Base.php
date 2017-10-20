@@ -1,33 +1,43 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* SG_Base : Classe de gestion d'une base de données logique
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** fichier de gestion d'une base logique SynerGaïa */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+ 
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Base_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Base_trait.php';
 } else {
+	/** trait vide par défaut pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Base_trait{};
 }
+
+/**
+ * SG_Base : Classe de gestion d'une base de données logique
+ * @version 2.6
+ */
 class SG_Base extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Base' */
 	const TYPESG = '@Base';
-	public $typeSG = self::TYPESG;
 
-	// Code de la base par défaut
+	/** string Code de la base par défaut */
 	const CODEBASE = 'synergaia';
-
-	// Base physique associée
+	
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+	
+	/** SG_BaseCouchDB|SG_BaseDomino Base physique associée */
 	public $base;
 	
-	// Code de base physique associée
+	/** string Code de base physique associée */
 	public $codeBase;
 	
-	//1.3.4 mode d'accès
+	/** string mode d'accès d'une base sécurisée
+	 * @since 1.3.4
+	 */
 	public $acces = '';
 
-	/** 1.1 Domino et DictionnaireBase ; 1.3.4 maj -> acces
+	/**
 	 * Construction de l'objet
-	 *
+	 * @since 0.0
+	 * @version 1.3.4 maj -> acces
 	 * @param string $pCodeBase code de la base
 	 * @param boolean $pCreerSiInexistante creer la base si besoin
 	 */
@@ -41,10 +51,7 @@ class SG_Base extends SG_Objet {
 			$this -> base = new SG_BaseCouchDB($pCodeBase, $pCreerSiInexistante);
 			$this -> codeBase = $this -> base -> codeBase;
 			$this -> acces = 'couchdb';
-		} elseif ($acces === 'domino') {			
-		//	if (!isset($_SESSION['@SynerGaïa'] -> domino)) {
-		//		$_SESSION['@SynerGaïa'] -> domino = new SG_DominoDB();
-		//	}
+		} elseif ($acces === 'domino') {
 			$this -> codeBase = $docbase -> getValeur('@Code');
 			$this -> base = new SG_BaseDominoDB($docbase -> getValeur('@AdresseIP'), $docbase -> getValeur('@Administrateur'), $docbase -> getValeur('@MotDePasse'));		
 			$this -> acces = 'domino';
@@ -52,8 +59,10 @@ class SG_Base extends SG_Objet {
 			$this -> erreurs[] = new SG_Erreur('0027', $acces . '=>' . $pCodeBase);
 		}
 	}
-	/** 1.0.6
+
+	/**
 	 * Retourne une chaine pour affichage (code de la base)
+	 * @since 1.0.6
 	 * @return string code de la base
 	 */
 	function toString() {
@@ -90,24 +99,21 @@ class SG_Base extends SG_Objet {
 		return $sgDoc;
 	}
 
-	/** 1.06 ajout ; 2.0 libelle 0109
+	/**
 	 * Sauvegarder le contenu de la base dans un fichier proposé en lien
-	 *
-	 * @return @Texte Nom du fchier de sauvegarde ou @Erreur message d'erreur
+	 * @since 1.06 ajout
+	 * @version 2.0 libelle 0109
+	 * @param string|SG_Texte|SG_Formule $pDir
+	 * @param string|SG_Texte|SG_Formule $pPrefixe
+	 * @return SG_Texte|SG_Erreur Nom du fchier de sauvegarde ou message d'erreur
 	 */
-	function Sauvegarder() {
+	function Sauvegarder($pDir = '', $pPrefixe = '') {
 		$ret = '';
-
-		// Nom de fichier temporaire
-		$nomFichier = 'synergaia_save_' . $this -> base -> codeBase.'_'.date('Y_m_d');
-		$tmpFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $nomFichier . '.json';
-
-		$sauvegardeOK = $this -> base -> Sauvegarder($tmpFile);
-
-		if ($sauvegardeOK -> estVrai() === true) {
-			$ret = new SG_Texte($tmpFile);
-		} else {
-			$ret = new SG_Erreur('0109', $nomFichier);
+		$ret = $this -> base -> Sauvegarder($pDir, $pPrefixe);
+		if(is_array($ret)) {
+			$collec = new SG_Collection();
+			$collec -> elements = $ret;
+			$ret = $collec;
 		}
 		return $ret;
 	}
@@ -115,21 +121,18 @@ class SG_Base extends SG_Objet {
 	/**
 	* Sauvegarder le contenu de la base dans un fichier proposé en lien
 	* 
-	* @param indefini nom du fichier à restaurer
-	*
+	* @param indefini $nomFichier nom du fichier à restaurer
 	* @return @Texte si ok ou @Erreur + message si problème
 	*/
-	function Restaurer($nomFichier='') {
+	function Restaurer($nomFichier = '') {
 		$ret = '';
 		$type = getTypeSG($nomFichier);
 		$fichier = $nomFichier;
 		if ($type !== 'string') {
 			if ($type === '@Formule') {
 				$fichier = $nomFichier -> calculer();
-				$type = getTypeSG($fichier);
 			}
-			$fichier = new SG_Texte($fichier);
-			$fichier = $fichier -> toString();
+			$fichier = SG_Texte::getTexte($fichier);
 		}
 		$restaureOK = $this -> base -> Restaurer($fichier);
 		if (getTypeSG($restaureOK) === 'string') {
@@ -137,28 +140,64 @@ class SG_Base extends SG_Objet {
 		} else {
 			$ret = $restaureOK;
 		}
-
 		return $ret;
 	}
-	/** 1.1 : ajout
-	* Compacte la base
-	*/
+
+	/** 
+	 * Compacte la base
+	 * @since 1.1 : ajout
+	 * @return SG_Texte
+	 */
 	public function Compacter() {
 		$ret = new SG_Texte($this -> base -> Compacter());
 		return $ret;
 	}
-	/** 1.3.0 ajout ; 1.3.1 correctif
-	* Chercher selon le filtre, indépendamment du @Type (uniquement couchdb)
-	*/
+
+	/**
+	 * Chercher selon le filtre, indépendamment du @Type (uniquement couchdb)
+	 * Cette recherche permet de créer une collection de tout ou partie des documents d'une base indépendamment d'un @Type
+	 * @since 1.3.0 ajout
+	 * @version 2.6 correction codeBase, codeBaseComplet
+	 * @param SG_Formule $pFiltre filtre sur lma recherche
+	 * @return SG_Collection
+	 */
 	public function Chercher($pFiltre = '') {
 		$ret = new SG_Collection();
-		if (getTypeSG($this -> base) === '@BaseCouchDB') {
+		if (getTypeSG($this -> base) === SG_BaseCouchDB::TYPESG) {
 			$vue = new SG_VueCouchDB();
-			$vue -> code = $this -> base -> codeBaseComplet . '/_all_docs';
+			$vue -> codeBase = $this -> base -> codeBase;
+			$vue -> codeBaseComplet = $this -> base -> codeBaseComplet;
+			$vue -> code = $this -> base -> codeBaseComplet . '/_all_docs/';
 			$ret = $vue -> Contenu('', $pFiltre, true);
 		}
 		return $ret;
 	}
+
+	/**
+	 * collection des infos sur la base
+	 * @since 2.4 ajout
+	 * @return SG_Collection tableau des infos
+	 **/
+	public function Infos() {
+		$ret = $this -> base -> Infos();
+		return $ret;
+	}
+
+	/**
+	 * Effectue la formule sur chaque document de la base
+	 * @since 2.6
+	 * @param SG_Formule $pFormule formule à exécuter sur chaque document
+	 * @return SG_Nombre|SG_Erreur nombre de documents traités ou erreur
+	 */
+	function PourChaque($pFormule = '') {
+		if (! $pFormule instanceof SG_Formule) {
+			$ret = new SG_Erreur('0289');
+		} else {
+			
+		}
+		return $ret;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Base_trait;
 }
