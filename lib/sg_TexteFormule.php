@@ -1,36 +1,48 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.0 (see AUTHORS file)
+<?php
+/** SynerGaia fichier de gestion de l'objet @TexteFormule */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_TexteFormule : Classe de gestion d'un texte de formule SynerGaia
+ * @version 2.0
  */
 class SG_TexteFormule extends SG_Texte {
-	// Type SynerGaia
+	/** string Type SynerGaia '@TexteFormule' */
 	const TYPESG = '@TexteFormule';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	/** 1.2 ajout ; 1.3.1 ajust height, placeholder ; 2.0 parm2
-	* HTML pour la modification du champ
-	* @param string $pRefChamp référence du champ HTML
-	* @param SG_Collection $pValeursPossibles collection des valeurs proposées
-	*
-	* @return string code HTML
-	*/
+	/**
+	 * HTML pour la modification du champ
+	 * 
+	 * @since 1.2 ajout
+	 * @version 2.0 parm2
+	 * @param string $pRefChamp référence du champ HTML
+	 * @param SG_Collection $pValeursPossibles collection des valeurs proposées
+	 *
+	 * @return string code HTML
+	 */
 	function modifierChamp($pRefChamp = '', $pValeursPossibles = NULL) {
-		$ret = '<textarea class="champ_TexteFormule" name="' . $pRefChamp . '"';
+		$ret = '<textarea contenteditable="true" class="sg-formule" name="' . $pRefChamp . '"';
 		$ret.= ' placeholder="Texte de formule SynerGaïa">' . $this -> toString() . '</textarea>';
 		return $ret;
 	}
-	/** 1.3.0 interpretation du javascript ; 1.3.1 ajout ; 1.3.2 Afficher -> afficherChamp(), supp js
-	* Retourne le texte des formules en mode HTML spécifique
-	**/
+
+	/**
+	 * Retourne le texte des formules en mode HTML spécifique
+	 * 
+	 * @version 1.3.2 Afficher -> afficherChamp(), supp js
+	 * @param string $pOption option d'affichage
+	 * @return SG_HTML
+	 */
 	function afficherChamp($pOption = '') {
 		$style = '';
-		$classe = 'champ_TexteFormule';
+		$classe = 'sg-formule';
 		$ret = '';
 		$option = '';
 		// Lit l'option passée
 		if ($pOption !== '') {
-			$tmpOption = new SG_Texte($pOption);
-			$option = $tmpOption -> texte;
+			$option = SG_Texte::getTexte($pOption);
 
 			// Si ":" dans l'option => style sinon classe
 			if (strpos($option, ':') !== false) {
