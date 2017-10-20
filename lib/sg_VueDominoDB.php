@@ -1,30 +1,35 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.1 (see AUTHORS file)
- * 
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @VueDominoDB */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_VueDominoDB : Classe de gestion des vues Domino
- *
+ * @since 1.1
  */
 class SG_VueDominoDB extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@VueDominoDB';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Document "vue" associé
+	/** string Document "vue" associé */
 	public $vue;
 
-	// Code de la vue
+	/** string Code de la vue */
 	public $code;
 
-	// Code de la base
+	/** string Code de la base */
 	public $codeBase;
 
-	// Code complet de la base avec prefixe
+	/** string Code complet de la base avec prefixe */
 	public $codeBaseComplet = '';
 
-	/** 1.1
+	/**
 	* Construction de l'objet
-	*
-	* @param indéfini $pCodeVue code de la vue
+	* 
+	* @since  1.1
+	* @param string|SG_Texte|SG_Formule $pBase
+	* @param string|SG_Texte|SG_Formule $pCodeVue code de la vue
 	*/
 	public function __construct($pBase = '', $pCodeVue = '') {
 		if (!isset($_SESSION['@SynerGaïa'] -> domino)) {
@@ -37,26 +42,49 @@ class SG_VueDominoDB extends SG_Objet {
 			$this -> code = SG_Texte::getTexte($pCodeVue);
 		}
 	}
-	
+
+	/**
+	 * Pas opérationnel
+	 * @since 1.1
+	 * @param string|SG_Texte|SG_Formule $parser
+	 * @param string|SG_Texte|SG_Formule $tag
+	 * @param string|SG_Texte|SG_Formule $attributes
+	 * @return boolean false
+	 */
 	function tagDebut($parser, $tag, $attributes) {
 		return false;
 	}
 
+	/**
+	 * Pas opérationnel
+	 * @since 1.1
+	 * @param string|SG_Texte|SG_Formule $parser
+	 * @param string|SG_Texte|SG_Formule $cdata
+	 * @return boolean false
+	 */
 	function cdata($parser, $cdata) {
 		return false;
 	}
 
+	/**
+	 * Pas opérationnel
+	 * @since 1.1
+	 * @param string|SG_Texte|SG_Formule $parser
+	 * @param string|SG_Texte|SG_Formule $tag
+	 * @return boolean false
+	 */
 	function tagFin($parser, $tag) {
 		return false;
 	}
 
-	/** 1.1
+	/**
 	 * Extrait le contenu de la vue
-	 *
+	 * @since 1.1
 	 * @param string $pCleRecherche clé de recherche
 	 * @param string $pFiltre formule à exécuter immédiatement
-	 * @param boolean $pIncludeDocs permet d'inclure les documents dans la recherche 
-	 *
+	 * @param boolean $pIncludeDocs permet d'inclure les documents dans la recherche
+	 * @param integer|SG_Nombre|SG_Formule $pStart
+	 * @param integer|SG_Nombre|SG_Formule $pCount
 	 * @return SG_Collection des objets SynerGaia lus
 	 */
 	function Contenu($pCleRecherche = '', $pFiltre = '', $pIncludeDocs = false, $pStart = 1, $pCount = 10000) {
@@ -179,23 +207,25 @@ class SG_VueDominoDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1
-	* Cherche les éléments correpondants à une clé dans la vue
-	*
-	* @param string $pCleRecherche clé de recherche
-	*
-	* @return SG_Collection
-	*/
+	/**
+	 * Cherche les éléments correpondants à une clé dans la vue
+	 * 
+	 * @since 1.1
+	 * @param string|SG_Texte|SG_Formule $pCleRecherche clé de recherche
+	 * @return SG_Collection
+	 */
 	function ChercherElements($pCleRecherche = '') {
 		return $this -> Contenu($pCleRecherche);
 	}
-	/** 1.1 source php manual article xml_parse
-	* parse l'xml de la vue dans un tableau associatif
-	*
-	* @param string $pCleRecherche clé de recherche
-	*
-	* @return SG_Collection
-	*/
+
+	/**
+	 * parse l'xml de la vue dans un tableau associatif
+	 * source php manual article xml_parse
+	 * 
+	 * @since 1.1 
+	 * @param string $xml texte à parser
+	 * @return SG_Collection
+	 */
 	function parseToArray($xml) {
 		$xml_array = array();
 		$parser = xml_parser_create('');
