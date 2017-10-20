@@ -1,42 +1,64 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.2 (see AUTHORS file)
-* Classe SynerGaia de gestion du cache
-*
-* Utilise apc si disponible, (2.1) puis memcached si disponible, puis memcache si disponible, sinon utilise le cache php (via variable globale)
-*/
-class SG_Cache {
-	// Type SynerGaia
-	const TYPESG = '@Cache';
-	public $typeSG = self::TYPESG;
+<?php
+/** SYNERGAIA fichier pour le taitement de l'objet @Cache */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
 
-	// Type de cache ; 2.1 memcached
-	const TYPE_PHP = 1;	// Cache "PHP"
-	const TYPE_MEMCACHE = 2; // Cache "MEMCACHE"
-	const TYPE_MEMCACHED = 4; // Cache "MEMCACHE"
-	const TYPE_APC = 3;// Cache "APC"
-	static $typeCache = 0;
-	
-	// Suffixe du type de donnée
+/**
+ * Classe SynerGaia de gestion des caches
+ * Utilise apc si disponible, (2.1) puis memcached si disponible, puis memcache si disponible, sinon utilise le cache php (via variable globale)
+ * Cette classe est statique
+ * @since 1.0.6
+ * @version 2.1 traitement de memcached
+ * @version 2.6
+ * @todo Terminer la gestion des objets en cache à partir de json et utiliser serialize et unserialisze
+ */
+class SG_Cache {
+	/** string Type SynerGaia '@Cache' */
+	const TYPESG = '@Cache';
+
+	/** integer Type de cache  "PHP" */
+	const TYPE_PHP = 1;
+
+	/** integer Type de cache  "MEMCACHE" */
+	const TYPE_MEMCACHE = 2;
+
+	/** integer Type de cache  "APC" */
+	const TYPE_APC = 3;
+
+	/** @var integer Type de cache  "MEMCACHED"
+	 * @since 2.1 memcached
+	 */
+	const TYPE_MEMCACHED = 4;
+
+	/** sting Suffixe du type de donnée */
 	const SUFFIXE_TYPE_DONNEE = '_type';
-	// Prefixe général des clés du cache
+	/** string Prefixe général des clés du cache */
 	const PREFIXE_CODE_CACHE = 'SG#';
-	// Prefixe aux clés du cache
+
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+	/** integer Type de cache utilisé */
+	static $typeCache = 0;
+
+	/** string Prefixe aux clés du cache */
 	static $prefixeCache = '';
-	// 1.0.6 Prefixe aux clés du cache de l'utilisateur
+
+	/** string Prefixe aux clés du cache de l'utilisateur
+	 * @since 1.0.6
+	 */
 	static $prefixeCacheUser = '';
 
-	// Objet de connexion à Memcache
+	/** handle Objet de connexion à Memcache */
 	static $memcache_obj;
 	
-	// pour memcached
+	/** string identifiat pour memcached */
 	static $persistent_id;
 
-	/** 1.0.6 ; 2.1 Memcached
-	* Initialise le cache
-	*
-	* @param integer type de cache à forcer
-	* @level 0
-	*/
+	/**
+	 * Initialise le cache
+	 * @since 1.0.6
+	 * @version 2.1 Memcached
+	 * @param integer type de cache à forcer
+	 */
 	static public function initialiser($pTypeCache = 0) {
 // tracer() ne marche pas ici. Utiliser error_log()
 		SG_Cache::initPrefixeCacheAppli();
@@ -55,7 +77,7 @@ class SG_Cache {
 			if ($pTypeCache === 0 and class_exists('Memcached')) {
 				$memcache_host = '127.0.0.1';
 				$memcache_port = 11211;
-				SG_Cache::$persistent_id = SG_Champ::idRandom();
+				SG_Cache::$persistent_id = SG_SynerGaia::idRandom();
 				SG_Cache::$memcache_obj = new Memcached(SG_Cache::$persistent_id);
 				SG_Cache::$memcache_obj -> setOption(Memcached::OPT_LIBKETAMA_COMPATIBLE, true);
 				SG_Cache::$memcache_obj -> addServer($memcache_host, $memcache_port);
@@ -92,26 +114,34 @@ class SG_Cache {
 		}
 // error_log(print_r(SG_Cache::$memcache_obj -> getStats()));
 	}
-	/* 1.0.7
-	* @level 0
-	*/
+
+	/**
+	 * Initialise le préfixe du cache pour l'application
+	 * 
+	 * @since 1.0.7
+	 */
 	static function initPrefixeCacheAppli() {
 		SG_Cache::$prefixeCache = SG_Cache::PREFIXE_CODE_CACHE . SG_Config::getCodeAppli() . '#';
 		SG_Cache::initPrefixeCacheUser();
 	}
-	/* 1.0.7
-	* @level 0
-	*/
+
+	/**
+	 * Initialise le préfixe du cache pour l'utilisateur en cours
+	 * 
+	 * @since 1.0.7
+	 */
 	static function initPrefixeCacheUser() {
 		SG_Cache::$prefixeCacheUser = SG_Cache::$prefixeCache . SG_SynerGaia::IdentifiantConnexion() . '#';
 	}
-	/** 1.1 correction erreur
-	* Détermine la clé d'accès au cache suivant le code
-	* @param string $pCode code de la variable
-	* @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
-	* @return string clé d'accès au cache
-	* @level 0
-	*/
+
+	/**
+	 * Détermine la clé d'accès au cache suivant le code
+	 * 
+	 * @since 1.1 correction erreur
+	 * @param string $pCode code de la variable
+	 * @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
+	 * @return string clé d'accès au cache
+	 */
 	static public function getKey($pCode = '', $pUser = true) {
 		if ($pUser === true) {
 			$cle = SG_Cache::$prefixeCacheUser . $pCode;
@@ -123,13 +153,13 @@ class SG_Cache {
 		}
 		return $cle;
 	}
+
 	/**
-	* Détermine le type de cache pour information
-	*
-	* @return string type de cache
-	* @level 0
-	*/
-	static public function getTypeCache($pCode='') {
+	 * Détermine le type de cache pour information
+	 *
+	 * @return string type de cache
+	 */
+	static public function getTypeCache() {
 		$ret = 'aucun';
 		switch (SG_Cache::$typeCache) {
 			case SG_Cache::TYPE_APC :
@@ -148,14 +178,14 @@ class SG_Cache {
 		return $ret;
 	}
 
-	/** 1.0.6
-	* Détermine si la variable est en cache
-	*
-	* @param string $pCode code de la variable
-	* @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
-	* @return boolean en cache
-	* @level 0
-	*/
+	/**
+	 * Détermine si la variable est en cache
+	 * 
+	 * @since 1.0.6
+	 * @param string $pCode code de la variable
+	 * @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
+	 * @return boolean est ou non en cache
+	 */
 	static public function estEnCache($pCode = '', $pUser = true) {
 		$ret = false;
 		$code = SG_Cache::getKey($pCode, $pUser);
@@ -178,14 +208,14 @@ class SG_Cache {
 		return $ret;
 	}
 
-	/** 1.0.6
-	* Extrait la valeur d'une variable du cache
-	*
-	* @param string $pCode code de la variable
-	* @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
-	* @return indéfini valeur en cache
-	* @level 0
-	*/
+	/**
+	 * Extrait la valeur d'une variable du cache
+	 * 
+	 * @since 1.0.6
+	 * @param string $pCode code de la variable
+	 * @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
+	 * @return indéfini valeur en cache
+	 */
 	static public function valeurEnCache($pCode = '', $pUser = true) {
 		$code = SG_Cache::getKey($pCode, $pUser);
 		switch (SG_Cache::$typeCache) {
@@ -248,14 +278,14 @@ class SG_Cache {
 		return null;
 	}
 
-	/** 1.0.6 ; 2.1 gère directement les objets
-	* Définit la valeur d'une variable du cache
-	*
-	* @param string $pCode code de la variable
-	* @param indéfini $pValeur valeur de la variable
-	* @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
-	* @level 0
-	*/
+	/**
+	 * Définit la valeur d'une variable du cache
+	 * @since 1.0.6
+	 * @version 2.1 gère directement les objets
+	 * @param string $pCode code de la variable
+	 * @param indéfini $pValeur valeur de la variable
+	 * @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
+	 */
 	static public function mettreEnCache($pCode = '', $pValeur, $pUser = true) {
 		$ret = false;
 		$code = SG_Cache::getKey($pCode, $pUser);
@@ -277,13 +307,14 @@ class SG_Cache {
 		return $ret;
 	}
 
-	/** 1.0.6
-	* Supprime la valeur d'une variable du cache
-	*
-	* @param string $pCode code de la variable
-	* @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
-	* @level 0
-	*/
+	/**
+	 * Supprime la valeur d'une variable du cache
+	 * 
+	 * @since 1.0.6
+	 * @param string $pCode code de la variable
+	 * @param boolean $pUser si True, c'est le cache de l'utilisateur qui est pris, sinon le cache commun
+	 * @return boolean ok ou non
+	 */
 	static public function effacerEnCache($pCode = '', $pUser = true) {
 		$ret = false;
 		$code = SG_Cache::getKey($pCode, $pUser);
@@ -305,10 +336,15 @@ class SG_Cache {
 		return $ret;
 	}
 
-	/** 1.3.1 : calculs, navigation, $pType ; 2.0 purge ; 2.1 '?' liste des clés
-	* Vide le cache
-	* @param (string ou @Texte) $pType : type(s) de cache à vider
-	*/
+	/**
+	 * Vide le cache
+	 * @since 1.3.0
+	 * @version 1.3.1 : calculs, navigation, $pType
+	 * @version 2.0 purge
+	 * @version 2.1 '?' liste des clés
+	 * @param string|SG_Texte $pType : type(s) de cache à vider
+	 * @return boolean ok ou non
+	 */
 	static public function viderCache($pType = '') {
 		$type = new SG_Texte($pType);
 		$type = strtolower($type -> texte);
@@ -361,30 +397,13 @@ class SG_Cache {
 		return $ret;
 	}
 
-	// TODO Terminer la gestion des objets en cache à partir de json...
-	static function decodeJson($proprietes = '') {
-		if (is_array($proprietes)) {
-			if (isset($proprietes['typeSG'])) {
-				$objet = $proprietes['typeSG'];
-				$objet = new $objet();
-				foreach ($proprietes as $key => $value) {
-					if (($key !== '_id') && ($key !== 'typeSG')) {
-						$this -> proprietes[$key] = $value;
-					}
-					if ($key === '_rev') {
-						$this -> revision = $value;
-					}
-				}
-			} else {
-				$objet = new SG_Collection();
-				$objet -> elements = $texte;
-			}
-		} else {
-			$objet = $texte;
-		}
-		return new SG_Erreur('@Cache.DecodeJson pas terminé !!');
-	}
-	
+	/**
+	 * Retourne le code du type de cache utilisé
+	 * @since 1.1
+	 * @param string $pCode si non vide on récupère le type de cache sinon type cache PHP
+	 * @return integer code de cache
+	 * @todo cette fonction semble inutilisée : à supprimer ?
+	 */
 	static function getCodeCache($pCode='') {
 		if ($pCode === '') {
 			$ret = SG_Cache::TYPE_PHP;
@@ -393,15 +412,39 @@ class SG_Cache {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout : reporté depuis SG_Connexion
-	 * @level >0
-	*/
+
+	/**
+	 * Vide le cache de la session en cours (variables conservées dans $_SESSION) sauf l'opération en cours
+	 * 
+	 * @since 1.1 ajout : reporté depuis SG_Connexion
+	 * @version 2.6 test $op objet
+	 * @version 2.4 raz libellés
+	 * @return SG_Nombre place libérée en mémoire en octets
+	 */
 	static function viderCacheSession() {
-		if (isset($_SESSION['principal'])) {
-			$op = SG_Navigation::OperationEnCours();
+		$ret = memory_get_usage();
+		if (isset($_SESSION['@SynerGaia']) and sizeof($_SESSION['@SynerGaia'] -> libelles) > 0) {
+			$_SESSION['@SynerGaia'] -> libelles = array();
+		}
+		$op = SG_Pilote::OperationEnCours();
+		if (is_object($op)) {
+			$op = $op -> reference;
+		} else {
+			$op = '';
+		}
+		if (isset($_SESSION['principal']) and is_array($_SESSION['principal'])) {
 			foreach($_SESSION['principal'] as $key => $doc) {
 				if ($key !== $op) {
 					unset($_SESSION['principal'][$key]);
+				}
+			}
+		} else {
+			$_SESSION['principal'] = array();
+		}
+		if (isset($_SESSION['operations']) and is_array($_SESSION['operations'])) {
+			foreach($_SESSION['operations'] as $key => $operation) {
+				if ($key !== $op) {
+					unset($_SESSION['operations'][$key]);
 				}
 			}
 		}
@@ -421,10 +464,18 @@ class SG_Cache {
 		unset($_SESSION[$codeAppli]['BE']); // liste des bases existantes
 		unset($_SESSION[$codeAppli]['PO']); // propriétés des objets
 		unset($_SESSION[$codeAppli]['gCD']); // getChercherDocument
+		$ret = new SG_Nombre($ret - memory_get_usage());
+		return $ret;
 	}
-	/* 1.1 ajout ; 1.3.1 purge tous les thèmes ; 2.0 correction Id() ; ModelesOperations ; 2.1 test $utilisateurs @Erreur ; 2.2 viderCacheBanniere
-	* @level >0
-	*/
+
+	/**
+	 * Vide le cache lié à la navigation (panneaux et thèmes) en $_SESSION
+	 * @since 1.1 ajout
+	 * @version 1.3.1 purge tous les thèmes
+	 * @version 2.0 correction Id() ; ModelesOperations
+	 * @version 2.1 test $utilisateurs @Erreur
+	 * @version 2.2 viderCacheBanniere
+	 */
 	static function viderCacheNavigation() {
 		unset($_SESSION['panels']);
 		self::viderCacheBanniere();
@@ -437,8 +488,10 @@ class SG_Cache {
 		$themes = SG_Rien::Chercher("@Theme");
 		if (getTypeSG($themes) === '@Collection') {
 			foreach($themes -> elements as $theme) {
-				$codeCache = 'MenuTheme(' .$theme -> Id() . ')';
-				self::effacerEnCache($codeCache, true);
+				if (getTypeSG($theme) === '@Theme') {
+					$codeCache = 'MenuTheme(' .$theme -> Id() . ')';
+					self::effacerEnCache($codeCache, true);
+				}
 			}
 		}
 		$utilisateurs = SG_Rien::Chercher("@Utilisateur");
@@ -449,74 +502,99 @@ class SG_Cache {
 			}
 		}
 	}
-	/** 2.2 ajout
-	* vide le cache des données de la bannière
-	**/
+
+	/**
+	 * vide le cache des données de la bannière
+	 * @since 2.2 ajout
+	 */
 	static function viderCacheBanniere() {
 		$_SESSION['page']['banniere'] = '';
 	}
-	/* 1.1 ajout
-	* @level 0
-	*/
+
+	/**
+	 * Vide le cache des données de calculs ('parms' 'formule')
+	 * @since 1.1 ajout
+	 * @todo ces caches semblent inutilisés : à supprimer ??
+	 */
 	static function viderCacheCalculs() {
 		unset($_SESSION['parms']);
 		unset($_SESSION['formule']);
 	}
-	/* 1.1 ajout
-	* @level 0
-	*/
+
+	/**
+	 * Vide le cache des données de config ($SG_Config)
+	 * 
+	 * @since 1.1 ajout
+	 */
 	static function viderCacheConfig() {
 		unset($SG_Config);
 	}
-	/* 1.2 ajout ; 1.3.1 getCodeModele, isMultiple sur chaque propriete, getObjetFonction, user=false ; 2.0 isProprieteExiste
-	* @level >0
-	*/
+
+	/**
+	 * Vide le cache des données du dictionnaire
+	 * 
+	 * @since 1.2 ajout
+	 * @version 1.3.1 getCodeModele, isMultiple sur chaque propriete, getObjetFonction, user=false
+	 * @version 2.0 isProprieteExiste
+	 * @version 2.6 @Dictionnaire.getMethodesObjet => DMO
+	 * @version 2.7 test SG_Erreur et return
+	 * @todo vider ? $codeCache = 'DMO(' . $pCodeObjet . ',' . $pModele . ')';
+	 */
 	static function viderCacheDictionnaire() {
 		self::effacerEnCache('getObjetFonction',false);
 		$collec = SG_Dictionnaire::Objets();
-		foreach($collec -> elements as $objet) {
-			$nom = $objet -> getValeur('@Code');
-			self::effacerEnCache('getCodeBase(' . $nom . ')', false);
-			self::effacerEnCache('getCodeModele(' . $nom . ')', false);
-			self::effacerEnCache('@Dictionnaire.classeObjet(' . $nom . ')', false);
-			self::effacerEnCache('@Dictionnaire.getLiens(' . $nom . ')', false);
-			self::effacerEnCache('@Dictionnaire.@Champs(' . $nom . ')', false);
-			self::effacerEnCache('@Dictionnaire.getMethodesObjet(' . $nom . ')', false);
-			self::effacerEnCache('@Dictionnaire.isLien(' . $nom . ')', false);
-			self::effacerEnCache('isObjetSysteme(' . $nom . ')', false);
-			self::effacerEnCache('@Dictionnaire.getProprietesObjet(' . $nom . ',)', false);
-			$proprietes = SG_Dictionnaire::getProprietesObjet($nom);
-			foreach($proprietes as $propriete => $uid) {
-				$codeElement = $nom . '.' .$propriete;
-				self::effacerEnCache('isMultiple(' . $codeElement . ')', false);
-				self::effacerEnCache('getCodeModele(' . $codeElement . ')', false);
-				self::effacerEnCache('IPE(' . $codeElement . ')', false);
+		if ($collec instanceof SG_Erreur) {
+			$ret = $collec;
+		} else {
+			foreach($collec -> elements as $objet) {
+				$nom = $objet -> getValeur('@Code');
+				self::effacerEnCache('getCodeBase(' . $nom . ')', false);
+				self::effacerEnCache('getCodeModele(' . $nom . ')', false);
+				self::effacerEnCache('@Dictionnaire.classeObjet(' . $nom . ')', false);
+				self::effacerEnCache('@Dictionnaire.getLiens(' . $nom . ')', false);
+				self::effacerEnCache('@Dictionnaire.@Champs(' . $nom . ')', false);
+				self::effacerEnCache('DMO(' . $nom . ')', false);
+				self::effacerEnCache('@Dictionnaire.isLien(' . $nom . ')', false);
+				self::effacerEnCache('isObjetSysteme(' . $nom . ')', false);
+				self::effacerEnCache('DPO(' . $nom . ',)', false);
+				$proprietes = SG_Dictionnaire::getProprietesObjet($nom);
+				foreach($proprietes as $propriete => $uid) {
+					$codeElement = $nom . '.' .$propriete;
+					self::effacerEnCache('isMultiple(' . $codeElement . ')', false);
+					self::effacerEnCache('getCodeModele(' . $codeElement . ')', false);
+					self::effacerEnCache('IPE(' . $codeElement . ')', false);
+				}
 			}
-		// vider ? $codeCache = '@Dictionnaire.getMethodesObjet(' . $pCodeObjet . ',' . $pModele . ')';
+			$ret = true;
 		}
+		return $ret;
 	}
-	/** 1.3.4 ajout ; 2.0 static
-	* pour tous les objets : false sauf SG_Erreur et dérivés
-	* @level 0
-	**/
+
+	/**
+	 * pour tous les objets : false sauf SG_Erreur et dérivés
+	 * 
+	 * @since 1.3.4 ajout
+	 * @version 2.0 static
+	 */
 	static function estErreur() {
 		return false;
 	}
-	/** 2.0 ajout
-	* purge complètement le cache
-	* @level 0
-	**/
+
+	/**
+	 * Purge complètement le cache
+	 * @since 2.0 ajout
+	 */
 	static function purge() {
 		$ret = false;
 		switch (self::$typeCache) {
 			case SG_Cache::TYPE_MEMCACHED :
-				SG_Cache::$memcache_obj -> flush(); // pose tout périmé (à la seconde)
+				SG_Cache::$memcache_obj -> flush(); // pose tout comme périmé (à la seconde)
 				$time = time()+1; //attendre une seconde pour péremption effective
 				while(time() < $time) {/*attendre*/}
 				$ret = true;
 				break;
 			case SG_Cache::TYPE_MEMCACHE :
-				SG_Cache::$memcache_obj -> flush(); // pose tout périmé (à la seconde)
+				SG_Cache::$memcache_obj -> flush(); // pose tout comme périmé (à la seconde)
 				$time = time()+1; //attendre une seconde pour péremption effective
 				while(time() < $time) {/*attendre*/}
 				$ret = true;
@@ -529,10 +607,12 @@ class SG_Cache {
 		}
 		return true;
 	}
-	/** 2.1
-	* liste des clés
-	* @return SG_Collection de SG_Texte
-	**/
+
+	/**
+	 * Liste des clés du cache utilisé
+	 * @since 2.1
+	 * @return SG_Collection de SG_Texte
+	 */
 	static function cles() {
 		$ret = array();
 		switch (self::$typeCache) {
