@@ -1,20 +1,25 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
+<?php
+/** QYNERGAIA fichier pour le traitement de l'objet @ModeleOperation */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_ModeleOperation : Classe de gestion d'un modele d'opération
+ * @version 2.3
  */
 class SG_ModeleOperation extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@ModeleOperation' */
 	const TYPESG = '@ModeleOperation';
 	
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Code du modèle d'opération
+	/** string Code du modèle d'opération */
 	public $code = '';
 
-	/** 1.2 recherche code base
+	/**
 	 * Construction de l'objet
-	 *
+	 * @since 0.0
+	 * @version 1.2 recherche code base
 	 * @param indéfini $pCodeModeleOperation code du modèle d'opération
 	 * @param array $pTableau tableau éventuel des propriétés du document pkhysique
 	 */
@@ -28,36 +33,48 @@ class SG_ModeleOperation extends SG_Document {
 		$this -> initDocumentCouchDB($code, $pTableau);
 		$this -> initDocument();
 	}
-	/** 2.1 ajout
-	* initDocument : Termine l'initialisation spécifique du document
-	**/
+
+	/**
+	 * initDocument : Termine l'initialisation spécifique du document
+	 * @since 2.1 ajout
+	 */
 	function initDocument() {
 		$this -> setValeur('@Type', '@ModeleOperation');
 		$this -> code = $this -> getValeur('@Code');
 	}
 
-	/** 2.0 parm
+	/**
 	 * Conversion en chaine de caractères
-	 *
+	 * @version 2.0 parm
+	 * @param string $pDefaut
 	 * @return string texte
 	 */
 	function toString($pDefaut = NULL) {
 		return $this -> getValeur('@Titre', $this -> code);
 	}
 
-	/** 2.0 parm
-	* Conversion en code HTML
-	*
-	* @return string code HTML
-	*/
+	/**
+	 * Conversion en code HTML
+	 * @version 2.0 parm
+	 * @param string $pDefaut
+	 * @return string code HTML
+	 */
 	function toHTML($pDefaut = NULL) {
 		return $this -> toString();
 	}
 
-	/** 1.3.0 supp 'htmlentities' ; 1.3.1 resume ; 1.3.2 parametre pour exécution en sg_get ; 1.3.3 parm event ; 2.0 effacer = true
+	/**
 	 * Fabrication du lien vers une nouvelle opération avec ce modèle
-	 *
-	 * @return string code HTML du lien
+	 * @version 1.3.0 supp 'htmlentities'
+	 * @version 1.3.1 resume
+	 * @version 1.3.2 parametre pour exécution en sg_get
+	 * @version 1.3.3 parm event
+	 * @version 2.0 effacer = true
+	 * @version 2.6 retour SG_HTML
+	 * @param boolean|SG_VraiFaux|SG_Formule  $pSGGet est-ce un lien en sgget ?
+	 * @param string|SG_Texte|SG_Formule $pCible cible du lien
+	 * @return SG_HTML code HTML du lien
+	 * @uses SynerGaia.launchOperation()
 	 */
 	function LienPourNouvelleOperation($pSGGet = true, $pCible = '') {
 		if(is_object($pSGGet)) {
@@ -90,11 +107,11 @@ class SG_ModeleOperation extends SG_Document {
 				$ret .= '</a>';
 			}
 		}
-		return $ret;
+		return new SG_HTML($ret);
 	}
 
 	/**
-	 * Affichage
+	 * Calcul du code html pour l'affichage comme champ
 	 *
 	 * @return string code HTML
 	 */
@@ -102,12 +119,15 @@ class SG_ModeleOperation extends SG_Document {
 		return '<span class="champ_ModeleOperation">' . $this -> toHTML() . '</span>';
 	}
 
-	/** 1.0.6 ; 1.3.1 param 2 ; 2.1 correction code document
-	* Modification
-	* @param $pRefChamp référence du champ HTML
-	* @param $pListeElements (collection) : liste des valeurs possibles (par défaut toutes)
-	* @return string code HTML
-	*/
+	/**
+	 * Calcul du code html pour la modification comme champ
+	 * @since 1.0.6
+	 * @version 1.3.1 param 2
+	 * @version 2.1 correction code document
+	 * @param string $pRefChamp référence du champ HTML
+ 	 * @param null|SG_Collection|SG_Formule $pListeElements liste des valeurs possibles (par défaut toutes)
+	 * @return string code HTML
+	 */
 	function modifierChamp($pRefChamp = '', $pListeElements = null) {
 		$ret = '<select class="champ_ModeleOperation" type="text" name="' . $pRefChamp . '">';
 
@@ -144,91 +164,138 @@ class SG_ModeleOperation extends SG_Document {
 		return $ret;
 	}
 
-	/**1.0.7
-	* Affecter un modèle d'opération à un utilisateur
-	* @param $pUtilisateur utilisateur destinataire de l'opération
-	* @return SG_Operation opération affectée
-	*/
+	/**
+	 * Affecter à un utilisateur une nouvelle opération de mon modèle
+	 * Si pas de paramètre, m'affecter moi
+	 * ATTENTION L'enregistrement de la nouvelle opération est fait
+	 * 
+	 * @since 1.0.7
+	 * @version 2.6 $ret, n° erreur 0282
+	 * @param string|SG_Texte|SG_Formule $pUtilisateur utilisateur destinataire de l'opération (par défaut, moi)
+	 * @return SG_Operation|SG_Erreur opération affectée ou erreur
+	 */
 	function Affecter($pUtilisateur = '') {
 		if ($pUtilisateur === '') {
 			$pUtilisateur = SG_SynerGaia::IdentifiantConnexion();
 		}
 
 		$utilisateur = SG_Annuaire::getUtilisateur($pUtilisateur);
-		if (!$utilisateur === false) { //	   $utilisateur = new SG_Utilisateur($pUtilisateur);
-
+		if ($utilisateur instanceof SG_Utilisateur) {
 			// Fabrique une nouvelle opération
 			$operation = SG_Operation::CreerDuModele($this -> code);
 			$operation -> setValeur('@Responsable', $utilisateur -> identifiant);
 			$operation -> Enregistrer();
-
-			return $operation;
+			$ret = $operation;
+		} elseif ($utilisateur === false) {
+			// inconnu
+			$ret = new SG_Erreur('0282', SG_Texte::getTexte($pUtilisateur));
 		} else {
-			return new SG_Erreur('Cet utilisateur n\existe pas !');
+			$ret = $utilisateur;
 		}
+		return $ret;
 	}
 
 	/**
-	* Commence une nouvelle opération
-	*
-	* @return string code HTML pour la redirection
-	*/
+	 * Commence une nouvelle opération de mon modèle
+	 *
+	 * @return string code HTML pour la redirection
+	 */
 	function Commencer() {
 		$url = SG_Navigation::URL_PRINCIPALE . '?' . SG_Navigation::URL_VARIABLE_MODELEOPERATION . '=' . $this -> code;
 		return '<script>document.location.href="' . $url . '";</script>';
 	}
-	// 2.1 getValeurPropriete ; 2.1.1 vide si Texteriche vide
+
+	/**
+	 * Texte de l'aide associée au modèle
+	 * 
+	 * @version 2.1 getValeurPropriete
+	 * @version 2.1.1 vide si Texteriche vide
+	 * @return string|SG_HTML
+	 */
 	public function Aide() {
 		$ret = $this -> getValeurPropriete('@Description', '');
 		if (is_object($ret) and $ret -> texte !== '' and $ret -> texte !== null) {
-			$ret = $ret -> toHTML();
+			$ret = $ret -> Afficher();
 		} else {
 			$ret = '';
 		}
 		return $ret;
 	}
-	/** 1.1 : ajout
-	* texte de la formule
-	*/
+
+	/**
+	 * Texte de la formule
+	 * 
+	 * @since 1.1 : ajout
+	 * @return string la phrase de la formule
+	 */
 	function Formule() {
 		return $this -> getValeur('@Phrase');
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Traitement après enregistrement : vide le cache navigation pour forcer sa mise à jour
+	 * @since 1.1 ajout
+	 */
 	function postEnregistrer() {
 		// remettre à jour les menus
 		$ret = $_SESSION['@SynerGaia'] -> ViderCache('n');
 	}
-	/** 2.1 ajout ; 2.2 -> fonction ; 2.3 return compil
-	* Prépare la compiation de la formule et met à jout le fichier .php
-	*/
+
+	/**
+	 * Prépare la compilation de la formule et met à jout le fichier .php
+	 * @since 2.1 ajout
+	 * @version 2.2 -> fonction
+	 * @version 2.3 return compil
+	 * @return boolean Compilation ok ?
+	 */
 	function preEnregistrer() {
+		// terminer l'initialisation
+		if (is_null($this -> code) or $this -> code === '') {
+			$this -> code = $this -> getValeur('@Code','');
+		}
 		// compiler avant de sauvegarder
 		$formule = $this -> getValeur('@Phrase', '');
 		$compil = new SG_Compilateur($formule);
+		$compil -> titre = 'Modèle d\'opération : ' . $this -> toString();
 		$tmp = $compil -> Traduire();
+		// si pas d'erreur, créer la classe du modèle d'opération
 		if ($compil -> erreur !== '') {
-			$ret = new SG_Erreur('0161', $this -> getValeur('@Code') . ' : ' . $compil -> erreur);
+			$ret = $compil -> erreur;
+			$ret -> gravite = SG_Erreur::ERREUR_CTRL;
+			SG_Pilote::OperationEnCours() -> erreurs[] = $compil -> erreur;
 		} else {
-			if ($compil -> php !== '' or $compil -> fonction !== '') {
+			if ($compil -> php !== '') {
 				$this -> setValeur('@PHP', 'oui' );
 			} else {
 				$this -> setValeur('@PHP', '' );
 			}
 			$ret = $compil -> compilerOperation($this -> code, $this -> Formule(), $compil -> php);
+			if (getTypeSG($ret) === '@Erreur') {
+				SG_Pilote::OperationEnCours() -> erreurs[] = $ret;
+			} elseif ($compil -> erreur !== '') {
+				SG_Pilote::OperationEnCours() -> erreurs[] = $compil -> erreur;
+			}
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Afficher les propriétés dans un bon ordre
-	**/
+
+	/**
+	 * Afficher les propriétés dans un bon ordre
+	 * @since 2.1 ajout
+	 * @param SG_Formule la liste des champs de l'affichage
+	 * @return SG_HTML le code html calculé
+	 */
 	function Afficher() {
 		$ret = call_user_func_array (array('SG_Document', 'Afficher'), func_get_args());
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Modifier les propriétés dans un bon ordre
-	**/
+
+	/**
+	 * Calcule le code html pour modifier les propriétés dans un bon ordre
+	 * @since 2.1 ajout
+	 * @param SG_Formule la liste des champs de l'affichage
+	 * @return SG_HTML le code html calculé
+	 */
 	function Modifier() {
 		$ret = call_user_func_array (array('SG_Document', 'Modifier'), func_get_args());
 		return $ret;
