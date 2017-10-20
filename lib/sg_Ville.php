@@ -1,32 +1,41 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* Classe SynerGaia de gestion d'une ville
-*/// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Ville */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Ville_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Ville_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Ville_trait{};
 }
-class SG_Ville extends SG_Document {
-	// Type SynerGaia
-	const TYPESG = '@Ville';
-	public $typeSG = self::TYPESG;
-	
-	const CODEBASE = 'synergaia_villes_fr';
 
-	// Code nom de la ville (pays / ville ou ville)
+/** SynerGaia 2.1.1 (see AUTHORS file)
+ * Classe SynerGaia de gestion d'une ville
+ * @since 1.0
+ * @version 2.1.1
+ * @version 2.6 lien géographique
+ */
+class SG_Ville extends SG_Document {
+	/** string Type SynerGaia '@Ville' */
+	const TYPESG = '@Ville';
+
+	/** string code de la base */
+	const CODEBASE = 'synergaia_villes_fr';
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+
+	/** string Code nom de la ville (pays / ville ou ville) */
 	public $code = '';
 
-	// Document physique
-	public $doc;
-
-	/** 1.1 latitude, longitude
-	* Construction de l'objet
-	*
-	* @param string $pCode nom de la ville
-	* @param indefini $pTableau tableau éventuel des propriétés du document CouchDB ou SG_DocumentCouchDB
-	* @param string $pPays code du pays 
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @since 1.0
+	 * @version 1.1 latitude, longitude
+	 * @param string $pCode nom de la ville
+	 * @param indefini $pTableau tableau éventuel des propriétés du document CouchDB ou SG_DocumentCouchDB
+	 * @param string $pPays code du pays 
+	 */
 	public function __construct($pCode = '', $pTableau= null, $pPays = '') {
 		$base = SG_Dictionnaire::getCodeBase($this -> typeSG);
 		$tmpCode = new SG_Texte($pCode);
@@ -37,8 +46,13 @@ class SG_Ville extends SG_Document {
 		$this -> initDocumentCouchDB($code, $pTableau);
 		$this -> code = $this -> getValeur('@Code','');
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Calcul le code html poure l'affichage dans un champ
+	 * 
+	 * @since 1.1 ajout
+	 * @return string code html
+	 */
 	function afficherChamp() {
 		$ret = '';
 		if ($this -> code !== '') {
@@ -47,11 +61,18 @@ class SG_Ville extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout ; 2.0 parm ; 2.1 php7
-	* Modification
-	* @param $pRefChamp référence du champ HTML
-	* @param $pListeElements (@Collection) : liste des valeurs possibles (par défaut toutes)
-	*/
+
+	/**
+	 * Calcule le code html pour la modification dans un champ
+	 * 
+	 * @since 1.1 ajout
+	 * @since 2.0 parm
+	 * @since 2.1 adaptation à php7
+	 * @param string $codeChampHTML référence du champ HTML
+	 * @param any $pListeElements : inutilisé
+	 * @return string code html
+	 * @uses SynerGaia.villes()
+	 */
 	function modifierChamp($codeChampHTML = '', $pListeElements = NULL) {
 		// trouver la valeur actuelle
 		$ville = '';
@@ -59,16 +80,27 @@ class SG_Ville extends SG_Document {
 			$ville = $_SESSION['@SynerGaia'] -> sgbd -> getVillesAjax($this -> code,$this -> getUUID());
 		}
 		// créer l'html du champ
-		$ret = '<select id="champ_Ville" type="text" name="' . $codeChampHTML . '">' . $ville . '</select>';
-		$ret .= '&nbsp&nbsp<img src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/zoom.png"><input id="champ_VilleRecherche" type="text" size="30" value=""></input>';
+		$ret = '';
+		$ret.= '<input id="champ_VilleRecherche" class="sg-ville-srch" type="text" size="30" value="" title="Recherche..."></input>';
+		$ret.= '<select id="champ_Ville" class="sg-ville-choix" type="text" name="' . $codeChampHTML . '">' . $ville . '</select>';
 		// ajouter le script de recherche ajax
-		$ret .= '<script>' . PHP_EOL;
-		$ret .= '$("#champ_VilleRecherche").keyup(function() {var cle=$(this).val();SynerGaia.villes(cle,"champ_Ville")});' . PHP_EOL;
-		$ret .= '</script>' . PHP_EOL;
+		$ret.= '<script>' . PHP_EOL;
+		$ret.= '$("#champ_VilleRecherche").keyup(function() {var cle=$(this).val();SynerGaia.villes(cle,"champ_Ville")});' . PHP_EOL;
+		$ret.= '</script>' . PHP_EOL;
 		return $ret;
 	}
-	/**1.2 lien géographique
-	*/
+
+	/**
+	 * Calcule le code html pour créer un lien vers une base géographique externe
+	 * 
+	 * @since 1.2
+	 * @version 2.6 retour DSG_HTML
+	 * @param string|SG_Texte|SG_Formule $pRequete
+	 * @param string|SG_Texte|SG_Formule $pTitre
+	 * @param string|SG_Texte|SG_Formule $pLatitude
+	 * @param string|SG_Texte|SG_Formule $pLongitude
+	 * @return SG_HTML
+	 */
 	function LienGeographique($pRequete = '', $pTitre = '', $pLatitude = '', $pLongitude = '') {
 		$requete = SG_Texte::getTexte($pRequete);
 		$titre = SG_Texte::getTexte($pTitre);
@@ -105,25 +137,29 @@ class SG_Ville extends SG_Document {
 		$ret = '';
 		if ($href !== '') {
 			$ret = '<span style="white-space: nowrap;">
-			<a class="lienGeographique" href="' . $href . '" style="white-space: normal;">
-			<img class="wmamapbutton noprint" src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/world.png" title="Montrer la localisation sur une carte interactive" 
+			<a class="sg-lien-map" href="' . $href . '" style="white-space: normal;">
+			<img class="sg-lien-map-btn noprint" src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/world.png" title="Montrer la localisation sur une carte interactive" 
 			alt="" style="padding: 0px 3px 0px 0px; cursor: pointer;"></img>' . $titre . '</a></span>';
 		}
-		return $ret;
+		return new SG_HTML($ret);
 	}
-	/** 2.1 ajout
-	* 
-	* @param
-	* @return
-	**/
+
+	/**
+	 * calcule le code html de l'affichage dans un champ
+	 * @since 2.1
+	 * @param any $pDefaut inutilisé
+	 * @return string code HTML
+	 */
 	function toHTML($pDefaut = null) {
 		return $this -> afficherChamp();
 	}
-	/** 2.1 : paramètre
-	* Conversion en chaine de caractères
-	*
-	* @return string texte
-	*/
+
+	/**
+	 * Conversion de l'objet en chaine de caractères
+	 * @version 2.1 : paramètre pour compatibilité avec SG_Objet
+	 * @param any $pDefaut inutilisé
+	 * @return string texte
+	 */
 	function toString($pDefaut = null) {
 		$ret = $this -> getValeur('Titre', null);
 		if($ret === null and method_exists($this, 'Titre')) {
@@ -135,6 +171,27 @@ class SG_Ville extends SG_Document {
 		if ($ret === '') {
 			$ret = $this -> getValeur('@Titre', '');
 		}
+		return $ret;
+	}
+
+	/**
+	 * Permet la recherche de l'égalité sur une chaine de caractères
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule|SG_Ville $pVille nom ou document de la ville
+	 * @return SG_VraiFaux|SG_Erreur
+	 **/
+	function Egale($pVille) {
+		$ret = new SG_VraiFaux();
+		if ($pVille instanceof SG_Ville) {
+			$ville = $pVille;
+		} else {
+			$ville = $_SESSION['@SynerGaia'] -> sgbd -> getDocumentsFromTypeChamp('@Ville', '@Code', SG_Texte::getTexte($pVille));
+			if ($ville instanceof SG_Collection) {
+				$ville = $ville -> Premier();
+			}
+		}
+		$ret = new SG_VraiFaux($this -> getUUID() === $ville -> getUUID());
 		return $ret;
 	}
 	
