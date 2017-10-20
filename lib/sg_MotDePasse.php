@@ -1,39 +1,44 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.2 (see AUTHORS file)
-* Classe SynerGaia de gestion d'un mot de passe
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia fichier permettant la gestion de l'objet @MotDePasse */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_MotDePasse_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_MotDePasse_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_MotDePasse_trait{};
 }
+
+/**
+* Classe SynerGaia de gestion d'un mot de passe
+* @version 2.2
+*/
 class SG_MotDePasse extends SG_Objet {
-	// Type SynerGaia
+	/** Type SynerGaia '@MotDePasse' */
 	const TYPESG = '@MotDePasse';
 	/**
-	 * Salt pour le chiffrement de mot de passe
+	 * string Salt pour le chiffrement de mot de passe
 	 * /!\ ne pas modifier après installation !
 	 */
 	const SALT = '6g5s.eds8g9r!sd';
 	/**
-	 * Type SynerGaia de l'objet
+	 * string Type SynerGaia de l'objet
 	 */
 	public $typeSG = self::TYPESG;
 
 	/**
-	 * Mot de passe en clair
+	 * string Mot de passe en clair
 	 */
 	public $mdpTexte = '';
 	/**
-	 * Hash du mot de passe
+	 * string Hash du mot de passe
 	 */
 	public $mdpHash = '';
 
 	/**
 	 * Construction de l'objet
 	 *
-	 * @param indéfini $pQuelqueChose hash du mot de passe
+	 * @param any $pQuelqueChose hash du mot de passe
 	 */
 	function __construct($pQuelqueChose = null) {
 		$tmpTexte = new SG_Texte($pQuelqueChose);
@@ -147,13 +152,16 @@ class SG_MotDePasse extends SG_Objet {
 		$ret .= '(laisser vide pour ne pas le modifier)';
 		return $ret;
 	}
-	/** 2.2 ajout
-	* Crypte et met à jour la valeur du champ d'un document si non vide (le document n'est pas enregistré)
-	* @param SG_Document : document à mettre à jour
-	* @param string : nom du champ à mettre à jour
-	* @param string : valeur du champ
-	* @return : le document mis à jour
-	**/
+
+	/**
+	 * Crypte et met à jour la valeur du champ d'un document si non vide (le document n'est pas enregistré)
+	 * 
+	 * @since 2.2 ajout
+	 * @param SG_Document $pDocument document à mettre à jour
+	 * @param string $pChamp nom du champ à mettre à jour
+	 * @param string $pValeur valeur du champ
+	 * @return : le document mis à jour
+	 */
 	static function setChamp($pDocument, $pChamp, $pValeur) {
 		// Si le mot de passe n'est pas vide
 		if ($pValeur !== '') {
@@ -163,6 +171,7 @@ class SG_MotDePasse extends SG_Objet {
 		}
 		return $pDocument;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_MotDePasse_trait;
 }
