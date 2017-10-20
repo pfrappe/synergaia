@@ -1,21 +1,28 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.1 (see AUTHORS file)
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @DictionnaireBase */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_DictionnaireBase : Classe de gestion d'une base de documents
+ * @since 1.1
  */
 class SG_DictionnaireBase extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@DictionnaireBase' */
 	const TYPESG = '@DictionnaireBase';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Code de l'objet du dictionnaire
+	/** string Code de l'objet du dictionnaire */
 	public $code;
 
-	/** 1.1
-	* Construction de l'objet
-	*
-	* @param string $pCodeObjet code de l'objet demandé
-	* @param array tableau éventuel des propriétés
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @since 1.1
+	 * @param string $pCode code de l'objet demandé
+	 * @param array $pTableau tableau éventuel des propriétés
+	 */
 	public function __construct($pCode = null, $pTableau = null) {
 		$tmpCode = new SG_Texte($pCode);
 		$base = SG_Dictionnaire::getCodeBase($this -> typeSG);
@@ -27,9 +34,12 @@ class SG_DictionnaireBase extends SG_Document {
 		$this -> code = $this -> getValeur('@Code', '');
 		$this -> setValeur('@Type', '@DictionnaireBase');
 	}
-	/** 2.1 ajout
-	* @formula : "couchdb","domino","odbc"
-	**/
+
+	/**
+	 * Liste des accès possibles à proposer dans la création d'une nouvelle base
+	 * @since 2.1 ajout
+	 * @return string : "couchdb","domino","odbc"
+	 */
 	function Acces_possibles () {
 		$ret = array("couchdb","domino","odbc");
 		return $ret;
