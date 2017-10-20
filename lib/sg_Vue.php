@@ -1,42 +1,47 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
-* SG_Vue : Classe de gestion d'une vue de base de données
-*/
+<?php
+/** SynerGaia fichier pour la gestion de l'objet @Vue */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
+ * SG_Vue : Classe de gestion d'une vue logique sur une base de données
+ * @since 2.1
+ */
 class SG_Vue extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Vue' */
 	const TYPESG = '@Vue';
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
-	// Vue physique associée
+	/** SG_VueCouchDB|SG_VueDomino Vue physique associée */
 	public $vue;
-	// Document de définition de la vue
+	/** SG_DocumentCouchDB Document de définition de la vue */
 	public $doc = '';
-	// Code de la vue
+	/** string Code de la vue */
 	public $code = '';
-	// Code de la base associée
+	/** string Code de la base associée */
 	public $codeBase = '';
 
-	// Sélection (1.3.4 private)
+	/** string phrase javascript de la sélection */
 	private $selection = '';
-	// 1.3.4 json calculé de la sélection (via setSelection)
+	/** string json calculé de la sélection (via setSelection) */
 	private $jsonselection = '';
-	// 1.3.4 sha1 de la selection (via setSelection)
+	/** string sha1 de la selection (via setSelection) */
 	private $sha1selection = '';
 	
-	/** 0.1 ; 2.0 getTexte
-	* Construction de l'objet
-	*
-	* @param indéfini $pCodeVue code de la vue (base / vue)
-	* @param indéfini $pCodeBase code de la base
-	* @param indéfini $pSelection sélection des documents
-	* @param boolean $pFormule indique si on vient de la traduction d'une formule (autre) ou de la programmation en PHP (true)
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @since 0.1
+	 * @version 2.0 getTexte
+	 * @param indéfini $pCodeVue code de la vue (base / vue)
+	 * @param indéfini $pCodeBase code de la base
+	 * @param indéfini $pSelection sélection des documents
+	 * @param boolean $pDirect indique si on vient de la traduction d'une formule (autre) ou de la programmation en PHP (true)
+	 */
 	function __construct($pCodeVue = '', $pCodeBase = '', $pSelection = '', $pDirect = false) {
 		$this -> code = SG_Texte::getTexte($pCodeVue);
 		$this -> codeBase = SG_Texte::getTexte($pCodeBase);
 		$this -> setSelection($pSelection);
 		if ($this -> code !== '' and $pDirect !== true) {
-			// ne pas employer SG_Rien::Chercher() sinon boucle et remplissage mémoire
 			$collection = $_SESSION['@SynerGaia']->getChercherDocuments(SG_DictionnaireVue::CODEBASE, '@DictionnaireVue', $this -> code, '');
 			$defvue = $collection -> Premier();
 			if (is_object($defvue) and $defvue -> Existe() -> EstVrai()) {
@@ -50,10 +55,13 @@ class SG_Vue extends SG_Objet {
 		}
 	}
 
-	/** 0.1 ; 2.0 si pas code base, l'ajouter
-	* Définition de la base associée
-	* @param indéfini $pCodeBase code de la base
-	*/
+	/**
+	 * Définition de la base associée
+	 * 
+	 * @since 0.1
+	 * @version 2.0 si pas code base, l'ajouter
+	 * @param indéfini $pCodeBase code de la base
+	 */
 	function setBase($pCodeBase = '') {
 		$this -> codeBase = $pCodeBase;
 		if (strpos($this -> code, '/') === false) {
@@ -61,10 +69,12 @@ class SG_Vue extends SG_Objet {
 		}
 	}
 
-	/** 0.1
-	* Définition de la formule de sélection
-	* @param indéfini $pSelection formule de sélection
-	*/
+	/**
+	 * Définition de la formule de sélection
+	 * 
+	 * @since 0.1
+	 * @param indéfini $pSelection formule de sélection
+	 */
 	function setSelection($pSelection = '') {
 		if(is_array($pSelection)) {
 			$this -> selection = $pSelection;
@@ -74,9 +84,14 @@ class SG_Vue extends SG_Objet {
 		$this -> jsonselection = json_encode($this -> selection);
 		$this -> sha1selection = sha1($this -> jsonselection);
 	}
-	/** 1.0.7 ; 1.3.4 json
-	* getSelection : phrase de sélection de la vue
-	*/
+
+	/**
+	 * getSelection : phrase de sélection de la vue
+	 * 
+	 * @since 1.0.7
+	 * @version 1.3.4 json
+	 * @return string
+	 */
 	function getSelection() {
 		$ret = '';
 		$docvue = $this -> getDocumentVue();
@@ -86,10 +101,12 @@ class SG_Vue extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7
-	* Calcule le code de la vue
-	* @return string code de la vue
-	*/
+	/**
+	 * Calcule le code de la vue
+	 * 
+	 * @since 1.0.7
+	 * @return string code de la vue
+	 */
 	function getCodeVue() {
 		if ($this -> code === '') {
 			$this -> code = $this -> codeBase . '/vue_' . $this -> sha1selection;
@@ -115,10 +132,14 @@ class SG_Vue extends SG_Objet {
 		return $this -> doc;
 	}
 
-	/** 1.0.7 ; 1.3.4 estErreur()
-	* Création de la vue
-	* @return boolean OK ?
-	*/
+	/**
+	 * Création de la vue
+	 * 
+	 * @since 1.0.7
+	 * @version 1.3.4 estErreur()
+	 * @return boolean OK ?
+	 * @todo : mettre des @Erreur sur les branches vides
+	 */
 	function creerVue() {
 		$ret = false;
 		// Si on a un code de vue
@@ -148,40 +169,52 @@ class SG_Vue extends SG_Objet {
 				// pas de codeBase
 			}
 		}
-
 		if ($ret === true) {
 			$this -> vue = new SG_VueCouchDB($this -> code);
 		}
-
 		return $ret;
 	}
-	/** 1.0.6
-	* Calcule le contenu de la vue
-	* @param string $pCleRecherche clé de recherche
-	* @return SG_Collection contenu
-	*/
+
+	/**
+	 * Calcule le contenu de la vue
+	 * 
+	 * @since 1.0.6
+	 * @version 2.4 erreur 0249
+	 * @param string $pCleRecherche clé de recherche
+	 * @param string $pFiltre
+	 * @param boolean $pIncludeDocs
+	 * @param boolean $pExactMatch
+	 * @return SG_Collection contenu
+	 */
 	function Contenu($pCleRecherche = '', $pFiltre = '', $pIncludeDocs = false, $pExactMatch = true) {
 		if ($this -> creerVue() === true) {
 			$ret = $this -> vue -> Contenu($pCleRecherche, $pFiltre, $pIncludeDocs, $pExactMatch);
 		} else {
-			$ret = new SG_Collection();
+			$ret = new SG_Erreur('0249', $this -> sha1selection); // erreur sur vue
 		}
 		return $ret;
 	}
-	/** 1.0.6
-	* Chercher à partir d'une clé
-	* @param string $pCleRecherche clé de recherche
-	* @return SG_Collection résultat de la recherche
-	*/
-	function ChercherElements($pCleRecherche = '', $pFiltre = '') {
-		$result = $this -> Contenu($pCleRecherche, $pFiltre, true);
+
+	/**
+	 * Chercher à partir d'une clé
+	 * 
+	 * @since 1.0.6
+	 * @version 2.4 parm 3
+	 * @param string $pCleRecherche clé de recherche
+	 * @param string $pFiltre filtre de sélection
+	 * @param boolean $pIncludeDocs inlure les documents (défaut true)
+	 * @return SG_Collection résultat de la recherche
+	 */
+	function ChercherElements($pCleRecherche = '', $pFiltre = '', $pIncludeDocs = true) {
+		$result = $this -> Contenu($pCleRecherche, $pFiltre, $pIncludeDocs);
 		return $result;
 	}
+
 	/**
-	* Chercher la première valeur trouvée à partir d'une clé
-	* @param string $pCleRecherche clé de recherche
-	* @return string résultat de la recherche
-	*/
+	 * Chercher la première valeur trouvée à partir d'une clé
+	 * @param string $pCleRecherche clé de recherche
+	 * @return string résultat de la recherche
+	 */
 	function ChercherValeur($pCleRecherche = '') {
 		if ($this -> creerVue() === true) {
 			return $this -> vue -> ChercherValeur($pCleRecherche);
@@ -189,11 +222,12 @@ class SG_Vue extends SG_Objet {
 			return null;
 		}
 	}
+
 	/**
-	* Chercher toutes les valeurs à partir d'une clé
-	* @param string $pCleRecherche clé de recherche
-	* @return SG_Collection résultat de la recherche
-	*/
+	 * Chercher toutes les valeurs à partir d'une clé
+	 * @param string $pCleRecherche clé de recherche
+	 * @return SG_Collection résultat de la recherche
+	 */
 	function ChercherValeurs($pCleRecherche = '') {
 		if ($this -> creerVue() === true) {
 			return $this -> vue -> ChercherValeurs($pCleRecherche);
@@ -201,10 +235,13 @@ class SG_Vue extends SG_Objet {
 			return null;
 		}
 	}
-	/** 2.0 test erreur
-	* Vue existe ?
-	* @return SG_VraiFaux selon que vue existe ou non
-	*/
+
+	/**
+	 * Vue existe ?
+	 * 
+	 * @version 2.0 test erreur
+	 * @return SG_VraiFaux selon que vue existe ou non
+	 */
 	function Existe() {
 		$doc = $this -> getDocumentVue();
 		if (getTypeSG($doc) === '@Erreur') {
@@ -214,10 +251,12 @@ class SG_Vue extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 enregistrer(false, FALSE) pour éviter boucle ; 2.3 retour objet
-	* Enregistre la définition de la vue
-	* @return SG_VraiFaux enregistrement ok
-	*/
+
+	/**
+	 * Enregistre la définition de la vue
+	 * @version 2.3 retour objet
+	 * @return SG_VraiFaux enregistrement ok
+	 */
 	function Enregistrer() {
 		// On fabrique la définition de la vue
 		$tmpDocVue = $this -> getDocumentVue();
@@ -237,9 +276,13 @@ class SG_Vue extends SG_Objet {
 		} 
 		return $ret;
 	}
-	/** 1.3.4 ajout
-	* Retourne le tableau de la vue 'categorie'
-	*/
+
+	/**
+	 * Retourne le tableau de la vue 'categorie'
+	 * 
+	 * @since 1.3.4 ajout
+	 * @return array
+	 */
 	function Categorie() {
 		if ($this -> creerVue() === true) {
 			$ret = $this -> vue -> contenuBrut('', '', false, 'categorie?group=true');
@@ -248,11 +291,15 @@ class SG_Vue extends SG_Objet {
 		}
 		return $ret;
 	}
-	/* 2.0 ajout
-	* Obtenir le document de Définition de la vur (dans le dictionnaire)
-	/* 2.0 ajout
-	* Recherche dynamique sur le poste de l'utilisateur
-	**/
+
+	/**
+	 * Recherche dynamique sur le poste de l'utilisateur
+	 * 
+	 * @since 2.0 ajout
+	 * @param string|SG_Texte|SG_Formule $pLibelle
+	 * @return string code HTML
+	 * @uses SynerGaia.vuechoisir()
+	 */
 	function Choisir($pLibelle = '') {
 		$libelle = SG_Texte::getTexte($pLibelle);
 		// créer l'html du champ
@@ -272,18 +319,24 @@ class SG_Vue extends SG_Objet {
 		$ret .= '</script>' . PHP_EOL;
 		return $ret;
 	}
-	/** 2.0 ajout
-	* Conversion en chaine de caractères
-	* @return string texte
-	*/
+
+	/**
+	 * Conversion en chaine de caractères
+	 * 
+	 * @since 2.0 ajout
+	 * @return string texte
+	 */
 	function toString() {
 		$ret = $this -> code;
 		return $ret;
 	}
-	/** 2.0 ajout
-	* retourne le nom seul de la vue (sans la base)
-	* @return string code vue
-	*/
+
+	/**
+	 * retourne le nom seul de la vue (sans la base)
+	 * 
+	 * @since 2.0 ajout
+	 * @return string code vue
+	 */
 	function getCodeCourt() {
 		$i = strpos($this -> code, '/');
 		if ($i === false) {
