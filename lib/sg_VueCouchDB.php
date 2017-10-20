@@ -1,32 +1,39 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_VueCouchDB : Classe SynerGaia de gestion d'une vue CouchDB
-*/
-class SG_VueCouchDB extends SG_Objet {
-	// Type SynerGaia
-	const TYPESG = '@VueCouchDB';
-	public $typeSG = self::TYPESG;
-	
-	const CODEBASE = 'vues';
+<?php
+/** SynerGaïa : fichier contenant la gestion de l'objet @VueCouchDB */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
 
-	// Document "vue" associé
+/**
+ * SG_VueCouchDB : Classe SynerGaia de gestion d'une vue CouchDB
+ * @version SynerGaia 2.6
+ */
+class SG_VueCouchDB extends SG_Objet {
+	/** string Type SynerGaia '@VueCouchDB' */
+	const TYPESG = '@VueCouchDB';
+	/** string Code de la base couchdb contenant les vues */
+	const CODEBASE = 'vues';
+	
+	/** string Type SynerGaia '@VueCouchDB' */
+	public $typeSG = self::TYPESG;
+
+	/** SG_Vue Document "vue" associé */
 	public $vue;
 	
-	// Code de la vue
+	/** string Code de la vue */
 	public $code;
 	
-	// Code de la base
+	/** string Code de la base */
 	public $codeBase;
 	/**
-	 * Code complet de la base avec prefixe
+	 * string Code complet de la base avec prefixe d'application
 	 */
 	public $codeBaseComplet = '';
 
-	/** 2.3 SG_Config::getCodeBaseComplet()
-	* Construction de l'objet
-	*
-	* @param indéfini $pCodeVue code de la vue
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @version 2.3 SG_Config::getCodeBaseComplet()
+	 * @param indéfini $pCodeVue code de la vue
+	 */
 	public function __construct($pCodeVue = '') {
 		// Si j'ai un code de vue
 		if ($pCodeVue !== '') {
@@ -44,21 +51,23 @@ class SG_VueCouchDB extends SG_Objet {
 	}
 
 	/**
-	* 1.1 traitement d'une vue calculée ; 1.3.0 performance sur filtre (gain 60%) ; 1.3.4 $pView ; 2.1 création docDB sans id ; 2.2 test -> fonction
-	* Extrait le contenu de la vue
-	*
-	* @param string $pCleRecherche : clé de recherche
-	* @param string $pFiltre : formule à exécuter immédiatement
-	* @param boolean $pIncludeDocs : permet d'inclure les documents dans la recherche 
-	* @return : SG_Collection des objets SynerGaia lus
-	*/
+	 * Extrait le contenu de la vue
+	 *
+	 * @version 2.6 si vue calculée : $codeElement['id'] au lieu de $codeElement['_id']
+	 * @param string $pCleRecherche : clé de recherche
+	 * @param string $pFiltre : formule à exécuter immédiatement
+	 * @param boolean $pIncludeDocs : permet d'inclure les documents dans la recherche 
+	 * @param boolean $pExactMatch indique si la clé est excate (défaut true)
+	 * @param string $pView type de vue (défaut 'all')
+	 * @return SG_Collection les objets SynerGaia lus
+	 */
 	function Contenu($pCleRecherche = '', $pFiltre = '', $pIncludeDocs = false, $pExactMatch = true, $pView = 'all') {
 		if(getTypeSG($pFiltre) === '@Formule') {
 			$filtre = $pFiltre;
 		} else {
 			$filtre = new SG_Formule($pFiltre);
 		}
-		if(($filtre -> formule === '' or $filtre -> formule === '""') and $filtre -> php === '' and $filtre -> fonction === '') {
+		if(($filtre -> texte === '' or $filtre -> texte === '""') and $filtre -> php === '' and $filtre -> fonction === '') {
 			$filtre = '';
 		}
 		// Initialise la collection
@@ -78,7 +87,7 @@ class SG_VueCouchDB extends SG_Objet {
 								$typeElement = SG_Dictionnaire::getClasseObjet($type);
 							}
 						}
-						$element = new $typeElement($this -> codeBase . '/' . $codeElement['_id'], $row['doc']);
+						$element = new $typeElement($this -> codeBase . '/' . $row['doc']['_id'], $row['doc']);
 					} else {
 						$element = new SG_Document(''); // 2.1 création sans id - gain de performance
 						$element -> doc -> codeDocument = $codeElement['_id'];
@@ -118,13 +127,17 @@ class SG_VueCouchDB extends SG_Objet {
 		return $collection;
 	}
 
-	/** 1.1 traitement d'une vue calculée ; 1.3.4 $pView ; 2.1 lack of memory 256M erreur 0119
-	* Extrait le contenu brut de la vue
-	*
-	* @param string $pCleRecherche clé de recherche
-	* @param boolean $pIncludeDocs permet d'inclure les documents dans la recherche 
-	* @return tableau des rows => value ou SG_Erreur
-	*/
+	/**
+	 * Extrait le contenu brut de la vue
+	 *
+	 * @version 2.1 lack of memory 256M erreur 0119
+	 * @version 2.7 correct getMessage()
+	 * @param string $pCleRecherche clé de recherche
+	 * @param boolean $pIncludeDocs permet d'inclure les documents dans la recherche 
+	 * @param boolean $pExactMatch indique si la clé est excate (défaut true)
+	 * @param string $pView type de vue (défaut 'all')
+	 * @return array tableau des rows => value ou SG_Erreur
+	 */
 	function contenuBrut($pCleRecherche = '', $pIncludeDocs = false, $pExactMatch = true, $pView = 'all') {
 		$cleRecherche = $pCleRecherche;
 		// Définit l'url d'accès à la vue
@@ -156,27 +169,29 @@ class SG_VueCouchDB extends SG_Objet {
 			$resultat = json_decode($ret, true);
 			ini_restore('memory_limit');
 		} catch (Exception $e) {
-journaliser($e -> getMessage, false);
-			$resultat['rows'] = new SG_Erreur('0119', $e -> getMessage);
+			$resultat['rows'] = new SG_Erreur('0119', $e -> getMessage());
 		}
 		return $resultat['rows']; // $listeElements; 1.3.4
 	}
+
 	/**
-	* Cherche les éléments correpondants à une clé dans la vue
-	*
-	* @param string $pCleRecherche clé de recherche
-	* @return SG_Collection
-	*/
+	 * Cherche les éléments correpondants à une clé dans la vue
+	 *
+	 * @param string $pCleRecherche clé de recherche
+	 * @param string $pView type de vue (défaut 'all')
+	 * @return SG_Collection
+	 */
 	function ChercherElements($pCleRecherche = '', $pView = 'all') {
 		return $this -> Contenu($pCleRecherche, $pView);
 	}
 
 	/**
-	* Cherche la première valeur trouvée dans la vue par une clé
-	*
-	* @param string $pCleRecherche clé de recherche
-	* @return string valeur trouvée
-	*/
+	 * Cherche la première valeur trouvée dans la vue par une clé
+	 *
+	 * @param string $pCleRecherche clé de recherche
+	 * @param string $pView type de vue (défaut 'all')
+	 * @return string valeur trouvée
+	 */
 	function ChercherValeur($pCleRecherche = '', $pView = 'all') {
 		$cleRecherche = $pCleRecherche;
 		$sgbd = $_SESSION['@SynerGaia'] -> sgbd;
@@ -203,7 +218,7 @@ journaliser($e -> getMessage, false);
 	 * Chercher toutes les valeurs à partir d'une clé
 	 *
 	 * @param string $pCleRecherche clé de recherche
-	 *
+	 * @param string $pView type de vue (défaut 'all')
 	 * @return SG_Collection résultat de la recherche
 	 */
 	function ChercherValeurs($pCleRecherche = '', $pView = 'all') {
@@ -245,9 +260,40 @@ journaliser($e -> getMessage, false);
 	}
 
 	/**
-	 * Enregistre la définition de la vue
+	 * Enregistre la définition de la vue (ne fait rien)
+	 * @todo à supprimer ??
 	 */
 	function Enregistrer() {
+	}
+
+	/**
+	 * Extrait le contenu brut de la vue
+	 * @since 2.4 ajout
+	 * @param string $pCleDebut clé de recherche début
+	 * @param string $pCleFin clé de recherche fin 
+	 * @param boolean $pIncludeDocs permet d'inclure les documents dans la recherche 
+	 * @param string $pView type de vue (défaut 'all')
+	 * @return array tableau des rows => value ou SG_Erreur
+	 */
+	function getCollection($pCleDebut = '', $pCleFin = '', $pIncludeDocs = false, $pView = 'all') {
+		// Définit l'url d'accès à la vue
+		$vueURL = $_SESSION['@SynerGaia'] -> sgbd -> url . $this -> code . $pView;
+		// Ajoute le critère de recherche si besoin
+		$parms = false;
+		$vueURL .= '?startkey="' . urlencode(strtolower($pCleDebut)) . '"&endkey="' . urlencode(strtolower($pCleFin)) . '\ufff0"';
+		if ($pIncludeDocs === true) {
+			$vueURL .= '&include_docs=true';
+		}
+		// Lance la requete, extrait la liste des éléments renvoyés par la vue
+		$ret = $_SESSION['@SynerGaia'] -> sgbd -> requete($vueURL, "GET");
+		try {
+			ini_set('memory_limit', '512M');
+			$resultat = json_decode($ret, true);
+			ini_restore('memory_limit');
+		} catch (Exception $e) {
+			$resultat['rows'] = new SG_Erreur('0239', $e -> getMessage);
+		}
+		return $resultat['rows'];
 	}
 }
 ?>
