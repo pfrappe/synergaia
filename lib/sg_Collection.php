@@ -1,37 +1,66 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Collection : Classe de traitement des collections
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia 2.6 Contient la classe SG_Collection */ 
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+// Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Collection_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Collection_trait.php';
 } else {
+	/** trait vide par défaut */
 	trait SG_Collection_trait{};
 }
+
+/** SG_Collection : Classe de traitement des collections
+ * @version 2.6
+ * @since 0.0
+ */
 class SG_Collection extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@Collection';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Liste interne des éléments de la collection
+	/** array Liste interne des éléments de la collection */
 	public $elements = array();
-	
-	//1.2 ajout : formule bouton à exécuter si clic sur telle ou telle zone (traité comme @Bouton)
+
+	/** string SG_Formule bouton à exécuter si clic sur telle ou telle zone (traité comme @Bouton) */
 	public $clic;
-	
-	//2.2 ajout : formule pour le choix du style de chaque ligne
+
+	/** string SG_Formule pour le choix du style de chaque ligne */
 	public $style;
 	
-	// 1.3.1 ajout
+	/** string titre de la collection */
 	public $titre = '';
+	
+	/** string curseur dans la collection (voir Premier, Dernier, Suivant, Precedent, Actuel)
+	 * @since 2.4
+	 */
+	public $cursor;
+	
+	/** boolean indique si la collection est réduite, c'est à dire que les élement représentent des documents réduit à SG_IDDoc
+	 * sert notamment pour réduire le @principal dans la sauvegarde de la $_SESSION
+	 * @since 2.5
+	 */
+	public $reduit = false;
+	
+	/** string id permettant d'avoir plusieurs collections dans la même page (sert pour les liens url)
+	 * @since 2.5
+	 */
+	public $id;
 
-	/** 2.1 arg non @Formule, array : +simple
-	* 1.2 : concatener si @Collection ; 1.3 Plusieurs paramètres => init collection
-	* Construction de l'objet
-	*
-	* @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_Collection est créé
-	*/
+	/** string type des éléments s'il est uniforme
+	 * @since 2.6
+	 */
+	public $type;
+
+	/**
+	 * Construction de l'objet : charge un éventuel tableau passé en paramètre puis effectue une initClasseDerive si existe
+	 * @since 0.0
+	 * @version 2.1 arg non @Formule, array : +simple
+	 * @param any $pQuelqueChose valeur à partir de laquelle le SG_Collection est créé
+	 */
 	public function __construct($pQuelqueChose = null) {
+		$this -> id = SG_SynerGaia::idRandom();
 		if (!is_null($pQuelqueChose)) {
 			if(func_num_args() > 1) {
 				$args = func_get_args();
@@ -69,14 +98,15 @@ class SG_Collection extends SG_Objet {
 		if(method_exists($this, 'initClasseDerive')) {
 			$this -> initClasseDerive(func_get_args());
 		}
+		$this -> cursor = key($this -> elements);
 	}
 		
 	/** 1.0.7 ; 1.3.1 vide si tableau plein d'éléments vides ; 1.3.4 $key0
-	* EstVide : @Vrai si aucun élément, @Faux sinon
-	* @return SG_VraiFaux 
-	* @formula : .@Compter.@Egale(0)
-	* level 0 sauf si contient un élément vide
-	**/
+	 * EstVide : @Vrai si aucun élément, @Faux sinon
+	 * @return SG_VraiFaux 
+	 * @formula : .@Compter.@Egale(0)
+	 * level 0 sauf si contient un élément vide
+	 **/
 	public function EstVide() {
 		$vide = false;
 		if(sizeof($this -> elements) === 0) {
@@ -93,10 +123,10 @@ class SG_Collection extends SG_Objet {
 	}
 	
 	/** 0.1 ; 2.0 plusieurs objets ajoutés à la collection
-	* Ajouter : Ajoute un ou plusieurs objets à la collection
-	* @param indéfini $pQuelqueChose
-	* @return SG_Collection
-	*/
+	 * Ajouter : Ajoute un ou plusieurs objets à la collection
+	 * @param indéfini $pQuelqueChose
+	 * @return SG_Collection
+	 */
 	public function Ajouter($pQuelqueChose = null) {
 		if(func_num_args() > 1) {
 			foreach(func_get_args() as $arg) {
@@ -139,33 +169,39 @@ class SG_Collection extends SG_Objet {
 		return $this;
 	}
 
-	/** 0.2
-	* Calcule le nombre d'éléments de la collection
-	*
-	* @return SG_Nombre
-	*/
+	/** 
+	 * Calcule le nombre d'éléments de la collection
+	 * @since 0.2
+	 * @return SG_Nombre
+	 */
 	public function Compter() {
 		return new SG_Nombre(sizeof($this -> elements));
 	}
 
-	/** 2.3 corrige et complète (index non numérique pour tableur)
-	* Extrait un élément donné
-	*
-	* @param indéfini $pNombre numéro de l'élément ou @Texte
-	* @return indéfini
-	*/
+	/**
+	 * Extrait un élément donné
+	 * @version 2.5 index peut être un document
+	 * @param SG_Nombre|SG_Formule $pNombre numéro de l'élément ou @Texte
+	 * @return SG_Objet
+	 */
 	public function Element($pNombre = null) {
 		$ret = null;
-		if (getTypeSG($pNombre) === '@Formule') {
-			$index = $pNombre -> calculer();
-		} else {
-			$index = $pNombre;
-		}
+		$index = $pNombre;
+		// si formule, la traduire
 		$type = getTypeSG($index);
-		if ($type === '@Nombre') {
-			$index = SG_Nombre::getNombre($index) - 1;
-		} elseif (!is_numeric($index)) {
-			$index = SG_Texte::getTexte($index);
+		if ($type === '@Formule') {
+			$index = $pNombre -> calculer();
+			$type = getTypeSG($index);
+		}
+		// si pas numérique, on essaie un objet
+		if (!is_numeric($index)) {
+			if ($type === '@Nombre') {
+				$index = SG_Nombre::getNombre($index) - 1;
+			} elseif ($index -> DeriveDeDocument() -> estVrai()) {
+				$index = $index -> getUUID();
+			} else {
+				$index = SG_Texte::getTexte($index);
+			}
 		}
 		if (isset($this -> elements[$index])) {
 			$ret = $this -> elements[$index];
@@ -174,12 +210,13 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.2
-	* Unique : Supprime les doublons de la collection
-	* @param any : formule sur chaque élément pour fournir la clé
-	*
-	* @return SG_Collection la collection réduite
-	*/
+
+	/**
+	 * Unique : Supprime les doublons de la collection
+	 * @since 1.2
+	 * @param any : formule sur chaque élément pour fournir la clé
+	 * @return SG_Collection la collection réduite
+	 */
 	public function Unique() {
 		$ret = new SG_Collection();
 		$nbElements = $this -> Compter() -> toInteger();
@@ -197,7 +234,6 @@ class SG_Collection extends SG_Objet {
 				$formule -> objet = $element;
 				$elementStr = $formule -> calculer() -> toString();
 			}
-			//$cle = sha1($elementStr); nécessaire si pb avec clé sur valeurs particulières ?
 			if(!isset($uniques[$elementStr])) {
 				$uniques[$elementStr] = $element;
 			}
@@ -207,21 +243,23 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	* Extrait les valeurs différentes d'une colonne ou des documents
-	* @param $pNomCateg @Texte champ ou colonne à catégoriser
-	* @param $pAvecLignes @VraiFaux : éclater la collection en sous-collections
-	* @return @Collection (valeurs trouvées) triées
-	*/
+
+	/**
+	 * Extrait les valeurs différentes d'une colonne ou des documents
+	 * 
+	 * @since 1.1 ajout
+	 * @version 2.6 getTexte, getBooleen, calculer formule
+	 * @param SG_Texte|SG_Formule $pPropriete champ ou colonne à catégoriser, ou formule à exécuter sur l'élement
+	 * @param SG_VraiFaux $pAvecLignes éclater la collection en sous-collections
+	 * @return SG_Collection (valeurs trouvées) triées
+	 */
 	function CategoriserSur($pPropriete = '', $pAvecLignes = false) {
 		// préparation des paramètres
-		$nom = new SG_Texte($pPropriete);
-		$nom = $nom -> texte;
+		$nom = SG_Texte::getTexte($pPropriete);
 		if (is_bool($pAvecLignes)) {
 			$avec = $pAvecLignes;
 		} else {
-			$avec = new SG_VraiFaux($pAvecLignes);
-			$avec = $avec -> estVrai();
+			$avec = SG_VraiFaux::getBooleen($pAvecLignes);
 		}
 		// analyse de la collection d'origine
 		$elements = array();
@@ -234,10 +272,13 @@ class SG_Collection extends SG_Objet {
 					$categ = '';
 				}
 			} else {
-				$categ = $element -> getValeur($nom, '');
+				if (getTypeSG($pPropriete) === SG_Formule::TYPESG) {
+					$categ = $pPropriete -> calculerSur($element);
+				} else {
+					$categ = $element -> getValeur($nom, '');
+				}
 				if (gettype($categ) !== 'string') {
-					$categ = new SG_Texte($categ);
-					$categ = $categ -> texte;
+					$categ = SG_Texte::getTexte($categ);
 				}
 			}
 			// mise à jour de la ligne
@@ -255,13 +296,14 @@ class SG_Collection extends SG_Objet {
 		$ret -> elements = $elements;
 		return $ret;
 	}
-	/** 2.3 simplifie
+	/** 2.3 simplifie ; 2.4 cursor
 	 * Extrait le premier élément de la collection
 	 *
-	 * @return indéfini
+	 * @return SG_Objet
 	 */
 	public function Premier() {
 		reset($this -> elements);
+		$this -> cursor = key($this -> elements);
 		return current($this -> elements);
 	}
 
@@ -286,42 +328,46 @@ class SG_Collection extends SG_Objet {
 		return $ret;
 	}
 
-	/**
+	/** 2.4 cursor
 	 * Extrait le dernier élément de la collection
 	 *
 	 * @return indéfini
 	 */
 	public function Dernier() {
-		return $this -> Element(sizeof($this -> elements));
+		end($this -> elements);
+		$this -> cursor = key($this -> elements);
+		return current($this -> elements);
 	}
 
-	/**
-	* Extrait les derniers éléments de la collection
-	*
-	* @param indéfini $pNombre nombre d'éléments
-	* @return SG_Collection
-	*/
+	/** 2.4 correction
+	 * Extrait les derniers éléments de la collection
+	 *
+	 * @param indéfini $pNombre nombre d'éléments
+	 * @return SG_Collection
+	 */
 	public function Derniers($pNombre) {
 		$tmpNombre = new SG_Nombre($pNombre);
 		$nombre = $tmpNombre -> toInteger();
 		if ($nombre > sizeof($this -> elements)) {
 			$nombre = sizeof($this -> elements);
-			$premierIndice = 1;
-		} else {
-			$premierIndice = sizeof($this -> elements) - $nombre + 1;
 		}
 		$ret = new SG_Collection();
+		end($this -> elements);
 		for ($i = 0; $i < $nombre; $i++) {
-			$ret -> Ajouter($this -> Element($premierIndice + $i));
+			array_unshift($ret -> elements, current($this -> elements));
+			prev($this -> elements);
 		}
 		return $ret;
 	}
 
-	/** 1.3.3 param 1,2
-	* Génère une liste HTML simple des objets de la collection
-	* @param $id (string) id html du bloc (pour les menus notamment)
-	* @return string code HTML de la liste (<ul>)
-	*/
+	/**
+	 * Génère une liste HTML simple des objets de la collection
+	 * 
+	 * @version 1.3.3 param 1,2
+	 * @param string $pID id html du bloc (pour les menus notamment)
+	 * @param string $pClasse classe CSS à ajouter
+	 * @return string code HTML de la liste (<ul>)
+	 */
 	public function toHTML($pID = '', $pClasse = '') {
 		$ret = $this -> toListeHTML();
 		$id = '';
@@ -337,11 +383,14 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.0.7
-	* toListeHTML : liste le texte de chaque élément (sinon la clé)
-	* @param $memeVide boolean force l'affichage d'une ligne si elle est vide
-	* @return html intérieur de liste de texte
-	*/	
+
+	/**
+	 * toListeHTML : liste le texte de chaque élément (sinon la clé)
+	 * 
+	 * @since 1.0.7
+	 * @param boolean $memeVide force l'affichage d'une ligne si elle est vide
+	 * @return string html intérieur de liste de texte
+	 */	
 	function toListeHTML( $memeVide = false) {
 		$ret = '';
 		$nb = sizeof($this -> elements);
@@ -368,11 +417,12 @@ class SG_Collection extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.6
-	* Génère une liste texte simple des UUID des objets de la collection
-	*
-	* @return string éléments de la liste
-	*/
+	/**
+	 * Génère une liste texte simple des UUID des objets de la collection
+	 * 
+	 * @since 1.0.6
+	 * @return string éléments de la liste
+	 */
 	public function toString() {
 		$ret = '';
 		$nb = sizeof($this -> elements);
@@ -385,6 +435,8 @@ class SG_Collection extends SG_Objet {
 				if(is_array($element)) {
 					$tmp = new SG_Collection($element);
 					$tmpTexte = $tmp -> toString();
+				} elseif (is_object($element)) {
+					$tmpTexte = $element -> toString();
 				} else {
 					$tmpTexte = $element;
 				}
@@ -397,19 +449,23 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 : extrait à partir de Afficher ; 2.0 libellé 0108
-	 * @param $format preparerTableauPagine ou preparerTableauSimple
-	 * @param $checkbox cases à cocher
-	 * @param (boolean) avec filtre de recherche
-	 * @param $args liste des colonnes
-	*/
+
+	/** 
+	 * Récupère les résultats d'une demande d'affichage
+	 * @version 2.0 libellé 0108
+	 * @param string $format format d'affichage 'preparerTableauSimple'
+	 * @param boolean $checkbox cases à cocher
+	 * @param boolean $pFiltre avec filtre de recherche
+	 * @param array $args liste des formules des colonnes
+	 * @return string HTML
+	 **/
 	function getResultats($format, $checkbox, $pFiltre, $args) {	
 		if (sizeof($this -> elements) === 0) {
 			$ret = self::libelle('0108'); // rien à afficher
 		} else {
 			$parms = $this -> preparerParametres($args);
 			$donnees = $this -> preparerDonnees($parms, $checkbox);
-			$ret = $this -> $format($donnees, $pFiltre);
+			$ret = $this -> $format($donnees, $pFiltre, $checkbox);
 		}
 		return $ret;
 	}
@@ -417,114 +473,64 @@ class SG_Collection extends SG_Objet {
 	/** 1.3.0 : preparerTableauSimple (abandon de editablegrid) ; 2.0 libelle 0108
 	 * Genere un tableau HTML avec liens des objets de la collection
 	 *
-	 * @param indefini $pParametres formules des colonnes à afficher
+	 * @param SG_Formule $pParametres suite de formules des colonnes à afficher
 	 *
-	 * @return string code HTML du tableau
+	 * @return SG_HTML code HTML du tableau
 	 */
 	public function Afficher($pParametres = null) {
 		if (sizeof($this -> elements) === 0) {
 			$ret = self::libelle('0108'); // rien à afficher
 		} else {
 			$args = func_get_args();
-			if (SG_ThemeGraphique::ThemeGraphique() === 'mobilex') {
-				$ret = $this -> getResultats('preparerTableauSimple', false, true, $args);
-			} else {
-				$ret = $this -> getResultats('preparerTableauSimple', false, true, $args);// avant 1.3.0 : preparerTableauPagine
-			}
+			$ret = $this -> getResultats('preparerTableauSimple', false, true, $args);
 		}
-		// enlève la référence au document principal   
-		$_SESSION['page']['ref_document'] = '';
 		if(getTypeSG($ret) !== '@HTML') {
 			$ret = new SG_HTML($ret);
 		}
 		if ($this -> titre != '') {
-			$ret -> texte = '<div class="collection-titre">' . $this -> titre .'</div>' . $ret -> texte;
+			$ret -> texte = '<div class="sg-coll-titre">' . $this -> titre .'</div>' . $ret -> texte;
 		}
-		$ret -> texte = '<div class="collection">' . $ret -> texte .'</div>';
+		$ret -> texte = '<div class="sg-collection">' . $ret -> texte .'</div>';
+		if ($ret -> saisie === true) {
+			// met à jour la référence au document principal
+			$this -> setPrincipal();
+		}
 		return $ret;
 	}
 
-	/** 1.2 preparerTableauSimple ; 1.3.0 $opEnCours ; 2.0 libelle 0108 ; 2.1 SG_HTML : 2.3 voir todo bug
-	* Fabrique un tableau HTML pour choisir un ou plusieurs éléments
-	* @param indefini $pParametres formules des colonnes à afficher
-	* @return string code HTML du tableau
-	*/
+	/**
+	 * Fabrique un tableau HTML pour choisir un ou plusieurs éléments
+	 * 
+	 * @version 2.5 sup preparer tableau pagine
+	 * @version 2.6 declarerOperationActive
+	 * @todo voir si affectation opération en cours est utile ? mais sinon il y a un bug. A supprimer
+	 * @param indefini $pParametres formules des colonnes à afficher
+	 * @return SG_HTML code HTML du tableau
+	 */
 	public function Choisir($pParametres = null) {
 		if (sizeof($this -> elements) === 0) {
 			$ret = self::libelle('0108'); // rien à afficher
 		} else {
 			$args = func_get_args();
-			if (SG_ThemeGraphique::ThemeGraphique() === 'mobilex') {
-				$ret = $this -> getResultats('preparerTableauSimple', true, true, $args);
-			} else {
-				$ret = $this -> getResultats('preparerTableauSimple', true, true, $args); //preparerTableauPagine
-			}
+			$ret = $this -> getResultats('preparerTableauSimple', true, true, $args, true);
 		}
 		// met à jour la référence au document principal
-		$opEnCours = SG_Navigation::OperationEnCours();
-		$_SESSION['principal'][$opEnCours -> reference] = $this;
-		$_SESSION['operations'][$opEnCours -> reference] = $opEnCours; // TODO 2.3 cela ne devrait pas être utile mais sinon il y a un bug. A supprimer
+		$opEnCours = SG_Pilote::OperationEnCours();
+		$opEnCours -> setPrincipal($this);
+		SG_Pilote::declarerOperationActive($opEnCours);
 		return new SG_HTML($ret);
 	}
 
-	/** 0.1 : 200 lignes par défaut ; 1.3.2 idRandom
-	* Fabrique le tableau HTML à partir du tableau JSON
-	*/
-	private function genererTableauHTML($pTableauJSON = '') {
-		// Identifiant unique du tableau
-		$idTable = SG_Champ::idRandom();
-
-		// Définition des blocs
-		// Zone de filtre sur le tableau
-		$zoneFiltre = '<div class="collectionZoneFiltre"><label for="' . $idTable . '_filter">Filtre : </label><input type="text" id="' . $idTable . '_filter"/></div>';
-		// Zone de contrôle des paramètres du tableau
-		$zoneControles = '<div class="collectionZoneControles"><label for="' . $idTable . '_pagesize">Lignes par page : </label><select id="' . $idTable . '_pagesize" name="' . $idTable . '_pagesize">';
-		$listeNombreLignesAffichables = array(5, 10, 20, 50, 100, 200,10000);
-		$nbListeNombreLignesAffichables = sizeof($listeNombreLignesAffichables);
-		for ($i = 0; $i < $nbListeNombreLignesAffichables; $i++) {
-			$zoneControles .= '<option value="' . $listeNombreLignesAffichables[$i] . '">' . $listeNombreLignesAffichables[$i] . '</option>';
-		}
-		$zoneControles .= '</select></div>';
-		// Zones de pagination du tableau
-		$zonePaginationHaut = '<div class="collectionZonePagination"><div id="' . $idTable . '_paginatorHaut"></div></div>';
-		$zonePaginationBas = '<div class="collectionZonePagination"><div id="' . $idTable . '_paginatorBas"></div></div>';
-
-		// Combine les blocs
-		$html = '';
-		$html .= '<div class="collection" id="' . $idTable . '_bloc">' . PHP_EOL;
-		$html .= ' <div class="collectionEntete">' . PHP_EOL . '  ' . $zoneFiltre . PHP_EOL . '  ' . $zonePaginationHaut . PHP_EOL . '  ' . $zoneControles . PHP_EOL . ' </div>' . PHP_EOL;
-		$html .= ' <div class="collection" id="' . $idTable . '_table"></div>' . PHP_EOL;
-		$html .= ' <div class="collectionPied">' . PHP_EOL . '  ' . $zonePaginationBas . PHP_EOL . ' </div>' . PHP_EOL;
-		$html .= '</div>' . PHP_EOL;
-
-		// Ajoute le script js pour transformer le tableau
-		$js = '<script>' . PHP_EOL;
-		if (SG_ThemeGraphique::ThemeGraphique() === 'mobilex') {
-			$js .= '$("#corps_content").on("pret", function () {' . PHP_EOL;
-		} else {
-			//$js .= ' $(function() {' . PHP_EOL;
-			$js .= ' $(function() {' . PHP_EOL;
-		}
-		$js .= '  editableGrid = new EditableGrid("SG_GridAttach",{pageSize: 200, stripeRows: true});' . PHP_EOL;
-		$js .= '  editableGrid.idTable=\'' . $idTable . '\';' . PHP_EOL;
-		$js .= '  editableGrid.load(' . $pTableauJSON . ');' . PHP_EOL;
-		$js .= '  editableGrid.initializeGrid();' . PHP_EOL;
-		$js .= ' });' . PHP_EOL;
-		$js .= '</script>' . PHP_EOL;
-
-		return $html . $js;
-	}
-
-	/** 2.1 php, parms par défaut @Collection, classe
-	* 1.0.7 ; 1.3.2 (integer) date pour éviter erreur JS ; idRandom ; 1.3.3 modif pour les url ; 2.0 libelle 0108
-	* Affiche la collection sous forme de calendrier
-	*
-	* @param indefini $pParametres formules des valeurs à utiliser
-	* @return string code HTML du tableau
-	* TODO : supprimer le test $php
-	*/
+	/** 
+	 * Affiche la collection sous forme de calendrier
+	 * 
+	 * @since 1.0.7
+	 * @version 2.6 clicvide
+	 * @param any $pParametres formules des valeurs à utiliser. Dans l'ordre : titre, debut, fin, classe CSS
+	 * @return SG_HTML code HTML du tableau (ou SG_Erreur)
+	 * @uses JS SynerGaia.initCalendar()
+	 */
 	public function AfficherCalendrier($pParametres = null) {
-		$_SESSION['besoinBoutonSubmit'] = false;
 		$ret = '';
 		// Vérifie que l'on a quelquechose à afficher
 		$nbLignes = sizeof($this -> elements);
@@ -546,21 +552,20 @@ class SG_Collection extends SG_Objet {
 					if (getTypeSG($parametre) === '@Formule') {
 						$formule = $parametre -> formule;
 					} else {
-						$tmpFormule = new SG_Texte($parametre);
-						$formule = $tmpFormule -> toString();
+						$formule = new SG_Formule(SG_Texte::getTexte($parametre));
 					}
 					switch($i) {
 						case 0 :
-							$paramTitre = $formule;
+							$paramTitre = $formule -> texte;
 							break;
 						case 1 :
-							$paramDateDebut = $formule;
+							$paramDateDebut = $formule -> texte;
 							break;
 						case 2 :
-							$paramDateFin = $formule;
+							$paramDateFin = $formule -> texte;
 							break;
 						case 3 :
-							$paramClasse = $formule;
+							$paramClasse = $formule -> texte;
 							break;
 					}
 				}
@@ -593,25 +598,29 @@ class SG_Collection extends SG_Objet {
 			$nbColonnes = 4;
 
 			// Identifiant unique du tableau
-			$idCalendrier = SG_Champ::idRandom();
+			$idCalendrier = SG_SynerGaia::idRandom();
 
-			// Encapsule tout le tableau dans un div
-			$ret .= '<div class="calendrier" id="calendrier_' . $idCalendrier . '"></div>' . PHP_EOL;
+			// Encapsule tout le tableau dans un div (le contenu sera rempli par le code javascript
+			$ret .= '<div id="calendrier_' . $idCalendrier . '" class="sg-calendrier"></div>' . PHP_EOL;
 
 			// Si on a un contexte avec une étape suivante, propose un lien cliquable sur les entrées
 			$lien = false;
-			if (array_key_exists('page', $_SESSION)) {
-				if (array_key_exists('etape_prochaine', $_SESSION['page'])) {
-					if ($_SESSION['page']['etape_prochaine'] != '') {
-						$lien = true;
-					}
-				}
+			$opencours = SG_Pilote::OperationEnCours();
+			if ($opencours -> prochaineEtape != '') {
+				$lien = true;
+				$debutURL = SG_Navigation::URL_VARIABLE_OPERATION . '=' . $opencours -> reference;
+				$debutURL.= '&' . SG_Navigation::URL_VARIABLE_ETAPE . '=' . $opencours -> prochaineEtape;
+				$debutURL.= '&' . SG_Navigation::URL_VARIABLE_DOCUMENT . '=';
 			}
+			// début d'url pour un simple clic
+			$urlclic = SG_Navigation::URL_VARIABLE_OPERATION . '=' . $opencours -> reference;
+			if (is_object($this -> clic)) {
+				$urlclic.= '&' . SG_Navigation::URL_VARIABLE_BOUTON . '=' . $this -> clic -> code;
+			}
+			$urlclic.= '&' . SG_Navigation::URL_VARIABLE_DOCUMENT . '=';
 
-			// Prépare le code javascript pour chacun des événements :
-			$codeJS = '';
-			$codeJS .= '<script type="text/javascript">' . PHP_EOL;
-			$codeJS .= 'evenements_' . $idCalendrier . '=[' . PHP_EOL;
+			// code javascript pour chacun des événements :
+			$codeJS = '<script type="text/javascript">' . PHP_EOL . 'evenements_' . $idCalendrier . '=[' . PHP_EOL;
 
 			$nbLignes = sizeof($this -> elements);
 			foreach ($this -> elements as &$element) {
@@ -673,7 +682,7 @@ class SG_Collection extends SG_Objet {
 							break;
 						case 1 :
 							// Deuxième "colonne" : date de début de l'événement
-							if (($tmpType !== '@Date') & ($tmpType !== '@DateHeure')) {
+							if (($tmpType !== '@Date') and ($tmpType !== '@DateHeure')) {
 								$evnmtDebut = new SG_DateHeure($valeurColonne);
 							} else {
 								$evnmtDebut = $valeurColonne;
@@ -681,7 +690,7 @@ class SG_Collection extends SG_Objet {
 							break;
 						case 2 :
 							// Troisième "colonne" : date de fin de l'événement
-							if (($tmpType !== '@Date') & ($tmpType !== '@DateHeure')) {
+							if (($tmpType !== '@Date') and ($tmpType !== '@DateHeure')) {
 								$evnmtFin = new SG_DateHeure($valeurColonne);
 							} else {
 								$evnmtFin = $valeurColonne;
@@ -697,20 +706,20 @@ class SG_Collection extends SG_Objet {
 					}
 				}
 
-				// Si on a un contexte avec une étape suivante, propose un lien cliquable sur le document
-				if ($lien === true) {
-					$uid = $element -> getUUID();
-					$evnmtURL = SG_Navigation::URL_VARIABLE_OPERATION . '=' . SG_Navigation::OperationEnCours() -> reference;
-					$evnmtURL.= '&' . SG_Navigation::URL_VARIABLE_ETAPE . '=' . $_SESSION['page']['etape_prochaine'];
-					$evnmtURL.= '&' . SG_Navigation::URL_VARIABLE_DOCUMENT . '=' . $element -> getUUID();
+				$codeJS .= '  {' . PHP_EOL;
+				// Si on a un clic sur l'évenement, on propose un submit
+				if (! is_null($this -> clic)) {
+					$evnmtURL = SG_Navigation::calculerURL($urlclic . $element -> getUUID(), true);
+				} elseif ($lien === true) {
+					// Si on a un contexte avec une étape suivante, propose un lien cliquable sur le document
 					// Empeche un contenu vide (impossible à cliquer)
 					if (trim($evnmtTitre) === '') {
 						$evnmtTitre = '(vide)';
 					}
-					$evnmtURL = SG_Navigation::calculerURL($evnmtURL);
+					// calcul l'url de renvoi de chaque ligne
+					$evnmtURL = SG_Navigation::calculerURL( $debutURL . $element -> getUUID());
 				}
 
-				$codeJS .= '  {' . PHP_EOL;
 				$codeJS .= '	  title: \'' . trim(preg_replace('/\s+/', ' ', addslashes($evnmtTitre))) . '\',' . PHP_EOL;
 				if ($evnmtURL !== '') {
 					$codeJS .= '	  url: \'' . $evnmtURL . '\',' . PHP_EOL;
@@ -746,18 +755,18 @@ class SG_Collection extends SG_Objet {
 				if ($evnmtClasse !== '') {
 					$codeJS .= ', className:"' . $evnmtClasse.'"';
 				} else {
-					$codeJS .= ', className:"fc-bleu"';
+					$codeJS .= ', className:"sg-bleu"';
 				}
 				$codeJS .= '  },' . PHP_EOL;
 
 			}
 			$codeJS .= '];' . PHP_EOL;
 
-			// url de lancement d'un clic sur case vide ($this -> clic est rempli dans @Calendrier.@Clic): 
+			// url de lancement d'un clic sur case vide ($this -> clicvide est rempli dans @Calendrier.@ClicVide): 
 			$url = '';
-			if ($this -> clic !== null) {
-				$url = SG_Navigation::URL_VARIABLE_OPERATION . '=' . SG_Navigation::OperationEnCours() -> reference;
-				$url.= '&' . SG_Navigation::URL_VARIABLE_BOUTON . '=' . $this -> clic -> code;
+			if ($this -> clicvide !== null) {
+				$url = SG_Navigation::URL_VARIABLE_OPERATION . '=' . $opencours -> reference;
+				$url.= '&' . SG_Navigation::URL_VARIABLE_BOUTON . '=' . $this -> clicvide -> code;
 				$url.= '&' . SG_Navigation::URL_VARIABLE_PARM1 . '=';
 				$url = SG_Navigation::calculerURL($url, true);
 			}
@@ -766,17 +775,17 @@ class SG_Collection extends SG_Objet {
 			$codeJS.= '</script>' . PHP_EOL;
 			$ret.= $codeJS;
 		}
-		$_SESSION['page']['ref_document'] = '';
 		return new SG_HTML($ret);
 	}
 
 	/** 2.1 return SG_HTML
-	* 1.1 SG_Navigation::OperationEnCours() ; 1.3.0 tenir compte @HTML ; 1.3.1 correction sur HTML -> texte, param 2
-	* Genere une liste HTML avec liens des objets de la collection
-	* @param (SG_Formule) $pFormule : formule de laligne
-	* @param (SG_VraiFaux) $pAvecURL : avec url ou non
-	* @return string code HTML de la liste (<ul>)
-	*/
+	 * 1.1 SG_Pilote::OperationEnCours() ; 1.3.0 tenir compte @HTML ; 1.3.1 correction sur HTML -> texte, param 2
+	 * Genere une liste HTML avec liens des objets de la collection
+	 * @param SG_Formule $pFormule : formule de laligne
+	 * @param SG_VraiFaux $pAvecURL : avec url ou non
+	 * @param SG_Formule|SG_Texte $pURL formule d'url ou url à appliquer sur les lignes
+	 * @return string code HTML de la liste (<ul>)
+	 */
 	public function Lister($pFormule = null, $pAvecURL = true, $pURL = null) {
 		$avecurl = SG_VraiFaux::getBooleen($pAvecURL);
 		if ($pFormule === null) {
@@ -789,23 +798,15 @@ class SG_Collection extends SG_Objet {
 			}
 		}
 		$ret = '<ul>';
-
 		$url = '';
 		if ($avecurl) {
 			if (is_null($pURL)) {
-				if (array_key_exists('contexte', $_SESSION)) {
-					if (array_key_exists('etape_prochaine', $_SESSION['page'])) {
-						if ($_SESSION['page']['etape_prochaine'] != '') {
-							$op = '';
-							if (is_object(SG_Navigation::OperationEnCours() )) {
-								$op = SG_Navigation::OperationEnCours() -> reference;
-							}
-							$url = SG_Navigation::URL_PRINCIPALE;
-							$url .= '?' . SG_Navigation::URL_VARIABLE_OPERATION . '=' . $op;
-							$url .= '&' . SG_Navigation::URL_VARIABLE_ETAPE . '=' . $_SESSION['page']['etape_prochaine'];
-							$url .= '&' . SG_Navigation::URL_VARIABLE_DOCUMENT . '=';
-						}
-					}
+				$op = SG_Pilote::OperationEnCours();
+				if ($op -> prochaineEtape != '') {
+					$url = SG_Navigation::URL_PRINCIPALE;
+					$url .= '?' . SG_Navigation::URL_VARIABLE_OPERATION . '=' . $op -> reference;
+					$url .= '&' . SG_Navigation::URL_VARIABLE_ETAPE . '=' . $op -> prochaineEtape;
+					$url .= '&' . SG_Navigation::URL_VARIABLE_DOCUMENT . '=';
 				}
 			} else {
 				$url = SG_Texte::getTexte($pURL);
@@ -814,10 +815,16 @@ class SG_Collection extends SG_Objet {
 				}
 			}
 		}
-
+		$virg = '';
 		foreach ($this -> elements as &$element) {
 			$texteLigne = '';
 			if (SG_Dictionnaire::isObjetExiste(getTypeSG($element)) === true) {
+				// pour permettre un copié / collé propre avec des virgules
+				$texteLigne = $virg . $texteLigne;
+				if ($virg == '') {
+					$virg = '<span style="display:none">,</span>';
+				}
+				// s'il y a une url...
 				if ($url !== '') {
 					$texteLigne .= '<a href="' . htmlentities($url . $element -> getUUID(), ENT_QUOTES, 'UTF-8') . '">';
 				}
@@ -826,7 +833,7 @@ class SG_Collection extends SG_Objet {
 				} else {
 					$result = $formule -> calculerSur($element);
 				}
-				if (getTypeSG($result) === '@HTML') {
+				if ($result instanceof SG_HTML) {
 					$texteLigne .= $result -> texte;
 				} elseif (is_object($result)) {
 					$tmp = new SG_HTML($result -> toHTML());
@@ -847,34 +854,58 @@ class SG_Collection extends SG_Objet {
 			$ret .= '<li>' . $texteLigne . '</li>';
 		}
 		$ret .= '</ul>';
-		$_SESSION['page']['ref_document'] = '';
 		return new SG_HTML($ret);
 	}
 
-	/**1.0.6 ; 1.3 amélioration performance (calculerSur)
-	* Applique une formule SynerGaia à chacun des éléments de la collection
-	*
-	* @param string $pFormule formule à appliquer
-	* @return SG_Collection collection après application de la formule
-	*/
+	/**
+	 * Applique une formule SynerGaia à chacun des éléments de la collection
+	 * @since 1.0.6
+	 * @version 2.4 @parms
+	 * @param string $pFormule formule à appliquer
+	 * @return SG_Collection collection après application de la formule
+	 */
 	public function PourChaque($pFormule = '') {
-		$formule = $pFormule;
-		if (getTypeSG($pFormule) !== '@Formule') {
-			$formule = new SG_Formule($pFormule);
-		}
 		$ret = new SG_Collection();
-		foreach ($this -> elements as &$element) {
-			$ret -> elements[] = $formule -> calculerSur($element, null);
+		if (func_num_args() <= 1) {
+			$formule = $pFormule;
+			if (getTypeSG($pFormule) !== '@Formule') {
+				$formule = new SG_Formule($pFormule);
+			}
+			foreach ($this -> elements as &$element) {
+				$ret -> elements[] = $formule -> calculerSur($element, null);
+			}
+		} else {
+			$args = func_get_args();
+			$formules = array();
+			foreach ($args as $arg) {
+				$formule = $arg;
+				if (getTypeSG($formule) !== '@Formule') {
+					$formule = new SG_Formule($formule);
+				}
+				$formules[] = $formule;
+			}
+			foreach ($this -> elements as &$element) {
+				$objet = new SG_Objet();
+				foreach ($formules as $formule) {
+					$res = $formule -> calculerSur($element, null);
+					if ($formule -> titre !== '') {
+						$objet -> proprietes [$formule -> titre] = $res;
+					} else {
+						$objet -> proprietes [] = $res;
+					}
+				}
+				$ret -> elements[] = $objet;
+			}
 		}
 		return $ret;
 	}
 
-	/** 1.0.6
-	* Filtre les éléments de la collection selon une formule
-	*
-	* @param string $pFormule formule à appliquer
-	* @return SG_Collection collection après filtrage
-	*/
+	/** 
+	 * Filtre les éléments de la collection selon une formule
+	 * @since 1.0.6
+	 * @param string $pFormule formule à appliquer
+	 * @return SG_Collection collection après filtrage
+	 */
 	public function Filtrer($pFormule = '') {
 		if (getTypeSG($pFormule) === '@Formule') {
 			$formule = $pFormule;
@@ -893,18 +924,19 @@ class SG_Collection extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.1 traitement formule php ; 2.2 clone ; 2.3 améliore sort pour éviter loop
-	* 1.1 test si méthode toString existe ; 1.3.0 $pSens ; 1.3.1 strtolower
-	* Trier les éléments de la collection selon une formule
-	*
-	* @param string $pFormule formule à appliquer
-	* @param string ou boolean : formule donnant une chaine commençant par "c" ou "d" ou true ou false pour respectivement croissant (defaut) ou descendant
-	* @return SG_Collection collection après tri
-	*/
+	/**
+	 * 1.1 test si méthode toString existe ; 1.3.0 $pSens ; 1.3.1 strtolower
+	 * Trier les éléments de la collection selon une formule
+	 * @since 1.0.6
+	 * @version 2.3 améliore sort pour éviter loop
+	 * @param string $pFormule formule à appliquer
+	 * @param string ou boolean : formule donnant une chaine commençant par "c" ou "d" ou true ou false pour respectivement croissant (defaut) ou descendant
+	 * @return SG_Collection collection après tri
+	 */
 	public function Trier($pFormule = '', $pSens = true) {
 		// formule de tri
 		$formule = '';
-		if (getTypeSG($pFormule) === '@Formule') {
+		if ($pFormule instanceof SG_Formule) {
 			$formule = $pFormule;
 		} else {
 			$formule = new SG_Formule($pFormule);
@@ -1009,12 +1041,12 @@ class SG_Collection extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7
-	* Exporte une collection dans un fichier JSON
-	*
-	* @param indéfini $pNomFichier nom du fichier d'export
-	* @return SG_Texte message de retour
-	*/
+	/** 
+	 * Exporte une collection dans un fichier JSON
+	 * @since 1.0.7
+	 * @param indéfini $pNomFichier nom du fichier d'export
+	 * @return SG_Texte message de retour
+	 */
 	public function Exporter($pNomFichier = '') {
 		$tmpNomFichier = new SG_Texte($pNomFichier);
 		$nomFichier = $tmpNomFichier -> toString();
@@ -1088,12 +1120,13 @@ class SG_Collection extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7 ajout ; 1.2 : opère si collec de n'importe quoi
-	* Détermine si un élément est contenu dans la collection (les _id doivent être identiques)
-	*
-	* @param indéfini $pElement élément à chercher
-	* @return SG_VraiFaux si l'élément est contenu dans la collection
-	*/
+	/**
+	 * Détermine si un élément est contenu dans la collection (les _id doivent être identiques)
+	 * @since 1.0.7
+	 * @version 1.2 : opère si collec de n'importe quoi
+	 * @param any $pElement élément à chercher
+	 * @return SG_VraiFaux si l'élément est contenu dans la collection
+	 */
 	public function Contient($pElement = null) {
 		$demande = $pElement;
 		$typeDemande = getTypeSG($demande);
@@ -1122,62 +1155,82 @@ class SG_Collection extends SG_Objet {
 		return new SG_VraiFaux($retBool);
 	}
 
-	/** 1.0.6 ; 2.2 test formule
-	* Calcul de la somme de la collection
-	*
-	* @param indéfini $pFormule formule a appliquer à chaque élément
-	* @return SG_Nombre
-	*/
+	/**
+	 * Calcul de la somme de la collection selon, la formule passée en paramètre.
+	 * Si aucun paramètre, on suppose que chaque terme est un @nombre dont on fait la somme
+	 * @since 1.0.6
+	 * @version 2.2 test formule
+	 * @param indéfini $pFormule formule a appliquer à chaque élément.
+	 * @return SG_Nombre ou SG_Erreur
+	 **/
 	public function Somme($pFormule = '.@toFloat') {
 		$somme = (double)0;
 
 		$formule = '';
-		if (getTypeSG($pFormule) !== '@Formule') {
-			$ret = new SG_Erreur('Le paramètre de la somme n\'est pas une formule');
+		// pas d'arguments : somme directe des élement
+		if(func_num_args() === 0) {
+			foreach ($this -> elements as &$elt) {
+				if (is_numeric($elt)) {
+					$somme+= $elt;
+				} elseif (getTypeSG($elt) === '@Nombre') {
+					$somme+= $elt -> toFloat();
+				}
+			}
 		} else {
-			$formule = $pFormule;
-			$nbElements = sizeof($this -> elements);
-			foreach ($this -> elements as &$element) {
-				if (SG_Dictionnaire::isObjetExiste(getTypeSG($element)) === true) {
-					$valeur = $formule -> calculerSur($element);
-					if (SG_Dictionnaire::isObjetExiste(getTypeSG($valeur))) {
-						$valeur = $valeur -> toFloat();
-					} elseif (is_string($valeur)) {
-						$valeur = strval($valeur);
+			// somme des résultats de formule
+			if (!$pFormule instanceof SG_Formule) {
+				$ret = new SG_Erreur('0302', getTypeSG($pFormule));
+			} else {
+				$formule = $pFormule;
+				$nbElements = sizeof($this -> elements);
+				foreach ($this -> elements as &$element) {
+					if (SG_Dictionnaire::isObjetExiste(getTypeSG($element)) === true) {
+						$valeur = $formule -> calculerSur($element);
+						if (SG_Dictionnaire::isObjetExiste(getTypeSG($valeur))) {
+							$valeur = $valeur -> toFloat();
+						} elseif (is_string($valeur)) {
+							$valeur = strval($valeur);
+						} elseif ($valeur instanceof SG_Erreur) {
+							$somme = $valeur;
+							break;
+						} else {
+							$somme = new SG_Erreur('0303');
+							break;
+						}
+						$somme += $valeur;
 					} else {
-						$somme = new SG_Erreur('Valeur non numérique');
-						break;
+						$somme += floatval($element);
 					}
-					$somme += $valeur;
-				} else {
-					$somme += floatval($element);
 				}
 			}
 		}
-		if (getTypeSG($somme) !== '@Erreur') {
+		if (! $somme instanceof SG_Erreur) {
 			$ret = new SG_Nombre($somme);
 		} else {
 			$ret = $somme;
 		}
 		return $ret;
 	}
-	/** 2.1 php ; 2.3 traite libellés en tableau ou collection
-	* 1.3.0 si pas de formule de libellé : indice ; 1.3.1 correction si clés non numériques ; 1.3.2 accélération 10%
-	* Calcul des données pour préparer les graphiques
-	*
-	* @param indéfini $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
-	* @param indéfini $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
-	* @return string tableauJSON des données
-	*/
+
+	/**
+	 * Calcul des données pour préparer les graphiques
+	 * @since 1.1
+	 * @version 2.6 traite si pas args
+	 * @param array $args tableau de paramètres SG_Formule par deux : $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
+	 *	puis $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
+	 * @return string tableauJSON des données
+	 */
 	private function calculDonneesPourGraphiques($args) {
 		$formuleValeur = '';
 		$formuleLibelle = '';
 		
 		$nbargs = sizeof($args);
-		if (getTypeSG($args[1]) === '@Formule') {
-			$formuleLibelle = $args[1];
-		} else {
-			$formuleLibelle = new SG_Formule(SG_Texte::getTexte($args[1]));
+		if (isset($args[1]) and $args[1] !== '') {
+			if (getTypeSG($args[1]) === '@Formule') {
+				$formuleLibelle = $args[1];
+			} else {
+				$formuleLibelle = new SG_Formule(SG_Texte::getTexte($args[1]));
+			}
 		}
 		// Récupérer la formule de calcul
 		$formuleValeur = array();
@@ -1192,28 +1245,32 @@ class SG_Collection extends SG_Objet {
 		// Fabrique le tableau des valeurs
 		$tableauDonnees = array();
 		$i = 0;
-		foreach ($this -> elements as &$element) {
+		foreach ($this -> elements as $key => &$element) {
 			$i++;
 			if (is_object($element) or is_array($element)) {
+				$nmax = $nbargs - 2;
 				// Calcul du libellé de l'abcisse
-				$libelle = $formuleLibelle -> calculerSur($element);
-				$type = getTypeSG($libelle);
-				if (SG_Dictionnaire::isObjetExiste($type)) {
-					if ($type === '@Collection') {
-						$libelle = $libelle -> elements[$i - 1] -> toString();
-					} else {
-						$libelle = $libelle -> toString();
-					}
-				} elseif (is_array($libelle)) {
-					$libelle = strval($libelle[$i - 1]);
+				if ($formuleLibelle === '') {
+					$libelle = '' . $key;
 				} else {
-					$libelle = strval($libelle);
-				}
-				if($libelle === '') {
-					$libelle = strval($i);
+					$libelle = $formuleLibelle -> calculerSur($element);
+					$type = getTypeSG($libelle);
+					if (SG_Dictionnaire::isObjetExiste($type)) {
+						if ($type === '@Collection') {
+							$libelle = $libelle -> elements[$i - 1] -> toString();
+						} else {
+							$libelle = $libelle -> toString();
+						}
+					} elseif (is_array($libelle)) {
+						$libelle = strval($libelle[$i - 1]);
+					} else {
+						$libelle = strval($libelle);
+					}
+					if($libelle === '') {
+						$libelle = strval($i);
+					}
 				}
 				$ligne = array($libelle);
-				$nmax = $nbargs - 2;
 				if(is_array($element)) {
 					$nmax = max($nmax, sizeof($element));
 					while(sizeof($formuleValeur) < $nmax) {
@@ -1225,13 +1282,21 @@ class SG_Collection extends SG_Objet {
 					$elt = $element;
 				}
 				// Traitement des paramètres de valeur
-				for($n = 0; $n < $nmax; $n++) {
-					// Calcul de la valeur
-					$valeur = $formuleValeur[$n] -> calculerSur($elt);
-					if (is_object($valeur)) {
-						$ligne[] = $valeur -> toFloat();
+				if ($nmax < 0) {
+					if (is_object($elt)) {
+						$ligne[] = $elt -> toFloat();
 					} else {
-						$ligne[] = floatval($valeur);
+						$ligne[] = floatval($elt);
+					}
+				} else {
+					for($n = 0; $n < $nmax; $n++) {
+						// Calcul de la valeur
+						$valeur = $formuleValeur[$n] -> calculerSur($elt);
+						if (is_object($valeur)) {
+							$ligne[] = $valeur -> toFloat();
+						} else {
+							$ligne[] = floatval($valeur);
+						}
 					}
 				}
 				$tableauDonnees[] = $ligne;
@@ -1242,6 +1307,7 @@ class SG_Collection extends SG_Objet {
 		// JSON correspondant
 		return json_encode($tableauDonnees);
 	}
+
 	/** 2.1.1 si $args vide
 	 * 1.3.0 transmission correcte des paramètres par défaut ; 1.3.2 @param 1 seule 1ere lettre utilisée, idRandom ; 2.0 libellé 0108
 	 * Génération d'un graphique en "histogramme"
@@ -1275,7 +1341,7 @@ class SG_Collection extends SG_Objet {
 			$tableauJSON = $this -> calculDonneesPourGraphiques($args);
 
 			// Identifiant unique du graphique
-			$idGraphique = 'graphique_' . SG_Champ::idRandom();
+			$idGraphique = 'graphique_' . SG_SynerGaia::idRandom();
 			switch (strtolower(substr($format,0,1))) {
 				case 'h':
 					$classe = 'Histogramme';
@@ -1303,13 +1369,13 @@ class SG_Collection extends SG_Objet {
 	}
 
 	/** 2.0 libellé 0108
-	 * Génération d'un graphique en "histogramme"
-	 *
-	 * @param indéfini $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
-	 * @param indéfini $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
-	 *
-	 * @return SG_Nombre
-	 */
+	* Génération d'un graphique en "histogramme"
+	*
+	* @param indéfini $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
+	* @param indéfini $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
+	*
+	* @return SG_HTML
+	*/
 	public function GraphiqueHistogramme($pFormuleValeur = '.@toFloat', $pFormuleLibelle = '.@toString') {
 		$ret = '';
 
@@ -1322,7 +1388,7 @@ class SG_Collection extends SG_Objet {
 			$tableauJSON = $this -> calculDonneesPourGraphiques(func_get_args());
 
 			// Identifiant unique du graphique
-			$idGraphique = 'graphique_' . SG_Champ::idRandom();
+			$idGraphique = 'graphique_' . SG_SynerGaia::idRandom();
 
 			$ret = '';
 			$ret .= '<div id="' . $idGraphique . '" class="graphique graphiqueHistogramme"></div>' . PHP_EOL;
@@ -1333,7 +1399,7 @@ class SG_Collection extends SG_Objet {
 			$ret .= '</script>' . PHP_EOL;
 			$_SESSION['libs']['graphiques'] = true;
 		}
-		return $ret;
+		return new SG_HTML($ret);
 	}
 
 	/** 2.0 libellé 0108
@@ -1356,7 +1422,7 @@ class SG_Collection extends SG_Objet {
 			$tableauJSON = $this -> calculDonneesPourGraphiques(func_get_args());
 
 			// Identifiant unique du graphique
-			$idGraphique = 'graphique_' . SG_Champ::idRandom();
+			$idGraphique = 'graphique_' . SG_SynerGaia::idRandom();
 
 			$ret = '';
 			$ret .= '<div id="' . $idGraphique . '" class="graphique graphiqueSecteurs"></div>' . PHP_EOL;
@@ -1367,7 +1433,7 @@ class SG_Collection extends SG_Objet {
 			$ret .= '</script>' . PHP_EOL;
 			$_SESSION['libs']['graphiques'] = true;
 		}
-		return $ret;
+		return new SG_HTML($ret);
 	}
 	/** 1.3.2 idRandom ; 2.0 libellé 0108
 	 * Génération d'un graphique en "secteurs"
@@ -1388,24 +1454,24 @@ class SG_Collection extends SG_Objet {
 			// Calcul des données
 			$json = $this -> calculDonneesPourGraphiques(func_get_args());
 			// Identifiant unique du graphique
-			$id='graphique_' . SG_Champ::idRandom();
+			$id='graphique_' . SG_SynerGaia::idRandom();
 			$ret='<div id="' . $id . '" class="graphique graphiqueCourbes"></div>';
 			//$ret.='<script src="js/synergaia-graphiques.js"></script>';
 			$ret.='<script>var data_' . $id . '=' . $json . ';graphiqueCourbes("div#' . $id . '",data_' . $id . ');</script>';
 		}
-		return $ret;
+		return new SG_HTML($ret);
 	}
 
-	/** 1.0.7 ; 2.1 traiter formule php
+	/** 1.0.7 ; 2.1 traiter formule php ; 2.4 formules -> texte != '' ; @Effectif => @Nombre ; @param $pLiens, @Docs @Doc
 	 * Grouper la collection et calculer un cumul par catégorie
 	 *
 	 * @param indéfini $pFormuleCategorie
 	 * @param indéfini $pFormuleValeur
 	 * @param indéfini $pFormuleLigne : formule à exécuter à chaque ligne de catégorie (sur les variables 'c2', 'c3', 'nb' et 'total')
-	 *
+	 * @param SG_VraiFaux $pLiens : tableau des liens vers les documents d'origine (si documents) (par défaut : true)
 	 * @return SG_Collection non triée
 	 */
-	public function GrouperCumuler($pFormuleCategorie = '', $pFormuleValeur = '', $pFormuleLigne = '') {
+	public function GrouperCumuler($pFormuleCategorie = '', $pFormuleValeur = '', $pFormuleLigne = '', $pLiens = true) {
 		$ret = new SG_Collection();
 
 		$formuleCategorie = '';
@@ -1417,15 +1483,24 @@ class SG_Collection extends SG_Objet {
 		} else {
 			$formuleCategorie = new SG_Formule($pFormuleCategorie);
 		}
-
 		if (getTypeSG($pFormuleValeur) === '@Formule') {
 			$formuleValeur = $pFormuleValeur;
 		} else {
 			$formuleValeur = new SG_Formule($pFormuleValeur);
 		}
+		// liens ?
+		if ($pLiens === false) {
+			$liens = false;
+		} else {
+			$liens = SG_VraiFaux::getBooleen($pLiens);
+		}
+		// si liens, un clic renverra la collection de documents
+		if ($liens) {
+			$ret -> Clic('.@Docs.@Afficher');
+		}
 		// Parcourt de la collection pour constituer les catégories
 		$cumul = array();
-		$nb = $this -> Compter() -> toInteger();
+		$nb = sizeof($this -> elements);
 		$total = 0;
 		$nbcat = 0;
 		foreach ($this -> elements as &$element) {
@@ -1433,16 +1508,25 @@ class SG_Collection extends SG_Objet {
 
 			$tmpTitre = '';
 			$tmpValeur = 0;
+			$tmpDoc = null;
+			$tmpCle = '';
 
 			if (SG_Dictionnaire::isObjetExiste($tmpType) or is_array($element)) {
 				// Calcul du titre de la catégorie de l'élément en cours
-				if ($formuleCategorie !== '') {
-					$tmpTitre = $formuleCategorie -> calculerSur($element) -> toString();
+				if ($formuleCategorie -> fonction !== '') {
+					$doc = $formuleCategorie -> calculerSur($element);
+					$tmpTitre = $doc -> toString();
+					$tmpCle = $tmpTitre;
+					if ($doc -> DeriveDeDocument() -> estVrai() and !is_null($doc -> doc -> codeDocument)) {
+						$tmpDoc = new SG_IDDoc($doc);
+						$tmpCle = $doc -> getUUID();
+					}
 				} else {
 					$tmpTitre = $element -> toString();
+					$tmpCle = $tmpTitre;
 				}
 				// Calcul de la valeur de l'élément en cours
-				if ($formuleValeur !== '') {
+				if ($formuleValeur -> fonction !== '') {
 					$tmpValeur = $formuleValeur -> calculerSur($element);
 					if(getTypeSG($tmpValeur) === '@Nombre') {
 						$tmpValeur = $tmpValeur -> toFloat();
@@ -1454,15 +1538,29 @@ class SG_Collection extends SG_Objet {
 				}
 			} else {
 				$tmpTitre = (string) $element;
+				$tmpCle = $tmpTitre;
 				$tmpValeur = 1;
 			}
-			if(isset($cumul[$tmpTitre])) {
-				$cumul[$tmpTitre][0] ++;
-				$cumul[$tmpTitre][1] += $tmpValeur;
+			if(isset($cumul[$tmpCle])) {
+				$cumul[$tmpCle][0] ++;
+				$cumul[$tmpCle][1] += $tmpValeur;
 			} else {
 				$nbcat ++; 
-				$cumul[$tmpTitre][0] = 1;
-				$cumul[$tmpTitre][1] = $tmpValeur;
+				$cumul[$tmpCle][0] = 1;
+				$cumul[$tmpCle][1] = $tmpValeur;
+				$cumul[$tmpCle][4] = $tmpTitre;
+			}
+			if (! is_null($tmpDoc)) {
+				$cumul[$tmpCle][3] = $tmpDoc;
+			}
+			// cumuler les liens
+			if ($liens === true and $element -> DeriveDeDocument() -> estVrai() === true) {
+				$id = new SG_IDDoc($element);
+				if(!isset($cumul[$tmpCle][2])) {
+					$cumul[$tmpCle][2] = array($id);
+				} else {
+					$cumul[$tmpCle][2][] = $id;
+				}
 			}
 			$total += $tmpValeur;
 		}
@@ -1491,34 +1589,47 @@ class SG_Collection extends SG_Objet {
 				}
 			}
 		}
-		$var = array('@EffectifTotal' => new SG_Nombre($nb), '@NombreCategories' => new SG_Nombre($nbcat), '@TotalGeneral' => new SG_Nombre($total), '@MinimumCategories' => new SG_Nombre($mincat), '@MaximumCategories' => new SG_Nombre($maxcat));
+		$var = array('@NombreTotal' => new SG_Nombre($nb), '@NombreCategories' => new SG_Nombre($nbcat), '@TotalGeneral' => new SG_Nombre($total), '@MinimumCategories' => new SG_Nombre($mincat), '@MaximumCategories' => new SG_Nombre($maxcat));
 
 		foreach($cumul as $key => $c) {
-			if ($formuleLigne -> formule !== '') {
-				$tmpFormule = new SG_Formule($formuleLigne -> formule);
+			if ($formuleLigne -> texte !== '') {
+				$tmpFormule = new SG_Formule($formuleLigne -> texte);
 				$tmpFormule -> php = $formuleLigne -> php;
 				$tmpFormule -> proprietes = $var;
-				$tmpFormule -> proprietes['@Effectif'] =  new SG_Nombre($c[0]);
+				$tmpFormule -> proprietes['@Nombre'] =  new SG_Nombre($c[0]);
 				$tmpFormule -> proprietes['@Total'] =  new SG_Nombre($c[1]);
 				$tmpFormule -> proprietes['@Calcul'] = $tmpFormule -> calculer();
 				$ligne = $tmpFormule -> proprietes;
 			} else {
 				$ligne = $var;
-				$ligne['@Effectif'] =  new SG_Nombre($c[0]);
+				$ligne['@Nombre'] =  new SG_Nombre($c[0]);
 				$ligne['@Total'] = new SG_Nombre($c[1]);
 				$ligne['@Calcul'] = new SG_Nombre($c[1]);
 			}
-			$ligne['@Titre'] = new SG_Texte($key);
-			$objet = new SG_Objet();
-			$objet -> proprietes = $ligne;
+			$ligne['@Titre'] = $c[4];
+			if ($liens === true) {
+				$ligne['@Docs'] = new SG_Collection();
+				if (isset($c[2])) {
+					$ligne['@Docs'] -> elements = $c[2];
+				}
+			}
+			if (isset($c[3])) {
+				$objet = $c[3] -> Document();
+				$objet -> proprietes = array_merge($objet -> proprietes, $ligne);
+			} else {
+				$objet = new SG_Objet();
+				$objet -> proprietes = $ligne;
+			}
 			$ret -> elements[$key] = $objet;
 		}
 		return $ret;
 	}
-	/* 1.0.7 ajout ; 1.3.0 possibilité de passer une collection ou une liste de valeurs ; 1.3.1 si $pFormule déjà formule garder 
+	/**
 	* AjouterColonne : ajoute une colonne à une collection de type tableau
-	* @param string ou formule, $pCode code de l'élément à ajouter
-	* @param $pFormule : formule portant sur l'élément ou suite de formules
+	* @since 1.0.7
+	* @version 1.3.1 si $pFormule déjà formule garder telle quelle
+	* @param string|SG_Texte|SG_Formule $pCode code de l'élément à ajouter
+	* @param string|SG_Formule $pFormule formule portant sur l'élément ou suite de formules
 	* @return @Collection moi-même
 	*/
 	function AjouterColonne($pCode = null, $pFormule = '') {
@@ -1571,12 +1682,13 @@ class SG_Collection extends SG_Objet {
 		}
 		return $this;
 	}
-	/* 1.0.7
+	/**
 	* MoyenneMobile : ajoute une colonne moyenne mobile à une collection de type tableau
-	* @param (@Formule) $pFormule : la formule donnant le nombre à moyenner
-	* @param string ou formule, $pCode code de l'élément à ajouter
-	* @param indéfini $pNombre : nombre d'éléments à moyenner (par défaut 3)
-	* @return @Collection moi-même
+	* @since 1.0.7
+	* @param SG_Formule $pFormule : la formule donnant le nombre à moyenner
+	* @param string|SG_Formule $pCode code de l'élément à ajouter
+	* @param integer|SG_Nombre|SG_Formule $pNombre nombre d'éléments à moyenner (par défaut 3)
+	* @return SG_Collection moi-même
 	*/  
 	function MoyenneMobile($pFormule = '', $pCode = '', $pNombre = 3) {
 		$code = new SG_Texte($pCode);
@@ -1623,24 +1735,22 @@ class SG_Collection extends SG_Objet {
 		}
 		return $this;
 	}
-	/* 1.1
+	/**
 	* SoldeProgressif : ajoute une colonne de solde progressif en fonction du tri de la colection à une collection de type tableau
-	* @param string ou formule, $pCode code de l'élément à ajouter
-	* @param indéfini $pNombre : champ ou formule à cumuler
-	* @return @Collection moi-même
+	* @since 1.1
+	* @param string|SG_Formule $pCode code de l'élément à ajouter
+	* @param integer|SG_Nombre|SG_Formule $pFormule champ ou formule à cumuler
+	* @return SG_Collection moi-même
 	*/  
 	function SoldeProgressif($pCode = '', $pFormule = '') {
-		$code = new SG_Texte($pCode);
-		$code = $code -> texte;
+		$code = SG_Texte::getTexte($pCode);
 		if ($code === '') {
 			$code = '@SoldeProgressif';
 		}
 		$solde = 0;
-		$formule = $pFormule -> formule;
-		foreach($this->elements as $key => &$element) {
-			$tmpFormule = new SG_Formule($formule, $element);
+		foreach($this -> elements as $key => &$element) {
 			// calcul de la moyenne
-			$valeur = $tmpFormule -> calculer();
+			$valeur = $pFormule -> calculerSur($element);
 			if(method_exists($valeur, 'toFloat')) {
 				$solde += $valeur -> toFloat();
 			}
@@ -1654,14 +1764,14 @@ class SG_Collection extends SG_Objet {
 		return $this;
 	}
 	
-	/** 2.1 php
-	* 1.3.2 usage de .Ligne(), '0080', ; 1.3.3 pas recalcul $nbcolonnes ; $sgformule ; 1.3.4 $ligne[2] clic
-	* 1.1 utilisation SG_Navigation::OperationEnCours(), traitement de ce qui vient de ChercherVue, chg paramètres ; 1.3.0 html ; 1.3.1 correction
+	/**
 	* met en forme le tableau des données d'une vue pour un affichage
-	* @param $pFormule : formule des paramètres ou rien
+	* @version 2.5 $index
+	* @since 1.0.2
+	* @param SG_Formule $pParms : formule des paramètres ou rien
 	* @param boolean $pCheckBox : ajouter des checkbox
 	* @param boolean $lien : mettre sur la première colonne un lien verds l'étape suivante.
-	* @return html à afficher
+	* @return string html à afficher
 	*/  
 	function preparerDonnees($pParms, $pCheckBox = false, $lien = true) {
 		$ret = '';
@@ -1678,32 +1788,28 @@ class SG_Collection extends SG_Objet {
 			
 			// Si on a un contexte avec une étape suivante, propose un lien cliquable sur la première colonne
 			if($lien === true) {
-				if (array_key_exists('page', $_SESSION)) {
-					if (array_key_exists('etape_prochaine', $_SESSION['page'])) {
-						if ($_SESSION['page']['etape_prochaine'] != '') {
-							$refChamp = SG_Navigation::OperationEnCours() -> reference . '/@Principal';
-							$codeChampHTML = SG_Champ::codeChampHTML($refChamp);
-							$lienSurPremiereColonne = true;
-						}
-					}
+				$op = SG_Pilote::OperationEnCours();
+				if ($op -> prochaineEtape != '') {
+					$refChamp = $op -> reference . '/@Principal';
+					$codeChampHTML = SG_Champ::codeChampHTML($refChamp);
+					$lienSurPremiereColonne = true;
 				}
 			}
 			// Fabrication des données du tableau
-			// Données
+			// 1. Données des lignes
 			$tableauData = array();
 			$typesDonnees = array();
 			$numLigne = 0;
-			foreach ($this -> elements as &$element) {
-				$ligne = $this -> getLigne($formules, $element, $pCheckBox, $lienSurPremiereColonne, $numLigne > 0, $codeChampHTML); // 1.3.2
+			foreach ($this -> elements as $key => &$element) {
+				$ligne = $this -> getLigne($formules, $element, $pCheckBox, $lienSurPremiereColonne, $numLigne > 0, $codeChampHTML, $key); // 1.3.2
 				if ($numLigne === 0) {
 					$typesDonnees = $ligne[1];
 				}			
 				$numLigne++;
 				$tableauData[] = array('id' => $numLigne, 'values' => $ligne[0], 'clic' => $ligne[2], 'style' => $ligne[3]);	
 			}
-			// Entete et type des données
-			$tableauMetadata = array();
-			// Cherche les libellé des colonnes
+			// 2. metadata
+			// - Cherche les libellé des colonnes
 			$premierElement = $this -> Premier();
 			$typePremierElement = getTypeSG($premierElement);
 			for ($i = 0; $i < $nbColonnes; $i++) {
@@ -1726,9 +1832,12 @@ class SG_Collection extends SG_Objet {
 					}
 				}
 			}
+			// - case à cocher initiale
+			$tableauMetadata = array();
 			if ($pCheckBox === true) {
 				$tableauMetadata[] = array('name' => 'c0', 'label' => ' ', 'datatype' => 'html', 'editable' => false);
 			}
+			// - mise en tableau
 			if ($typesDonnees !== null) {
 				for ($i = 0; $i < $nbColonnes; $i++) {
 					if(isset($typesDonnees[$i])) {
@@ -1739,14 +1848,21 @@ class SG_Collection extends SG_Objet {
 					$tableauMetadata[] = array('name' => 'c' . ($i + 1), 'label' => $titres[$i], 'datatype' => $td, 'editable' => false);
 				}
 			}
+			// fin
 			$ret = array('metadata' => $tableauMetadata, 'data' => $tableauData);
 		}
+		// mettre la collection dans les variables de l'opération puisqu'elle peut resservir
+		$operation = SG_Pilote::OperationEnCours() -> proprietes[$this -> id] = $this;
 		return $ret;
 	}
 
-	/* 1.0.2 ajout ; 2.0 strRpos (':') ; 2.1 php
+	/**
 	* transforme en formule unique le tableau des paramètres formule en entrée
-	* @param (array) $pArgs : tableau des formules (SG_Formule) de paramètres
+	* @since 1.0.2
+	* @version 2.1
+	* @version 2.6 instanceof au lieu de getTypeSG
+	* @param array $pArgs : tableau des formules (SG_Formule) de paramètres
+	* @return array liste des paramètres mis en forme
 	*/
 	function preparerParametres($pArgs) {
 		$formules = array();
@@ -1754,10 +1870,10 @@ class SG_Collection extends SG_Objet {
 		$methodes = array();
 		$n = 0;
 		$php = '';
-		if(is_array($pArgs) and isset($pArgs[0]) and getTypeSG($pArgs[0]) === '@Formule' and ($pArgs[0] -> php !== '' or $pArgs[0] -> fonction !== '')) {
+		if(is_array($pArgs) and isset($pArgs[0]) and $pArgs[0] instanceof SG_Formule and ($pArgs[0] -> php !== '' or $pArgs[0] -> fonction !== '')) {
 			// 2.1 interprétation à la volée
 			foreach ($pArgs as $parametre) {
-				if (getTypeSG($parametre) === '@Formule') {
+				if ($parametre instanceof SG_Formule) {
 					$titres[] = $parametre -> titre;
 					$methodes[] = $parametre -> methode;
 				}
@@ -1772,7 +1888,7 @@ class SG_Collection extends SG_Objet {
 				$methodes[] = '.Titre';
 			}
 			foreach ($pArgs as $parametre) {
-				if (getTypeSG($parametre) === '@Formule') {
+				if ($parametre instanceof SG_Formule) {
 					$formules[] = $parametre;
 				} else {
 					$i = strrpos($texte, ':');
@@ -1790,53 +1906,16 @@ class SG_Collection extends SG_Objet {
 		$ret = array($titres, $formules, $methodes);
 		return $ret;
 	}
-	/** 1.1 extrait de preparerTableauPagine ; 1.3.2 idRandom ; 2.0 libellé 0108
-	*/
-	function preparerListe($pDonnees) {		
-		$ret .= '<ul id="corps_liste" data-role="listview" data-filter="true">';
-		if (isset($pDonnees['metadata'])) {
-			// Identifiant unique du tableau
-			$idTable = SG_Champ::idRandom();
-			$valeurs = $pDonnees['data'];
-			$nbLignes = sizeof($valeurs);
-			if ($nbLignes === 0) {
-				$ret .= self::libelle('0108'); // rien à afficher
-			} else {
-				foreach ($valeurs as &$ligne) {
-					$nbColonnes = sizeof($ligne);
-					$values = $ligne['values'];
-					$ret .= '<li>';
-					foreach ($ligne['values'] as $ic => $valeur) {
-						if ($ic === 'c1') {
-							$ret .= '<span><h1>' . $valeur . '</h1></span>';
-						} else {
-							$ret .= '<p>' . $valeur . '</p>';
-						}
-					}
-					$ret .= '</li>';
-				}
-			}
-		} else {
-			$ret .= '<li>Metadata manquantes</li>';
-		}
-		$ret .= '</ul>';
-		return $ret;
-	}
-	/* 1.1 : renommé et décomposé
-	* prépare le tableau des données en vue d'affichage par différentes méthodes
-	*/	
-	function preparerTableauPagine($pDonnees) {
-		$tableauJSON = json_encode($pDonnees);
-		// Génère le tableau HTML
-		$ret = $this -> genererTableauHTML($tableauJSON);
-		return $ret;
-	}
-	/** 1.1 aussi collection diverse ; 1.3.2 idRandom ; 1.3.3 cm ; 2.0 libellé 0108 ; 2.1 php
+
+	/**
 	 * Etiquettes sur page A4
-	 * @param @Nombre ou integer $pLignes : nombre de lignes d'étiquettes dans la page
-	 * @param @Nombre ou integer $pColonnes : nombre de colonnes d'étiquettes dans la page
-	 * @param @Texte $pStyle : style pour le texte
-	 * @return page HTML
+	 * @since 1.0.3
+	 * @version 2.1
+	 * @param SG_Nombre|integer $pLignes : nombre de lignes d'étiquettes dans la page
+	 * @param SGNombre|integer $pColonnes : nombre de colonnes d'étiquettes dans la page
+	 * @param string|SG_Texte $pStyle : style pour le texte
+	 * @return string page HTML
+	 * @uses JS SynerGaia.print()
 	 */
 	function AfficherEtiquettes($pLignes = 7, $pColonnes = 2, $pStyle = '') {		
 		$ret = '';
@@ -1879,7 +1958,7 @@ class SG_Collection extends SG_Objet {
 			$valeurs = $this -> elements;
 		}
 		// Identifiant unique du tableau
-		$idTable = SG_Champ::idRandom();
+		$idTable = SG_SynerGaia::idRandom();
 		// boucle d'édition
 		if (sizeof($valeurs) === 0) {
 			$ret .= self::libelle('0108'); // rien à afficher
@@ -1952,35 +2031,37 @@ class SG_Collection extends SG_Objet {
 				$ret = $this -> getResultats('preparerTableauSimple', false, false, $args);
 			}
 		}
-		// enlève la référence au document principal   
-		$_SESSION['page']['ref_document'] = '';
 		return new SG_HTML($ret);
 	}
-	/** 2.1 $valeur array
-	* 1.1 ajout ; 1.3.1 si pas ['data'] ; 1.3.2 idRandom ; 1.3.3 recherche utilise synergaia.filtrer et injection de style ; 2.0 $pFiltre
-	* Tableau simple de type table 
-	* @param (array) données à afficher
-	* @param (boolean) avec zone de recherche
+	/**
+	* Tableau simple de type table.
+	* @since 1.1
+	* @param array $donnees données à afficher
+	* @param boolean $pFiltre faut-il afficher avec zone de recherche ?
+	* @param boolean $pCheckbox faut-il ajouter une colonne checkbox (choisir dans la liste) ?
+	* @return SG_HTML options de tableau + <style> + <table> + propriété 'saisie'
+	* @uses JS SynerGaia.stopPropagation()
 	*/
-	function preparerTableauSimple($donnees, $pFiltre = true) {
+	function preparerTableauSimple($donnees, $pFiltre = true, $pCheckbox = false) {
 		$ret = '';
 		if (isset($donnees['data'])) {
+			$saisie = false;
 			$valeurs = $donnees['data'];
 			// Identifiant unique du tableau
-			$idTable = SG_Champ::idRandom();
+			$idTable = SG_SynerGaia::idRandom();
 			//tableau
-			$ret .= $this -> optionsDeTableau($idTable, $pFiltre, true, sizeof($valeurs));
+			$ret .= $this -> optionsDeTableau($idTable, $pFiltre, true, sizeof($valeurs), $pCheckbox);
 			$ret .= '<style id="hidden-' . $idTable . '">.hidden-' . $idTable . ' { display: table-row;}</style>';
-			$ret .= '<table id="' . $idTable . '" data-role="table" data-mode="columntoggle" class="corpstable">';
+			$ret .= '<table id="' . $idTable . '" data-role="table" data-mode="columntoggle" class="sg-collection">';
 			if (isset($donnees['metadata'])) {
 				// panneau d'entête
 				$ret .= '<thead><tr>'; // entête
 				$titres = $donnees['metadata'];
 				for($i = 0; $i < sizeof($titres); $i++) {
 					if ($i === 0) {
-						$ret .= '<th>';
+						$ret .= '<th class="sg-th-cell">';
 					} else {
-						$ret .= '<th data-priority="' . $i . '">';
+						$ret .= '<th class="sg-th-cell" data-priority="' . $i . '">';
 					}
 					$value = $titres[$i];
 					if(isset($value['label'])) {
@@ -1996,33 +2077,45 @@ class SG_Collection extends SG_Objet {
 				// création du tableau
 				$ret .= '<tbody>';
 				$tr = '<tr class="hidden-' . $idTable . '"';
+				// chaque ligne
 				for($i = 0; $i < $n; $i++) {
 					$l = $valeurs[$i];
 					$ret .= $tr;
 					if ($this -> style !== null) {
 						$ret.= ' style="' . SG_Texte::getTexte($l['style']) . '"';
 					}
-					$ret.= '>';
-					$clic = $l['clic'];
+					$ret.= $l['clic'] . '>';
+					// chaque cellule de la ligne
 					foreach ($l['values'] as $valeur) {
 						if (is_array($valeur)) {
 							$tmpcol = new SG_Collection($valeur);
-							$txt = $tmpcol -> Lister() -> texte . '</td>';//implode('<br>', SG_Texte::getTexte($valeur)) . '</td>';
+							$txt = $tmpcol -> Lister() -> texte . '</td>';
 						} else {
 							$txt = SG_Texte::getTexte($valeur);
 						}
-						$ret .= '<td ' . $clic . '>' . $txt . '</td>';
+						if (getTypeSG($valeur) === '@HTML' and $valeur -> saisie === true) {
+							// il y a de la saisie sur la ligne, donc on remonte l'info et on arrête la propagation du clic sur la ligne
+							$ret .= '<td class="sg-td-cell" onClick="SynerGaia.stopPropagation(event)">' . $txt . '</td>';
+							$saisie = true;
+						} else {
+							$ret .= '<td class="sg-td-cell">' . $txt . '</td>';
+						}
 					}
 					$ret .= '</tr>';
 				}
 				$ret .= '</tbody>';
 			}
 			$ret .= '</table>';
+			$ret = new SG_HTML($ret);
+			$ret -> saisie = $saisie;
 		}
-		return $ret; 
+		return $ret;
 	}
-	/** 1.1 : ajout
-	* Egale : contient l'objet en paramètre * @param indéfini $pQuelqueChose objet avec lequel comparer
+
+	/**
+	* Egale : contient l'objet en paramètre
+	* @since 1.1
+	* @param any $pQuelqueChose objet avec lequel comparer
 	* @return SG_VraiFaux vrai si les deux documents sont identiques
 	*/
 	function Egale ($pQuelqueChose) {
@@ -2052,21 +2145,38 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	// 2.2 SynerGaia.tritable(), comptage des lignes affichées ; placeholder ; 2.3 tout sel + inverser sel
-	//1.3.0 filtre à partir de 3 caractères ; 1.3.3 utilisation de SynerGaia.filtrertable + image loader ; 2.0 correction su pas filtre
-	function optionsDeTableau($idTable= '', $pFiltre = true, $pTri = true, $nb = 0) {
+
+	/**
+	 * Calcul l'html pour les options de calcul de l'affichage en tableau
+	* @version 2.4 checkbox
+	* @since 1.0.2
+	* @param string $idTable
+	* @param boolean $pFiltre
+	* @param boolean $pTri
+	* @param integer $nb
+	* @param boolean $pCheckbox
+	* @return string html calculé
+	* @uses JS SynerGaia.filtrertable(), SynerGaia.selectAll(), SynerGaia.unselectAll(), SynerGaia.tritable()
+	*/
+	function optionsDeTableau($idTable= '', $pFiltre = true, $pTri = true, $nb = 0, $pCheckbox = false) {
 		// création d'un filtre
 		$urljs = SG_Navigation::URL_JS;
 		$ret = '';
 		if ($pFiltre === true) { // todo "recherche" en base libellé
-			$ret.= '<div class="noprint">
-			<input id="' . $idTable .'-filtre" placeholder="Rechercher..." type="text" class="collection-filtre"></input>' . PHP_EOL;
+			$ret.= '<div class="sg-search noprint">
+			<input id="' . $idTable .'-filtre" placeholder="Rechercher..." type="text" class="sg-coll-filtre"></input>' . PHP_EOL;
 			$ret.= '<img id="' . $idTable .'-loader" src="' . $urljs . 'loader.gif" style="display:none"></img>';
 			$ret.= '<script>$("#' . $idTable .'-filtre").keyup(function() {SynerGaia.filtrertable("' . $idTable . '", this.value);});</script>' . PHP_EOL;
-			$ret.= '<div  class="collection-infos"><span id="infostableau">(' . $nb . ' lignes)</span>';
+			$ret.= '<div  class="sg-coll-infos"><span id="infostableau">(' . $nb . ' lignes)</span>';
 			$ret.= '<span id="' . $idTable .'-nb"></span></div>';
 		} else {
-			$ret .= '<div>';
+			$ret.= '<div>';
+		}
+		if ($pCheckbox === true) {
+			$ret.= '<div class="sg-selectunselect">';
+			$ret.= '<img id="' . $idTable .'-selectall" class="sg-img-selectall" onclick="SynerGaia.selectAll(\'' . $idTable . '\')" title="Tout sélectionner"></img>';
+			$ret.= '<img id="' . $idTable .'-unselectall" class="sg-img-unselectall" onclick="SynerGaia.unselectAll(\'' . $idTable . '\')" title="Tout dé-sélectionner"></img>';
+			$ret.= '</div>';
 		}
 		if ($pTri === true) {
 			$ret.= '<script src="' . $urljs . 'jquery/tablesorter/tablesorter.js"></script>' . PHP_EOL;
@@ -2077,6 +2187,7 @@ class SG_Collection extends SG_Objet {
 		$ret.='</div>' . PHP_EOL;
 		return $ret;
 	}
+
 	/** 1.1 ajout ; 2.0 correction + parm 2
 	* Permet d'éclater des lignes selon l'explosion d'une cellule. Une colonne est ajoutée ou remplacée avec la nouvelle valeur calculée.
 	* @param formule donnant une collection pour éclater chaque ligne
@@ -2125,12 +2236,22 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout vient de preparerDonnees ; 1.3.4 $cible ; 2.1 $element peut être string, static
-	* @param $element visé
-	* @param $texte texte à cliquer
-	* @param $cible si renvoi via ajax (la cible peut être "centre" pour n'avoir que le onClick)
-	*/
-	static function creerLienCliquable($element, $texte, $cible = '') {
+
+	/**
+	 * Crée l'url pour le clic de la ligne
+	 * 
+	 * @since 1.1 ajout vient de preparerDonnees
+	 * @version 1.3.4 $cible
+	 * @version 2.1 $element peut être string, static
+	 * @version 2.5 $pIndex
+	 * @param SG_Objet $element visé
+	 * @param string $texte texte à cliquer
+	 * @param string $cible si renvoi via ajax (la cible peut être "centre" pour n'avoir que le onClick)
+	 * @param string $idinfo
+	 * @param string $pIndex : index dans la collection
+	 * @return string html résultat pour la ligne
+	 **/
+	static function creerLienCliquable($element, $texte, $cible = '', $idinfo = '', $pIndex = '') {
 		$ret = $texte;
 		$uid = '';
 		if (is_string($element)) {
@@ -2144,17 +2265,24 @@ class SG_Collection extends SG_Objet {
 		}
 		// si lien réel
 		if ($cible !== '') {
-			$ret = self::onClick($element, $cible); // 2.1
+			$ret = self::onClick($element, $cible, false, $idinfo, $pIndex); // 2.1
 		} else {
 			$url = SG_Navigation::getUrlEtape($element);
 			if ($url !== '') {
-				$ret = '<a href="' . htmlentities($url, ENT_QUOTES, 'UTF-8') . '" title="vers l\'étape suivante" class="lien">' . $texte . '</a>';
+				$ret = '<a href="' . htmlentities($url, ENT_QUOTES, 'UTF-8') . '" title="vers l\'étape suivante" class="sg-lien">' . $texte . '</a>';
 			}
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Affiche en format pellicule la collection (d'images...)
+	 * @since 1.1
+	 * @param string|SG_Formule $pPhoto
+	 * @param string|SG_Formule $pTitre
+	 * @param string|SG_Formule $pClic
+	 * @param string|SG_Nombre|SG_Formule $pTaille
+	 **/
 	function AfficherPellicule($pPhoto = '', $pTitre = '', $pClic = '', $pTaille = 0) {
 		// préparer les paramètres
 		$photo = new SG_Texte($pPhoto);
@@ -2180,8 +2308,11 @@ class SG_Collection extends SG_Objet {
 			if ($i > 10) {break;}
 		}
 	}
-	/** 1.2 ajout
-	*/
+
+	/**
+	 * Calcul le JSON correspondant à la collection
+	 * @since 1.2
+	 */
 	function JSON() {
 		$ret = '';
 		$nbargs = func_num_args();
@@ -2262,8 +2393,10 @@ class SG_Collection extends SG_Objet {
 		$ret = new SG_Texte($ret);
 		return $ret;
 	}
-	/** 1.2 ajout
+
+	/**
 	* Affichage en arbre d'une colection arborescente, par exemple document.Voisinage()
+	* @since 1.2
 	*/
 	function AfficherArbre() {
 		$texteJSON = '';
@@ -2292,7 +2425,7 @@ class SG_Collection extends SG_Objet {
 			$texteJSON = '{"parents":[' . $texteJSON . ']}';
 		}
 		// Identifiant unique du graphique
-		$idGraphique = 'arbre_' . SG_Champ::idRandom();
+		$idGraphique = 'arbre_' . SG_SynerGaia::idRandom();
 
 		$ret = '';
 		$ret .= '<div id="' . $idGraphique . '" class="arbre"></div>' . PHP_EOL;
@@ -2302,10 +2435,18 @@ class SG_Collection extends SG_Objet {
 		$ret .= '</script>' . PHP_EOL;
 		return $ret;
 	}
-	/** 1.2 ajout ; 2.3 classe
-	* transforme la collection en @Calendrier
-	* @param : liste des paramètres de @Calendrier
-	**/
+
+	/** 
+	 * Transforme la collection en SG_Calendrier
+	 * 
+	 * @since 1.2
+	 * @version 2.3 classe
+	 * @param string|SG_Formule|SG_Texte $pTitre
+	 * @param SG_Date|SG_DateHeur|SG_Formule $pDebut
+	 * @param SG_Date|SG_DateHeur|SG_Formule $pFin = null
+	 * @param string|SG_Texte|SG_Formule $pClasse class CSS pour les cases du calendrier
+	 * @return SG_Calendrier
+	 */
 	function Calendrier($pTitre = null, $pDebut = null, $pFin = null, $pClasse = null) {
 		/* 3 lignes : ne semble pas fonctionner et n'est pas sûr
 		$ret = $this -> Devient('@Calendrier');
@@ -2322,9 +2463,12 @@ class SG_Collection extends SG_Objet {
 		$ret -> initClasseDerive(array($this->elements, $pTitre, $pDebut, $pFin, $pClasse));
 		return $ret;
 	}
-	/* 1.3.0 ajout
-	* Choisit un document au hasard
-	*/
+
+	/**
+	 * Choisit un document au hasard
+	 * @since 1.3.0
+	 * @return SG_Document|SG_Objet|SG_Erreur l'élément choisi de la collection (ou erreur si collection vide)
+	 */
 	function AuHasard() {
 		$n = sizeof($this -> elements);
 		if ($n == 0) {
@@ -2334,12 +2478,14 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/* 1.3.0 ajout
-	* Réduit la collection aux documents passés en paramètres.
-	* Sert quand la collection contient des documents modifiés non enregistrés.
-	* @param (array de string) liste des UUID des documents à conserver
-	* @return (@Collection) moi-même
-	*/
+
+	/**
+	 * Réduit la collection aux documents passés en paramètres.
+	 * Sert quand la collection contient des documents modifiés non enregistrés.
+	 * @since 1.3.0
+	 * @param array $pListeAGarder liste des UUID des documents à conserver
+	 * @return SG_Collection) moi-même
+	 */
 	function reduire($pListeAGarder) {
 		foreach($this -> elements as $key => $element) {
 			if(!in_array($element -> getUUID(), $pListeAGarder)) {
@@ -2348,12 +2494,16 @@ class SG_Collection extends SG_Objet {
 		}
 		return $this;
 	}
-	/** 1.3.1 AJout ; 2.3 param
-	* retourne la liste des textes de chaque éléments avec un séparateur
-	* @param $pSep : si rempli, indique qu'on veut le résultat comme un texte par ce séparateur. Sinon, c'est pour une collection de textes
-	* @formula result="";.@PourChaque(result=result.@Concatener({,"},.@toString,{"});result;
-	* @return : la chaine résultante (@Texte) ou la collection des textes (@Collection)
-	**/
+
+	/**
+	 * retourne la liste des textes de chaque éléments avec un séparateur (donné en paramètre)
+	 * 
+	 * @since 1.3.1
+	 * @version 2.3 ajout du paramètre $pSep
+	 * @param SG_Texte|SG_Formule $pSep : si rempli, indique qu'on veut le résultat comme un texte par ce séparateur. Sinon, c'est pour une collection de textes
+	 * @formula result="";.@PourChaque(result=result.@Concatener({,"},.@toString,{"});result;
+	 * @return : la chaine résultante (@Texte) ou la collection des textes (@Collection)
+	 */
 	function Texte($pSep = false) {
 		// quel mode choisi ?
 		if ($pSep != false) {
@@ -2375,22 +2525,37 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.1 php , correction si resultat is_array ; 2.2 $style ; formule = résultat ; 2.3 init $typesDonnees
-	* 1.3.2 ajout ; 1.3.3 correctif toHTML ; $formule est toujours SG_Formule ; 1.3.4 return[2] = clic
-	* Calcule une ligne du tableau de sortie et le passe comme objet HTML
-	**/
-	function getLigne($formules, $element, $pCheckBox = false, $lienSurPremiereColonne = false, $sanstype = false, $codeChampHTML= '') {
+
+	/**
+	 * Calcule une ligne du tableau de sortie et le passe comme objet HTML
+	 * 
+	 * @since 1.3.2
+	 * @version 2.4 style @Texte
+	 * @version 2.6 $clic vers étape
+	 * @param array $formules
+	 * @param any $element objet de la ligne
+	 * @param boolean $pCheckBox
+	 * @param boolean $lienSurPremiereColonne
+	 * @param boolean $sanstype
+	 * @param string $codeChampHTML
+	 * @param string $pIndex
+	 * @return array éléments de la ligne à afficher
+	 * @uses JS SynerGaia.submit()
+	 **/
+	function getLigne($formules, $element, $pCheckBox = false, $lienSurPremiereColonne = false, $sanstype = false, $codeChampHTML= '', $pIndex = '') {
 		$tmpContenuLigne = array();
 		$typesDonnees = null;
-		if (getTypeSG($element) === 'string') {
+		if (is_string($element)) {
 			$element = new SG_Texte($element);
 		}
 		// calcul des clauses de style
 		$style = '';
-		if ($this -> style !== null) {
+		if (! is_null($this -> style)) {
 			for ($i = 0; $i < sizeof($this -> style) ; $i+=2) {
 				$si = $this -> style[$i] -> calculerSur($element);
-				if ( ! method_exists($si, 'estVrai')) {
+				if ($si instanceof SG_Texte) {
+					$style = $si;
+				} elseif ( ! method_exists($si, 'estVrai')) {
 					$style = SG_Libelle::getLibelle('0177',true, getTypeSG($si));
 					break;
 				} else {
@@ -2413,12 +2578,21 @@ class SG_Collection extends SG_Objet {
 			}
 		}
 		// on sépare le cas d'une formule à appliquer ou d'un résultat direct.
-		$valeursColonnes = SG_Operation::calculerSur($element, $formules);		
+		$valeursColonnes = SG_Operation::calculerSur($element, $formules);
 		$nbColonnes = sizeof($valeursColonnes);
 		// créer un lien cliquable
 		$clic = '';
 		if (!$pCheckBox and $lienSurPremiereColonne and is_object($element)) {
-			$clic = $this -> creerLienCliquable($element, '', "centre");
+			$index = urlencode($this -> id . ':' . $pIndex);
+			if (is_object($this -> clic)) {
+				// on renvoie sur une étape d'une branche
+				$url = SG_Navigation::URL_VARIABLE_OPERATION . '=' . SG_Pilote::OperationEnCours() -> reference;
+				$url.= '&' . SG_Navigation::URL_VARIABLE_DOCUMENT . '=' .  $element -> getUUID();
+				$url.= '&' . SG_Navigation::URL_VARIABLE_ETAPE . '=' . $this -> clic -> code;
+				$clic = 'onclick="SynerGaia.submit(event, null,\'' . SG_Navigation::calculerURL($url) . '\')"';
+			} else {				
+				$clic = $this -> creerLienCliquable($element, '', 'centre', '', $index);
+			}
 		}
 		// Et on prend chaque colonne
 		for ($numColonne = 0; $numColonne < $nbColonnes; $numColonne++) {
@@ -2426,8 +2600,10 @@ class SG_Collection extends SG_Objet {
 
 			$valeurColonne = $valeursColonnes[$numColonne];
 			// Essai d'appel du .toHTML
-			if(is_object($valeurColonne)) {
-				if(method_exists($valeurColonne, 'toHTML')) { // 1.3.3
+			if ($valeurColonne instanceof SG_HTML) {
+				$tmpContenuCellule = $valeurColonne;
+			} elseif (is_object($valeurColonne)) {
+				if (method_exists($valeurColonne, 'toHTML')) { // 1.3.3
 					$tmpContenuCellule = $valeurColonne -> toHTML();
 				} else {
 					$tmpContenuCellule = $valeurColonne -> toString();
@@ -2437,13 +2613,13 @@ class SG_Collection extends SG_Objet {
 			}
 			// calcul du type de données
 			if (!$sanstype) {
-				if ($lienSurPremiereColonne === true) {
-					$typesDonnees[$numColonne] = 'html';
-				} else {
-					$typeValeurColonne = getTypeSG($valeurColonne);
-					if (SG_Dictionnaire::isObjetExiste($typeValeurColonne)) {
-						// Cherche le type de donnée à afficher
-						if (! isset($typesDonnees[$numColonne])) {
+				if (! isset($typesDonnees[$numColonne])) {
+					if ($lienSurPremiereColonne === true) {
+						$typesDonnees[$numColonne] = 'html';
+					} else {
+						$typeValeurColonne = getTypeSG($valeurColonne);
+						if (SG_Dictionnaire::isObjetExiste($typeValeurColonne)) {
+							// Cherche le type de donnée à afficher
 							switch($typeValeurColonne) {
 								case '@Texte' :
 									$typesDonnees[$numColonne] = 'string';
@@ -2468,15 +2644,12 @@ class SG_Collection extends SG_Objet {
 									$typesDonnees[$numColonne] = 'string';
 									break;
 							}
+						} else {
+							// Sinon ajoute directement
+							$typesDonnees[$numColonne] = 'string';
 						}
-					} else {
-						// Sinon ajoute directement
-						$typesDonnees[$numColonne] = 'string';
 					}
 				}
-			}
-			if (getTypeSG($tmpContenuCellule) === '@HTML') {
-				$tmpContenuCellule = $tmpContenuCellule -> texte;
 			}
 			// Si on a un contexte avec une étape suivante, propose un lien cliquable sur la premiere colonne
 			if ($numColonne === 0) {
@@ -2490,12 +2663,15 @@ class SG_Collection extends SG_Objet {
 		$ret = array($tmpContenuLigne, $typesDonnees, $clic, $style);
 		return $ret;
 	}
-	/** 1.3.2
-	* calcule la différence des valeurs successives et l'ajoute comme colonne
-	* @param (@Formule) $pFormule : la formule donnant le nombre à différencier
-	* @param string ou formule, $pCode code de l'élément à ajouter
-	* @return @Collection moi-même
-	***/
+
+	/**
+	 * calcule la différence des valeurs successives et l'ajoute comme colonne
+	 * 
+	 * @since 1.3.2
+	 * @param SG_Formule $pFormule : la formule donnant le nombre à différencier
+	 * @param string|SG_Texte|SG_Formule $pCode code de l'élément à ajouter
+	 * @return SG_Collection moi-même
+	 */
 	function Progression ($pFormule = '',$pCode = '') {
 		$code = new SG_Texte($pCode);
 		$code = $code -> texte;
@@ -2532,24 +2708,26 @@ class SG_Collection extends SG_Objet {
 		}
 		return $this;
 	}
-	/** 1.3.2 ajout
+
+	/**
 	* Retourne une liste de liens de la collection vers d'autres documents de la collection ou externes
-	* @param (@Formule) $pTitre formule donnant le titre des documents
-	* @param (@Formule) $pLiens formule donnant la collection des documents liés
-	* @param (@Formule) liste de formule supplémentaires pour des argmuants en plus (formule:code)
-	* @return (json) texte JSON pour la mise en graphique
+	* @since 1.3.2 ajout
+	* @param string|SG_Texte|SG_Formule $pTitre formule donnant le titre des documents
+	* @param string|SG_Texte|SG_Formule $pLiens formule donnant la collection des documents liés
+	* @param string|SG_Texte|SG_Formule liste de formule supplémentaires pour des argmuants en plus (formule:code)
+	* @return string texte JSON pour la mise en graphique
 	**/
 	function getLiensJSON($pTitre = '', $pLiens = '') {
 		$formuletitre = $pTitre;
-		if(getTypeSG($pTitre) !== '@Formule') {
+		if (! $pTitre instanceof SG_Formule) {
 			$formuletitre = new SG_Formule($pTitre);
 		}
 		$ret = array();
 		$formuleliens = $pLiens;
-		if (getTypeSG($formuleliens) !== '@Formule') {
+		if (! $formuleliens instanceof SG_Formule) {
 			$formuleliens = new SG_Formule(SG_Texte::getTexte($formuleliens));
 		}
-		if ($formuleliens -> formule === '') {
+		if ($formuleliens -> texte === '') {
 			$ret = new SG_Erreur('0081');
 		} else {
 			$args = func_get_args();
@@ -2581,11 +2759,13 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
+
 	/** 1.3.2 ajout ; 2.0 imageLoader
 	* Affiche une carte circulaire des liens entre documents
-	* @param (@Formule) $pTitre formule donnant le titre des documents
-	* @param (@Formule) $pLiens formule donnant la collection des documents liés
-	* @return (json) texte JSON pour la mise en graphique
+	* @param string|SG_Texte|SG_Formule $pTitre formule donnant le titre des documents
+	* @param string|SG_Texte|SG_Formule $pLiens formule donnant la collection des documents liés
+	* @return string texte JSON pour la mise en graphique
+	* @uses JS SynerGaia.imageLoader(), cercleDeRelations(), searchRelations()
 	**/
 	function AfficherEnCercle($pTitre = '', $pLiens = '') {
 		$json = $this -> getLiensJSON($pTitre, $pLiens);
@@ -2600,43 +2780,51 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 ajout
-	* Calcule la matrice de proximité et les classes de regroupement
-	* 1. laisser tomber les feuilles isolées (sans lien vers ou de)
-	* 2. regrouper les feuilles avec un seul lien de ou vers (petits groupes)
-	* 3. trier les plus populaires (plus signifiants)
-	* 3.1 repérer le seuil (grand delta avec le suivant)
-	* 3.2 prendre le plus populaires selon seuil comme tête de regroupement
-	* 3.3 étiqueter le groupe selon le(s) mot(s) le plus populaire des titres des feuilles rattachées (et de la 1ere phrase du texte ?)
-	* 4. leur adjoindre les feuilles liées les plus discriminantes
-	* 4.1 repérer le seuil selon + grand delta
-	* 4.2 adjoindre au groupe (selon seuil)
-	* @param (@Formule) $pTitre formule donnant le titre des documents
-	* @param (@Formule) $pLiens formule donnant la collection des documents liés
-	* @return (json) texte JSON pour la mise en graphique
-	**/
+
+	/**
+	 * Calcule la matrice de proximité des documents de la collection et les classes de regroupement
+	 * 1. laisser tomber les feuilles isolées (sans lien vers ou de)
+	 * 2. regrouper les feuilles avec un seul lien de ou vers (petits groupes)
+	 * 3. trier les plus populaires (plus signifiants)
+	 * 	3.1 repérer le seuil (grand delta avec le suivant)
+	 * 	3.2 prendre le plus populaires selon seuil comme tête de regroupement
+	 * 	3.3 étiqueter le groupe selon le(s) mot(s) le plus populaire des titres des feuilles rattachées (et de la 1ere phrase du texte ?)
+	 * 4. leur adjoindre les feuilles liées les plus discriminantes
+	 * 	4.1 repérer le seuil selon + grand delta
+	 * 	4.2 adjoindre au groupe (selon seuil)
+	 * 
+	 * @since 1.3.2
+	 * @param SG_Formule $pTitre formule donnant le titre des documents
+	 * @param SG_Formule $pLiens formule donnant la collection des documents liés
+	 * @param SG_Formule $pGras
+	 * @return string texte JSON pour la mise en graphique
+	 * @uses JS proximites.optimize(), proximites.initialize(), proximites.chercher()
+	 * @todo mettre libellés en fichiers
+	 **/
 	function Proximites($pTitre = '', $pLiens = '', $pGras = '') {
 		$ret = new SG_Collection();
-		$json = call_user_func_array(array($this, 'getLiensJSON'), func_get_args()); //$this -> getLiensJSON($pTitre, $pLiens);
+		$json = call_user_func_array(array($this, 'getLiensJSON'), func_get_args());
 		if (getTypeSG($json) === '@Erreur') {
 			$ret = $json -> Afficher();
 		} else {
 			$url = 'index.php?m=DocumentConsulter&d=';
-			$ret = ''; //'<script src="js/synergaia-proximites.js"></script>';
+			$ret = '';
 			$ret.= '<input id="proximites_search" placeholder="rechercher" onkeyup="proximites.chercher(\'#proximites_search\')"></input>';
 			$ret.= '<span id="prox-opt" onclick="proximites.optimize()" style="font:8pt blue underline"> (essayer une autre optimisation)</span>';
-			//$ret.= '<span id="prox-options" onclick="proximites.trigger()" style="font:8pt blue underline"> (cercles&lt;-&gt;rectangles)</span>';
 			$ret.= '<br><div id="proximites"></div>';
-			//$ret.= '<script>SynerGaia.imageLoader("#proximites");</script>';
 			$ret.= '<script>var data=' . $json .';proximites.initialize("#proximites",data,"' . $url . '");</script>';	
 		}
 		return $ret;
 	}
-	/** 1.3.4 ajout ; 2.1.1 test date vide
-	* Affichage de la collection comme Doodle sur des options (ou des dates)
-	* @param $pTitre
-	* @param $pChoix
-	**/
+
+	/**
+	 * Affichage de la collection comme Doodle sur des options (ou des dates)
+	 * @since 1.3.4
+	 * @version 2.1.1 test date vide
+	 * @param string|SG_Texte|SG_Formule $pTitre
+	 * @param string|SG_Texte|SG_Formule $pChoix
+	 * @todo mettre libellés en fichiers
+	 */
 	function AfficherDoodle ($pTitre = '.@Titre', $pChoix = '.@Dates') {
 		// extraire la formule du titre (param 1)
 		if (getTypeSG($pTitre) === '@Formule') {
@@ -2645,10 +2833,10 @@ class SG_Collection extends SG_Objet {
 			$formuleTitre = new SG_Formule($pTitre);
 		}
 		$titre = '';
-		$dp = strpos($formuleTitre -> formule, ':');
+		$dp = strpos($formuleTitre -> texte, ':');
 		if ($dp !== false) {
-			$titre = substr($formuleTitre -> formule, $dp + 1);
-			$formuleTitre -> setFormule(substr($formuleTitre -> formule, 0, $dp));
+			$titre = substr($formuleTitre -> texte, $dp + 1);
+			$formuleTitre -> setFormule(substr($formuleTitre -> texte, 0, $dp));
 		}
 		if (getTypeSG($pChoix) == '@Formule') {
 			$formuleChoix = $pChoix;
@@ -2714,15 +2902,23 @@ class SG_Collection extends SG_Objet {
 		$ret.= '</tr></tfoot><table>';
 		return new SG_HTML($ret);
 	}
-	// 2.0 ajout
+
+	/**
+	 * retourne le libellé correspondant à un numéro de message (SG_Libelle)
+	 * @since 2.0
+	 * @param string $no numéro du libellé recherché
+	 * @return string
+	 */
 	private function libelle($no) {
 		$ret = SG_Libelle::getLibelle($no, false);
 		return $ret;
 	}
-	/** 2.0 ajout
-	* place une collection d'@HTML dans la gauche
-	* @return (SH_HTML) : la collection dans le cadre gauche
-	**/
+
+	/**
+	 * place une collection d'@HTML dans la gauche
+	 * @since 2.0
+	 * @return (SH_HTML) : la collection dans le cadre gauche
+	 **/
 	function AGauche() {
 		$html = new SG_HTML('');
 		foreach($this -> elements as $elt) {
@@ -2731,11 +2927,13 @@ class SG_Collection extends SG_Objet {
 		$html -> AGauche();
 		return $html;
 	}
-	/** 2.1 ajout
-	* enlève une entrée ou des entrées d'une collection
-	* @param : document ou collection de ceux à enlever
-	* @return : collection modifiée
-	**/
+
+	/**
+	 * enlève une entrée ou des entrées d'une collection
+	 * @since 2.1
+	 * @param : document ou collection de ceux à enlever
+	 * @return : collection modifiée
+	 **/
 	function Enlever($pQuelqueChose = null) {
 		$ret = $this;
 		$type = getTypeSG($pQuelqueChose);
@@ -2765,17 +2963,19 @@ class SG_Collection extends SG_Objet {
 		}
 		return $this;
 	}
+
 	/** 2.1 ajout ; 2.2 tests objets
 	* Affiche une collection de documents sous forme d'une liste de news (vignette, titre, chapeau, date de publication)
-	* @param $pTitre
-	* @param $pPhoto
-	* @param $pResume
-	* @param $pPublication
+	* @param SG_Formule $pTitre
+	* @param SG_Formule $pPhoto
+	* @param SG_Formule $pResume
+	* @param SG_Formule $pPublication
+	* @return SG_HTML
 	**/
 	function AfficherNews($pTitre = '', $pPhoto = '', $pResume = '', $pPublication = "") {
 		$ret = '<div class="news">';
 		if ($this -> titre != '') {
-			$ret.= '<div class="collection-titre">' . $this -> titre .'</div>';
+			$ret.= '<div class="sg-coll-titre">' . $this -> titre .'</div>';
 		}
 		foreach ($this -> elements as $key => $elt) {
 			$ret.= '<div class="news-ligne" ' . self::onClick($elt,'centre') . '>';
@@ -2811,25 +3011,41 @@ class SG_Collection extends SG_Objet {
 		$ret.= '</div>'; // news
 		return new SG_HTML($ret);
 	}
-	/** 2.1 ajout
-	* ajoute un événement onclick vers lancement opération suivante
-	* @param
-	**/
-	static function onClick($element, $cible = '', $pEfface = false) {
+
+	/** 2.1 ajout ; 2.5 index
+	 * ajoute un événement onclick vers lancement opération ou étape suivante
+	 * @param SG_Objet $element : objet visé par le clic
+	 * @param string $cible : cadre cible pour l'affichage du clic
+	 * @param boolean $pEfface : faut-il effacer les autres cadres ? (défaut false)
+	 * @param string $idinfo : code d'une div où puiser un complément d'url (sert pour @Repertoire)
+	 * @param string $pIndex : si objet d'une ligne de collection, id collection et indice dans la collection
+	 * @return string
+	 * @uses JS SynerGaia.champs(), SynerGaia.launchOperation()
+	 **/
+	static function onClick($element, $cible = '', $pEfface = false, $idinfo = '', $pIndex = '') {
 		$ret = '';
-		$url = SG_Navigation::getUrlEtape($element, false);
+		$url = SG_Navigation::getUrlEtape($element, false, $pIndex);
 		if ($url !== '') {
-		/*	if ($cible !== '' and $cible !== 'centre') { // ne fonctionne pas
-				$cible = ',{centre:\'' . $cible . '\'}';
+		/*	if ($pIndex !== '') {
+				$url.= '&' . SG_Navigation::URL_VARIABLE_INDEX . '=' . $pIndex;
 			}*/
+			// données à joindre en provenance d'une div dont on a passé l'id
+			$data = 'null';
+			if ($idinfo != '') {
+				$data = 'SynerGaia.champs(\'' . $idinfo . '\')';
+			}
 			$cible = '';
-			$ret = 'onclick="SynerGaia.launchOperation(event,\'' . htmlentities($url, ENT_QUOTES, 'UTF-8') . '\', null, ' . ($pEfface ? 'true' : 'false') . $cible . ')"';
+			$ret = 'onclick="SynerGaia.launchOperation(event,\'' . htmlentities($url, ENT_QUOTES, 'UTF-8') . '\',' . $data . ', ' . ($pEfface ? 'true' : 'false') . $cible . ')"';
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
+
+	/**
 	* équivalent d'un Trim sur filtre on garde ceux qui répondent @Vrai au filtre, sinon ceux qui ne sont pas vides
-	* @param
+	* @since 2.1
+	* @version 2.6 test si $elt pas objet
+	* @param SG_Formule $pFiltre
+	* @return SG_Collection
 	**/
 	function Condenser($pFiltre = '') {
 		$ret = array();
@@ -2838,7 +3054,11 @@ class SG_Collection extends SG_Objet {
 		}
 		foreach($this -> elements as $key => $elt) {
 			if ($pFiltre === '') {
-				$tmp = ($elt -> EstVide() -> estVrai() !== true);
+				if (is_object($elt)) {
+					$tmp = ($elt -> EstVide() -> estVrai() !== true);
+				} else {
+					$tmp = ($elt !== '' and !is_null($elt));
+				}
 			} else {
 				$tmp = $filtre -> calculerSur($elt) -> estVrai();
 			}
@@ -2848,8 +3068,10 @@ class SG_Collection extends SG_Objet {
 		}
 		return new SG_Collection($ret);
 	}
-	/** 2.2 ajout
+
+	/**
 	* gere le titre de la collection
+	* @since 2.2
 	* @param $pTitre : titre a donner à la collection
 	* @return : si pas de paramètre, le titre. Sinon, $this
 	**/
@@ -2862,8 +3084,10 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.2 ajout
+	/**
 	* gere le style des lignes de la collection. Sera appliquée à chaque ligne
+	* (l'exécution de la formule se fait dans -> getLigne
+	* @since 2.2
 	* @param $pStyle : formule donnant le style de la ligne
 	* @return : si pas de paramètre, la collection des arguments de style. Sinon, la collection elle-même
 	**/
@@ -2876,10 +3100,13 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.2 ajout
-	* clone une collection vide avec les même propriétés sauf les éléments (par exemple en sortie de tri)
-	* @return la nouvelle collection
-	**/
+
+	/**
+	 * clone une collection vide avec les même propriétés sauf les éléments (par exemple en sortie de tri)
+	 * 
+	 * @since 2.2
+	 * @return la nouvelle collection
+	 */
 	function cloner () {
 		$ret = new SG_Collection;
 		$ret -> clic = $this -> clic;
@@ -2888,14 +3115,17 @@ class SG_Collection extends SG_Objet {
 		$ret -> proprietes = $this -> proprietes;
 		return $ret;
 	}
-	/** 2.2 ajout
-	* éclater un éléments en fonction de périodes annuelles. Si le début ou la fin manquent dans le résultat calculé, on prend @Maintenant
-	* @param (@Date ou @DateHeure) $pDebut : début de l'intervalle
-	* @param (@Date ou @DateHeure) $pFin : fin de l'intervalle
-	* @param $pCodeDebut (par défaut @Debut) : nom de la propriété qui contiendra la valeur du début de la période pour chaque élément
-	* @param $pCodeFin (par défaut @Fin) : nom de la propriété qui contiendra la valeur de fin de la période pour chaque élément
-	* @return @Collection éclatée : périodes 
-	**/
+
+	/**
+	 * éclater un éléments en fonction de périodes annuelles. Si le début ou la fin manquent dans le résultat calculé, on prend @Maintenant
+	 * 
+	 * @since 2.2
+	 * @param (@Date ou @DateHeure) $pDebut : début de l'intervalle
+	 * @param (@Date ou @DateHeure) $pFin : fin de l'intervalle
+	 * @param $pCodeDebut (par défaut @Debut) : nom de la propriété qui contiendra la valeur du début de la période pour chaque élément
+	 * @param $pCodeFin (par défaut @Fin) : nom de la propriété qui contiendra la valeur de fin de la période pour chaque élément
+	 * @return @Collection éclatée : périodes 
+	 */
 	function EclaterAnnees($pDebut='', $pFin = '', $pCodeDebut = '@Debut', $pCodeFin = '@Fin') {
 		$ret = $this -> cloner();
 		$cdebut = SG_Texte::getTexte($pCodeDebut);
@@ -2927,18 +3157,27 @@ class SG_Collection extends SG_Objet {
 		}
 		return $ret;
 	}
-	//2.3 ajout
-	// prépare la formule à exécuter en cas de clic
+
+	/**
+	 * Prépare la formule à exécuter en cas de clic
+	 * 
+	 * @since 2.3
+	 * @param SG_Formule $pAction action à exécuter quand on clique sur la ligne
+	 * @return SG_Collection la collection en cours
+ 	 */
 	function Clic($pAction = null) {
-		$formule = $pAction;
-		$this -> clic = new SG_Bouton('clic', $formule);
+		$this -> clic = $pAction; // new SG_Bouton('clic', $pAction);
 		return $this;
 	}
-	/** 2.3 ajout
-	* Chercher éventuellement un élement indexé par le nom de champ
-	* 
-	* @param : nom du champ
-	**/
+
+	/**
+	 * Chercher éventuellement un élement indexé par le nom de champ
+	 * @since 2.3
+	 * @param string $pChamp nom du champ clé dans la collection
+	 * @param any $pValeurDefaut valeur par défaut du champ
+	 * @param string $pModele nom du modèle du champ
+	 * @return la valeur du champ correspondant
+	 **/
 	public function getValeurPropriete($pChamp = null, $pValeurDefaut = null, $pModele = '') {
 		if (isset($this -> elements[$pChamp])) {
 			$ret = $this -> elements[$pChamp];
@@ -2948,32 +3187,223 @@ class SG_Collection extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.3 ajout
-	* La collection est censée ne compredrfe que des adresses mail
+	/**
+	* La collection est censée ne comprendre que des adresses mail
 	* la fonction reprend la liste et l'affiche dans une zone cliquable avec une url mailto:
 	* 
-	* @param pMode SG_Texte : type de champ destinataire (to, cc, bcc par défaut)
+	* @since 2.3
+	* @version 2.4 ajout parm $pNombre
+	* @version 2.6 copy
+	* @param string|SG_Texte|SG_Formule $pMode type de champ destinataire (to, cc, bcc par défaut)
+	* @param integer|SG_Nombre|SG_Formule $pNombre le nombre maximum d'adresses dans un bloc (défaut 50)
 	* @return SG_HTML : la liste entourée d'une url mailto complète.
+	* @uses JS SynerGaia.copy()
 	**/
-	public function AfficherMailTo($pMode = 'bcc') {
+	public function AfficherMailTo($pMode = 'bcc', $pNombre = 50) {
 		$mode = SG_Texte::getTexte($pMode);
-		$texte = $this -> Lister() -> texte; // obtenir la liste des adresses à afficher
-		// obtenir la liste des adresses pour le mailto
+		$emet = SG_Rien::Moi() -> getValeur('Email',''); // créer un from à partir de mon adresse
+		$max = SG_Nombre::getNombre($pNombre);
+		$ret = '';
 		$dest = '';
+		$i=99999999;
+		$n=0;
+		$msg = SG_Libelle::getLibelle('0268', false);
+		$ta = '<textarea id="copyTarget" onclick="SynerGaia.copy(event)" class="sg-coll-mailto-ta">';
 		foreach ($this -> elements as $adr) {
+			if ($i > $max) {
+				$n++;
+				if ($n > 1) {
+					$ret.= $msg . '<a href="mailto:' . $emet . '?' . $mode . '=' . $dest . '">' . $ta;
+					// fin de la liste, de la balise, de la div cliquable, de la div du bloc mailto
+					$ret.= $dest . '</textarea></a></div>';
+					$ret.= '<div class="sg-coll-mailto"><b>Bloc ' . $n . '</b><br>';
+				}
+				// entête de bloc
+				$i = 0;
+				$dest = '';
+			}
 			$txt = SG_Texte::getTexte($adr);
 			if ($txt !== '' and $txt !== null) {// supprimer les adresses vides
-				if ($dext = '') {
-					$dest= $txt;
+				if ($dest === '') {
+					$dest = $txt;
 				} else {
 					$dest.= ',' . $txt;
 				}
+				$i++;
 			}
 		}
-		$emet = SG_Rien::Moi() -> getValeur('Email',''); // créer un from à partir de mon adresse
-		$ret = '<a href="mailto:' . $emet . '?' . $mode . '=' . $dest . '">' . $texte . '</a>'; // fabriquer le texte html
+		// fin de la liste, de la balise, de la div cliquable, de la div du bloc mailto
+		$ret.= $msg . '<br><a href="mailto:' . $emet . '?' . $mode . '=' . $dest . '">' . $ta;
+		$ret.= $dest . '</textarea></a></div>';
+		if ($n > 1) {
+			$ret = '<div class="sg-coll-mailto"><b>Bloc 1</b><br>' . $ret;
+		}
 		return new SG_HTML($ret);
 	}
+	/**
+	* Crée un nouveau répertoire à partir des documents ou des photos ou des objets de la collection
+	* @since 2.4
+	* @param SG_Formule|SG_Texte le code du répertoire à créer
+	* @return SG_Repertoire le nouveau répertoire (non enregistré)
+	**/
+	function CreerRepertoire($pTitre = '') {
+		$newrep = new SG_Repertoire();
+		$newrep -> titre = SG_Texte::getTexte($pTitre);
+		$newrep -> mettreValeur('@Titre', $newrep -> titre);
+		$newrep -> Ajouter($this);
+		return $newrep;
+	}
+	/**
+	* Retourne l'élément actuel selon le curseur ou erreur 224 si la collection est vide
+	* @since 2.4
+	* @return SG_Objet|SG_Erreur
+	**/
+	function Actuel() {
+		if (is_null($his -> cursor)) {
+			$ret = $this -> Premier();// positionne le curseur au début
+		} elseif (array_key_exists($this -> cursor, $this -> elements)) {
+			$ret = $this -> elements[$this -> cursor];
+		} else {
+			$ret = new SG_Erreur('0224', $this -> cursor);
+		}
+		return $ret;
+	}
+	/**
+	* positionne le curseur sur l'élément précédent et retourne l'élément (ou erreur si n'existe pas)
+	* @since 2.4
+	* @return SG_Objet|SG_Erreur retourne l'élément actuel selon le curseur
+	**/
+	function Precedent() {
+		if (is_null($this -> cursor)) {
+			$ret = new SG_Erreur('0229');
+		} else {
+			$keys = array_keys($this -> elements);
+			$key = array_search($this -> cursor, $keys);
+			if ($key === false) {
+				$ret = new SG_Erreur('0225', $this -> cursor);
+			} else {
+				--$key;
+				if ($key < 0) {
+					$ret = new SG_Erreur('0226');
+				} else {
+					$this -> cusor = $keys[$key];
+					$ret = $this -> elements[$this -> cursor];
+				}
+			}
+		}
+		return $ret;
+	}
+	/**
+	* Positionne le curseur sur l'élément suivant et retourne l'élément (ou erreur si n'existe pas)
+	* @since 2.4
+	* @return SG_Objet|SG_Erreur retourne l'élément actuel selon le curseur
+	**/
+	function Suivant() {
+		if (is_null($this -> cursor)) {
+			$this -> AllerAuDebut();
+		}
+		$keys = array_keys($this -> elements);
+		$key = array_search($this -> cursor, $keys);
+		if ($key === false) {
+			$ret = new SG_Erreur('0227', $this -> cursor);
+		} else {
+			++$key;
+			if ($key >= sizeof($keys)) {
+				$ret = new SG_Erreur('0228');
+			} else {
+				$this -> cusor = $keys[$key];
+				$ret = $this -> elements[$this -> cursor];
+			}
+		}
+		return $ret;
+	}
+
+	/** 
+	 * Positionne le curseur au début de la collection
+	 * @since 2.4
+	 * @return SG_Collection la collection
+	 **/
+	function AllerAuDebut() {
+		reset($this -> elements);
+		$this -> cursor = key($this -> elements);
+		return $this;
+	}
+
+	/**
+	 * positionne le curseur au début de la collection
+	 * @since 2.4
+	 * @return SG_Collection la collection
+	 **/
+	function AllerALaFin() {
+		end($this -> elements);
+		$this -> cursor = key($this -> elements);
+		return $this;
+	}
+
+	/**
+	 * Modifier les éléments de la collection ou en ajouter ou supprimer
+	 * @since 2.6
+	 * @param string $pRefChamp référence html du champ
+	 * @return string HTML de la liste des éléments avec la possibilité d'en ajouter
+	 * @uses JS SynerGaia.collAdd(), SynerGaia.collSupp()
+	 **/
+	function modifierChamp($pRefChamp = '') {
+		$ret = '<div class="sg-coll-modif">';
+		foreach ($this -> elements as $key => &$elt) {
+			if (!is_object($elt) and ! is_null($this -> type)){
+				$elt = new $this -> type ($elt);
+			}
+			if (is_object($elt)) {
+				$ret.= '<div class="sg-coll-elt">';
+				$ret.= '<div class="sg-coll-elt-field">' . $elt -> modifierChamp($pRefChamp . '[' . $key . ']') . '</div>';
+				$ret.= '<div class="sg-coll-elt-plus" onclick="SynerGaia.collAdd(event, \'' . get_class($elt) . '\')" title="Ajouter un élément"></div>';
+				$ret.= '<div class="sg-coll-elt-moins" onclick="SynerGaia.collSupp(event)" title="Supprimer cet élément"></div>';
+				$ret.= '</div>';
+			}
+		}
+		$ret.= '</div>';
+		return $ret;
+	}
+
+	/**
+	 * Affiche le champ en modification
+	 * @since 2.6
+	 * @return SG_HTML code pour la saisie d'une collection
+	 **/
+	function Modifier() {
+		return new SG_HTML($this -> modifierChamp());
+	}
+
+	/**
+	 * Met à jour ou retourne le type d'élément d'une collection d'éléments d'un seul type
+	 * Si $pType donne une erreur, le résultat est cette erreur et $this -> type n'est pas modifié
+	 * Si le type n'est pas défini, retourne '@Rien'
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Objet|SG_Formule $pType nom du type SynerGaïa des éléments. Si absent on fournira le type
+	 * @return SG-Texte|SG_Formule code pour la saisie d'une collection
+	 **/
+	function Type($pType = null) {
+		if (func_num_args() === 0) {
+			if (is_null($this -> type)) {
+				$ret === SG_Rien::typeSG;
+			} else {
+				$ret = new SG_Texte($type);
+			}
+		} else {
+			$ret = $this;
+			$type = SG_Texte::getTexte($pType);
+			if ($type instanceof SG_Erreur) {
+				$ret = $type;
+			} elseif ($type === "" or $type === SG_Rien::typeSG) {
+				$this -> type = null;
+			} else {
+				$this -> type = $type;
+			}
+		}
+		return $ret;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Collection_trait;
 }
