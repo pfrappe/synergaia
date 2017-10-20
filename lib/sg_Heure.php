@@ -1,19 +1,27 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* Classe SynerGaia de gestion d'une heure
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Heure */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Heure_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Heure_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * @since 2.1.1
+	 */
 	trait SG_Heure_trait{};
 }
+
+/**
+ * Classe SynerGaia de gestion d'une heure
+ * @version 2.1.1
+ */
 class SG_Heure extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Heure' */
 	const TYPESG = '@Heure';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Valeur interne de l'heure
+	/** integer Valeur interne de l'heure (unix) */
 	public $_heure;
 
 	/**
@@ -120,7 +128,7 @@ class SG_Heure extends SG_Objet {
 	}
 
 	/**
-	 * Affichage
+	 * Calcul du code html pour l'affichage d'un champ @Heure
 	 *
 	 * @return string code HTML
 	 */
@@ -129,22 +137,26 @@ class SG_Heure extends SG_Objet {
 	}
 
 	/**
-	 * Modification
+	 * Calcul du code html pour la modification d'un champ @Heure
 	 *
-	 * @param $pRefChamp référence du champ HTML
+	 * @param string $pRefChamp référence du champ HTML
 	 *
 	 * @return string code HTML
 	 */
 	function modifierChamp($pRefChamp = '') {
 		return '<input class="champ_Heure" type="text" name="' . $pRefChamp . '" value="' . str_replace('"', '&quot;', $this -> toString()) . '"/>';
 	}
-	/** 1.1
-	* EstVide
-	*/
+
+	/**
+	 * Calcul si le champ est vide ou non
+	 * @since 1.1
+	 * @return SG_VraiFaux
+	 */
 	public function EstVide() {
 		$ret = new SG_VraiFaux($this -> _heure === null);
 		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Heure_trait;
 }
