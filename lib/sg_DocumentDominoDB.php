@@ -1,22 +1,32 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.1 (see AUTHORS file)
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @DocumentDominoDB */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_DocumentDominoDB : Classe de gestion d'un document Domino
+ * @since 1.1
  */
 class SG_DocumentDominoDB extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@DocumentDominoDB';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
-	
+
+	/** string code de la base */
 	public $codeBase;
-	
+
+	/** string code du document */
 	public $codeDocument;
-	
+
+	/** array tableau des propriétés du document */
 	public $proprietes;
 	
-	/** 1.1 ajout
-	* @param $pBase : chemin ou replicaID
-	* @param $UniversalID du document
-	*/
+	/**
+	 * Construction d'un nouveau document Domino
+	 * @since 1.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pBase : chemin ou replicaID
+	 * @param string|SG_Texte|SG_Formule $pDocumentUNID UNID Lotus Notes id du document
+	 */
 	public function __construct($pBase = '', $pDocumentUNID = '') {
 		// objet domino
 		if (!isset($_SESSION['@SynerGaïa'] -> domino)) {
@@ -73,7 +83,12 @@ class SG_DocumentDominoDB extends SG_Objet {
 			}
 		}
 	}
-	// 1.1 ajout
+
+	/**
+	 * Retourne l'id SynerGaïa du document
+	 * @since 1.1 ajout
+	 * @return string
+	 */
 	function getUUID() {
 		return $this -> codeBase . '/' . $this -> codeDocument;
 	}
