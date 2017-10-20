@@ -1,24 +1,27 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* Classe SynerGaia de gestion de la configuration de SynerGaia
-*/
+<?php
+/** SynerGaia fichier de gestion de l'objet @Config */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
+ * Classe SynerGaia de gestion de la configuration de SynerGaia
+ * @version 2.4
+ */
 class SG_Config {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Config' */
 	const TYPESG = '@Config';
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Emplacement du fichier de configuration
+	/** string Emplacement du fichier de configuration */
 	const FICHIER = 'config/config.php';
 
 	/**
-	* Détermine la valeur du paramètre de configuration
-	*
-	* @param string $cle clé du paramètre de configuration
-	* @param indéfini $valeurParDefaut valeur par défaut du paramètre
-	* @return indéfini valeur du paramètre de configuration
-	* @level 0
-	*/
+	 * Détermine la valeur du paramètre de configuration
+	 *
+	 * @param string $cle clé du paramètre de configuration
+	 * @param indéfini $valeurParDefaut valeur par défaut du paramètre
+	 * @return string valeur du paramètre de configuration
+	 */
 	static function getConfig($cle, $valeurParDefaut = '') {
 		global $SG_Config;
 		$ret = $valeurParDefaut;
@@ -28,14 +31,15 @@ class SG_Config {
 		return $ret;
 	}
 
-	/** 1.3.0 SYNERGAIA_PATH_TO_APPLI ;
-	* Définit la valeur du paramètre de configuration
-	*
-	* @param string $cle clé du paramètre de configuration
-	* @param indéfini $valeur valeur du paramètre
-	* @return boolean modification ok
-	* level 0
-	*/
+	/**
+	 * Définit la valeur du paramètre de configuration
+	 * 
+	 * @version 1.3.0 utilisation de SYNERGAIA_PATH_TO_APPLI ;
+	 * @param string $cle clé du paramètre de configuration
+	 * @param string|integer $valeur valeur du paramètre
+	 * @param string $comment
+	 * @return boolean modification ok
+	 */
 	static function setConfig($cle, $valeur = '', $comment = '') {
 		global $SG_Config;
 
@@ -96,26 +100,33 @@ class SG_Config {
 		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* retourne le code application (il provient de la configuration ou de l'utilisateur)
-	* @return string : code interne de l'application
-	**/
+
+	/**
+	 * retourne le code application (il provient de la configuration ou de l'utilisateur)
+	 * 
+	 * @since 2.3 ajout
+	 * @return string code interne de l'application
+	 */
 	static function getCodeAppli() {
 		$ret = self::getConfig('CouchDB_prefix', '');
 		return $ret;
 	}
-	/** 2.3 ajout
-	* retourne le code de base avec le bon préfixe pour l'accès par CouchDB.
-	* Par défaut le préfixe est le code de l'application.
-	* Mais il peut être remplacé parce qu'on partage une base entre applications
-	* on ne fait rien s'il s'agit d'une base système de CouchDB (elle commence par _)
-	* @param string : code de la base à chercher
-	* @return string : code de base complet pour accès CouchDB
-	**/
+
+	/**
+	 * retourne le code de base avec le bon préfixe pour l'accès par CouchDB.
+	 * Par défaut le préfixe est le code de l'application.
+	 * Mais il peut être remplacé parce qu'on partage une base entre applications
+	 * on ne fait rien s'il s'agit d'une base système de CouchDB (elle commence par _)
+	 * 
+	 * @since 2.3 ajout
+	 * @version 2.4 villes
+	 * @param string $pCodeBase code de la base à chercher
+	 * @return string code de base complet pour accès CouchDB
+	 */
 	static function getCodeBaseComplet($pCodeBase) {
 		$ret = $pCodeBase;
 		// si base non système CouchDB, et si on n'a pas un cas particulier dans la config, on met le prefixe
-		if (! $_SESSION['@SynerGaia'] -> sgbd -> isBaseSysteme($pCodeBase)) {
+		if ($pCodeBase === 'synergaia_villes_fr' or ! $_SESSION['@SynerGaia'] -> sgbd -> isBaseSysteme($pCodeBase)) {
 			$ret = self::getConfig('CouchDB_' . $pCodeBase,'');
 			if ($ret === '') {
 				$ret = self::getCodeAppli() . $pCodeBase;
