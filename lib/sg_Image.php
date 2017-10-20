@@ -1,33 +1,61 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.2 (see AUTHORS file)
-* SG_Image : classe SynerGaia de gestion d'une image
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitemet de l'objet @Image */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Image_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Image_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Image_trait{};
 }
+
+/**
+ * SG_Image : classe SynerGaia de gestion d'une image
+ * @version 2.2
+ */
 class SG_Image extends SG_ObjetComposite {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Image' */
 	const TYPESG = '@Image';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	/** 1.1 ajout
-	* Construction de l'objet
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @since 1.1 ajout
+	 * @param any $pQuelqueChose
+	 * @param string|SG_Texte|SG_Formule $pUUId = ''
+	 */
 	function __construct($pQuelqueChose = null, $pUUId = '') {
 		$this -> initObjetComposite($pQuelqueChose, $pUUId);
 		$this -> champs = array('@Titre' => null, '@Fichier' => null);
 	}
-	/** 1.1 ajout ; 2.1 suppression de la boucle, getSrc ; 2.2 sup height et width ; title
-	*/
+
+	/**
+	 * Calcul le code html pour l'affichage de l'objet
+	 * 
+	 * @since 1.1 ajout
+	 * @version 2.1 suppression de la boucle, getSrc
+	 * @version 2.2 sup height et width ; title
+	 * @return string code html
+	 */
 	function toHTML() {
-		$ret = '<img class="repertoire-photo" src="' . $this -> getSrc(false) .'" title="' . $this -> getValeur('@Titre').'">'; // width="100%" height="100%"
+		$ret = '<img class="sg-rep-photo" src="' . $this -> getSrc(false) .'" title="' . $this -> getValeur('@Titre').'">'; // width="100%" height="100%"
 		return $ret;
 	}
-	/** 1.1 ajout ; 1.3.1 static ; 2.2 0182
-	*/
+
+	/**
+	 * Retaille l'image selon une nouvelle dimension
+	 * 
+	 * @since 1.1 ajout
+	 * @version 1.3.1 static
+	 * @version 2.2 erreur 0182
+	 * @param integer $pMax nouvelle taille
+	 * @param string $pData texte de l'image
+	 * @TODO mettre au propre l'erreur 0182 (provisoire)
+	 * @return string|SG_Erreur
+	 */
 	static function resizeTo($pMax = 0, $pData) {
 		if (!function_exists('imagecreatefromstring')) {
 			$ret = new SG_Erreur('0047');
@@ -65,8 +93,13 @@ if($source === false) {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Crée une image redimensionnée selon la taille passée en paramètre
+	 * @since 1.1 ajout
+	 * @param integer $pMax nouvelle taille
+	 * @return SG_Image
+	 */
 	function Redimensionner($pMax = 0) {
 		$fichier = $this -> getValeur('@Fichier','');
 		foreach ($fichier as $key => $image) {
@@ -81,8 +114,13 @@ if($source === false) {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Crée une nouvelle image sous forme de vignette (taille 100px)
+	 * 
+	 * @since 1.1 ajout
+	 * @return SG_IMage
+	 */
 	function Vignette() {
 		$fic = current($this -> getValeur('@Fichier',''));
 		$key = key($this -> getValeur('@Fichier',''));
@@ -98,12 +136,19 @@ if($source === false) {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Calcule le texte html à afficher avec une possibilité de clic
+	 * 
+	 * @since 1.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pMessage message à afficher sur le bouton
+	 * @param SG_Formule $pFormule formule à exécuter au clic
+	 * @return SG_HTML
+	 */
 	function AfficherClic($pMessage = '', $pFormule = '') {
 		$ret = '';
 		$fichier = $this -> getValeur('@Fichier');
-		$popup = '#popup_window';
+		$popup = '#popup';
 		foreach ($fichier as $key => $image) {
 			$formule = $pFormule;
 			if ($pFormule === '') {
@@ -117,20 +162,32 @@ if($source === false) {
 		$ret = new SG_HTML($ret);
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Calcule le code html pour l'affichage de l'objet
+	 * 
+	 * @since 1.1
+	 * @version 2.6 return SG_HTML
+	 * @param integer $pTaille taille de l'image affichée
+	 * @return SG_HTML
+	 */
 	function Afficher($pTaille = 0) {
 		if ($pTaille === 0) {
 			$image = $this;
 		} else {
 			$image = $this -> Redimensionner($pTaille);
 		}
-		$ret = '<div>' . $image -> toHTML() . PHP_EOL. '<p class="repertoire-legende">' . $image -> getValeur('@Titre') . '<p></div>';
-		return $ret;
+		$ret = '<div>' . $image -> toHTML() . PHP_EOL. '<p class="sg-rep-legende">' . $image -> getValeur('@Titre') . '<p></div>';
+		return new SG_HTML($ret);
 	}
-	/** 2.1 ajout
-	* récupère les données pour un champ src="..."
-	**/
+
+	/**
+	 * Récupère les données pour un champ src="..."
+	 * 
+	 * @since 2.1
+	 * @param integer $pEncode
+	 * @return string
+	 */
 	function getSrc($pEncode = true) {
 		$ret = '';
 		$fichier = $this -> getValeur('@Fichier','');
@@ -157,6 +214,7 @@ if($source === false) {
 		}
 		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Image_trait;
 }
