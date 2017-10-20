@@ -1,41 +1,59 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Objet : Classe de gestion d'un objet de base
-*/
-// 2.3 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia fichier pour le traitement de l'objet @Objet */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+ 
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Objet_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Objet_trait.php';
 } else {
+	/** trait vide par défaut : pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Objet_trait{};
 }
-class SG_Objet { //extends SG_Rien 
-	// Type SynerGaia
+
+/**
+ * SG_Objet : Classe de gestion d'un objet de base
+ * @version 2.4
+ */
+class SG_Objet {
+	/** string Type SynerGaia '@Objet' */
 	const TYPESG = '@Objet';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	// 1.1 indicateur de composition 
+	/** boolean indicateur de composition
+	 * @since 1.1 
+	 */
 	const COMPOSITE = false;
 	
-	// 1.1 nom du champ de l'objet
+	/** string nom du champ de l'objet
+	 * @since 1.1 
+	 */
 	public $reference;
 	
-	// Objet contenant notre objet
+	/** SG_Objet Objet contenant notre objet */
 	public $contenant = null;
 	
-	// 1.1 : $index formule permettant de retrouver l'élément à partir du principal
+	/** string formule permettant de retrouver l'élément à partir du principal
+	 * @since 1.1 
+	 */
 	public $index;
 	
-	// 2.1 titre de l'objet pour l'affichage
+	/** string titre de l'objet pour l'affichage
+	 * @since 2.1
+	 */
 	public $titre;
 	
-	/** 1.0.4
-	* propriétés de l'objet
-	*/
+	/**
+	 * array propriétés de l'objet
+	 * @since 1.0.4
+	 */
 	public $proprietes = array();
 	
-	/** 1.0.4
-	* @param array Array(propriété => valeur, etc)
-	*/
+	/**
+	 * Initialisation de l'objet
+	 * 
+	 * @since 1.0.4
+	 * @param array $pQuelqueChose Array(propriété => valeur, etc)
+	 */
 	public function __construct($pQuelqueChose = null) {
 		if(!is_null($pQuelqueChose)) {
 			$this -> proprietes = $pQuelqueChose;
@@ -56,22 +74,24 @@ class SG_Objet { //extends SG_Rien
 
 	/**
 	* Conversion en chaine de caractères
-	*
+	* @version 2.4 valeur titre si pas doc
 	* @return string texte
 	*/
 	function toString() {
 		$ret = '';
 		if (isset($this -> doc)) {
 			$ret = $this -> doc -> toString();
+		} else {
+			$ret = $this -> getTitre();
 		}
 		return $ret;
 	}
 
 	/**
-	* Conversion valeur numérique
-	*
-	* @return float valeur numérique
-	*/
+	 * Conversion valeur numérique
+	 *
+	 * @return float valeur numérique
+	 */
 	function toFloat() {
 		$ret = (double)0;
 		if (isset($this -> doc)) {
@@ -81,10 +101,10 @@ class SG_Objet { //extends SG_Rien
 	}
 
 	/**
-	* Conversion valeur numérique
-	*
-	* @return integer valeur numérique
-	*/
+	 * Conversion valeur numérique
+	 *
+	 * @return integer valeur numérique
+	 */
 	function toInteger() {
 		$ret = (integer)0;
 		if (isset($this -> doc)) {
@@ -93,14 +113,16 @@ class SG_Objet { //extends SG_Rien
 		return $ret;
 	}
 
-	/** 1.0.4 ; 2.1 php, valeur par défaut
-	* Lecture de la valeur d'une propriété (du document ou de l'objet)
-	*
-	* @param string $pChamp code de la propriété
-	* @param indéfini $pValeurDefaut valeur de la propriété si le champ n'existe pas
-	* @param string $pModele modele si on le connait
-	* @return indéfini valeur de la propriete
-	*/
+	/**
+	 * Lecture de la valeur d'une propriété (du document ou de l'objet)
+	 * 
+	 * @since 1.0.4
+	 * @version 2.1 php, valeur par défaut
+	 * @param string $pChamp code de la propriété
+	 * @param indéfini $pValeurDefaut valeur de la propriété si le champ n'existe pas
+	 * @param string $pModele modele si on le connait
+	 * @return indéfini valeur de la propriete
+	 */
 	public function getValeurPropriete($pChamp = null, $pValeurDefaut = null, $pModele = '') {
 		$ret = $pValeurDefaut;
 		$champs = explode('.', $pChamp);
@@ -123,14 +145,14 @@ class SG_Objet { //extends SG_Rien
 		return $ret;
 	}
 
-	/** 1.1 cas des code xxx.yyy (objets composites) ; 2.0 erreur 0111
-	* Lecture de la valeur d'un champ de l'objet
-	*
-	* @param string $pChamp code du champ
-	* @param indéfini $pValeurDefaut valeur si le champ n'existe pas
-	*
-	* @return indéfini valeur du champ
-	*/
+	/**
+	 * Lecture de la valeur d'un champ de l'objet
+	 * 
+	 * @version 2.0 erreur 0111
+	 * @param string $pChamp code du champ
+	 * @param indéfini $pValeurDefaut valeur si le champ n'existe pas
+	 * @return indéfini valeur du champ
+	 */
 	public function getValeur($pChamp = null, $pValeurDefaut = null) {
 		$ret = null;
 		$champ = $pChamp;
@@ -152,14 +174,14 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $ret;
 	}
+
 	/**
-	* Lecture de la valeur d'un champ de l'objet
-	*
-	* @param string $pChamp code du champ
-	* @param indéfini $pValeurDefaut valeur si le champ n'existe pas
-	*
-	* @return indéfini valeur du champ
-	*/
+	 * Lecture de la valeur d'un champ de l'objet
+	 *
+	 * @param string $pChamp code du champ
+	 * @param indéfini $pValeur valeur si le champ n'existe pas
+	 * @return indéfini valeur du champ
+	 */
 	public function setValeur($pChamp = null, $pValeur) {
 		$ret = $pValeur;
 		if (isset($this -> doc)) {
@@ -170,9 +192,10 @@ class SG_Objet { //extends SG_Rien
 		return $ret;
 	}
 
-	/** 2.1.1 SG_HTML
+	/**
 	 * Conversion en code HTML
-	 *
+	 * 
+	 * @version 2.1.1 SG_HTML
 	 * @return string code HTML
 	 */
 	function toHTML() {
@@ -190,16 +213,28 @@ class SG_Objet { //extends SG_Rien
 
 	/**
 	 * Affichage
+	 * 
+	 * @version 2.6 prise en compte titre
+	 * @param string|SG_Texte|SG_Formule $pClasse éventuelle classe d'affichage
 	 *
 	 * @return string code HTML
 	 */
 	function Afficher() {
-		return $this -> toHTML();
+		$ret = $this -> toHTML();
+		if (isset($this -> titre)) {
+			$ret -> texte = '<span class="sg-titrechamp">' . $this -> titre . ' : </span>' . $ret -> texte;
+		}
+		$args = func_get_args();
+		if (isset($args[0])) {
+			$classe = SG_Texte::getTexte($args[0]);
+			$ret -> texte = '<div class="' . $classe . '">' . $ret -> texte . '</div>';
+		}
+		return $ret;
 	}
 
 	/**
 	 * Modification
-	 *
+	 * @param string|SG_Texte|SG_Formule nom du champ de saisie
 	 * @return string code HTML
 	 */
 	function Modifier() {
@@ -207,16 +242,20 @@ class SG_Objet { //extends SG_Rien
 		$arg_number = func_num_args();
 		if ($arg_number === 1) {
 			$arg_list = func_get_args();
-			$pRefChamp = $arg_list[0];
+			$pRefChamp = SG_Texte::getTexte($arg_list[0]);
 		}
 		$ret = '<input type="text" name="' . $pRefChamp . '" value="' . str_replace('"', '&quot;', $this -> toString()) . '"/>';
+		$ret = new SG_HTML($ret);
+		$ret -> saisie = true;
 		return $ret;
 	}
 
-	/** 1.3.1 => type si pas param ; teste boucle
-	* Teste si l'objet est du type demandé ou de sa hiérarchie
-	* @param quelquechose $pType Type demandé
-	* @return (SG_VraiFaux) est ou non du modèle demandé ou de sa hiérarchie, (@Texte) modèle si pas de paramètre
+	/**
+	* Teste si l'objet est du type demandé ou de sa hiérarchi
+	* 
+	* @version 1.3.1 => type si pas param ; teste bouclee
+	* @param  string|SG_Texte|SG_Formule $pType Type demandé
+	* @return SG_VraiFaux est ou non du modèle demandé ou de sa hiérarchie, (@Texte) modèle si pas de paramètre
 	*/
 	function EstUn($pType = '') {
 		$type = SG_Texte::getTexte($pType);
@@ -238,10 +277,17 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $ret;
 	}
-	/** 1.0.7
-	* Si : exécute un @Si sur l'objet en cours. Les paramètres sont ceux de SG_Rien->Si()
-	* @return objet php (string, number, boolean, temps)
-	*/
+
+	/**
+	 * Si : exécute un @Si sur l'objet en cours. Les paramètres sont ceux de SG_Rien->Si()
+	 * 
+	 * @since 1.0.7
+	 * @param SG_Formule $pCondition
+	 * @param SG_Formule $pValeurSiVrai
+	 * @param SG_Formule $pValeurSiFaux
+	 * @param SG_Formule $pValeurSiIndefini
+	 * @return SG_Objet php (string, number, boolean, temps)
+	 */
 	function Si ($pCondition = '', $pValeurSiVrai = null, $pValeurSiFaux = null, $pValeurSiIndefini = null) {
 		if (getTypeSG($pCondition) === '@Formule') {
 			$pCondition -> objet = $this;
@@ -258,21 +304,37 @@ class SG_Objet { //extends SG_Rien
 		$ret = SG_Rien::Si($pCondition, $pValeurSiVrai, $pValeurSiFaux, $pValeurSiIndefini);
 		return $ret;
 	}
-	/** 1.0.7
-	* Ceci : cet objet
-	*/
+
+	/**
+	 * Ceci : cet objet
+	 * @since 1.0.7
+	 * @return SG_Objet ceci
+	 */
 	function Ceci() {
 		return $this;
 	}
-	/** 1.1 ; 1.3.1 simplifié (voir @Document)
-	* Indique si l'objet dérive de @Document
-	*/
+
+	/**
+	 * Indique si l'objet dérive de @Document
+	 * 
+	 * @since 1.1 
+	 * @version 1.3.1 simplifié (voir @Document)
+	 * return SG_VraiFaux
+	 */
 	function DeriveDeDocument () {
 		$ret = new SG_VraiFaux(false);
 		return $ret;
 	}
-	/** 1.1 AJout ; 1.3.4 Marche si collection de liens ; 2.1.1 si uid @Texte
-	*/
+
+	/**
+	 * Met la valeur dans une peopriété
+	 * 
+	 * @since 1.1 AJout
+	 * @version 2.1.1 si uid @Texte
+	 * @param string|SG_Texte|SG_Formule $pChamp nom du champ
+	 * @param any $pValeur valeur à mettre
+	 * @return SG_Objet ceci
+	 */
 	function MettreValeur($pChamp = '', $pValeur = '') {
 		$champ = SG_Texte::getTexte($pChamp);
 		if (getTypeSG($pValeur) === '@Formule') {
@@ -307,8 +369,12 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $this;
 	}
-	/** 1.2 ajout
-	*/
+
+	/**
+	 * Sort la description de l'objet en format json
+	 * @since 1.2 ajout
+	 * @return string
+	 */
 	function JSON() {
 		$ret = $this -> toString();
 		if($ret !== '') {
@@ -329,7 +395,15 @@ class SG_Objet { //extends SG_Rien
 		$ret = new SG_Texte($ret);
 		return $ret;
 	}
-	// 1.2 ajout
+
+	/**
+	 * Transforme l'objjet dans une autre classe
+	 * 
+	 * @todo contrôler qu'il s'agit d'un objet dérivé (ne marche pas toujours)
+	 * @since 1.2 ajout
+	 * @param string|SG_Texte|SG_Formule $pType le nouveau type de l'objet
+	 * @return SG_Objet
+	 */
 	function Devient($pType) {
 		$typeactuel = getTypeSG($this);
 		$typenew = new SG_Texte($pType);
@@ -347,9 +421,11 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $ret;
 	}
-	/** 1.3 vient de SG_Rien
+
+	/**
 	 * Teste si la valeur est vide
-	 *
+	 * 
+	 * @since 1.3 vient de SG_Rien
 	 * @return SG_VraiFaux est vide
 	 */
 	function EstVide() {
@@ -360,9 +436,15 @@ class SG_Objet { //extends SG_Rien
 		$ret = new SG_VraiFaux($retBool);
 		return $ret;
 	}
-	/** 1.3 : déplacé de @Rien (1.1 ajout)
-	* Debug de l'objet
-	*/
+	
+	/**
+	 * Debug de l'objet
+	 * 
+	 * @since 1.1 ajout dans SG_Rien)
+	 * @version 1.3 : déplacé de SG_Rien
+	 * @param string message à ajouter
+	 * @return SG_Objet this
+	 */
 	function Tracer($pMsg = '') {
 		$msg = new SG_Texte($pMsg);
 		if($msg -> texte === '') {
@@ -372,13 +454,25 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $this;
 	}
-	//1.3.1 ajout (vient de @Rien : permet de se passer de gérer la compatibilité avec .@Principal dans les anciennes versions)
+
+	/**
+	 * Récupère le principal (vient de SG_Rien)
+	 * permet de se passer de gérer la compatibilité avec .@Principal dans les anciennes versions)
+	 * 
+	 * @since 1.3.1 ajout (vient de @Rien
+	 * @todo voir à supprimer
+	 * @return SG_Objet
+	 */
 	function Principal() {
-		return SG_Navigation::OperationEnCours() -> Principal();
+		return SG_Pilote::OperationEnCours() -> Principal();
 	}
-	/** 1.3.1 ajout
-	* @return (SG_VraiFaux) vide
-	*/
+
+	/**
+	 * Teste si deux objets sont égaux
+	 * @since 1.3.1 ajout
+	 * @param SG_Objet $pQuelqueChose
+	 * @return SG_VraiFaux
+	 */
 	function Egale($pQuelqueChose) {
 		if(getTypeSG($pQuelqueChose) === self::TYPESG) {
 			$ret = new SG_VraiFaux($pQuelqueChose === $this -> toString());
@@ -387,15 +481,23 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $ret;
 	}
-	/** 1.3.4 ajout
-	* pour tous les objets : false sauf SG_Erreur et dérivés
-	**/
+
+	/**
+	 * Teste si 'objet est un SG_Erreur
+	 * pour tous les objets : false sauf SG_Erreur et dérivés
+	 * 
+	 * @since 1.3.4 ajout
+	 * @return boolean
+	 */
 	function estErreur() {
 		return false;
 	}
-	/** 2.1 ajout
+
+	/**
 	* fournit un titre à l'objet (getValeur 'Titre', puis méthode 'Titre', puis getValeur @Titre )
-	* @return (string) : le titre trouvé sinon ''
+	* 
+	* @since 2.1 ajout
+	* @return string : le titre trouvé sinon ''
 	**/
 	function getTitre() {
 		$ret = $this -> getValeur('Titre', null);
@@ -408,12 +510,16 @@ class SG_Objet { //extends SG_Rien
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* recherche soit une méthode soit une propriété de l'objet
-	* @param (string) $pNom : nom de la valeur recherchée
-	* @param (any) $pDefaut : valeur par défaut si aucune méthode ni propriété (par défaut : null)
-	* @return : soit la valeur réelle, soit la valeur par défaut
-	**/
+
+	/**
+	 * recherche soit une méthode soit une propriété de l'objet
+	 * 
+	 * @since 2.1 ajout
+	 * @version correction method_exists($this,$nom) au lieu de method_exists($nom,$nom)
+	 * @param (string) $pNom : nom de la valeur recherchée
+	 * @param (any) $pDefaut : valeur par défaut si aucune méthode ni propriété (par défaut : null)
+	 * @return : soit la valeur réelle, soit la valeur par défaut
+	 */
 	function get($pNom = '', $pDefaut = null) {
 		if(substr($pNom,0,1) === '@') {
 			$nom = substr($pNom, 1);
@@ -422,21 +528,153 @@ class SG_Objet { //extends SG_Rien
 		}
 		if (isset($this -> proprietes[$nom])) {
 			$ret = $this -> proprietes[$nom];
-		} elseif (method_exists($nom,$nom)){
+		} elseif (method_exists($this,$nom)) {
 			$ret = $this -> $nom();
 		} else {
 			$ret = $this -> getValeurPropriete($pNom, $pDefaut);
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* est ou dérive de SG_HTML
-	* @return boolean : vrai ou faux
-	**/
+
+	/**
+	 * est ou dérive de SG_HTML
+	 * 
+	 * @since 2.1 ajout
+	 * @return boolean : vrai ou faux
+	 */
 	function estHTML() {
 		$ret = (get_class($this) === 'SG_HTML' or is_subclass_of($this, 'SG_HTML'));
 		return $ret;
 	}
+
+	/**
+	 * Code l'html pour demander une ou plusieurs propriétés temporaires sur un objet ou un document
+	 * 
+	 * @since 2.5 ajout
+	 * @param string|SG_Texte|SG_Formule chaine de caractères : "code,modele,titre"
+	 * @return SG_HTML|SG_Erreur) : champ à saisir
+	 */
+	function Demander() {
+		$ret = '';
+		$args = func_get_args();
+		if (isset($args[0])) {
+			$_SESSION['saisie'] = true;
+			$doc = $this;
+			$opEnCours = SG_Pilote::OperationEnCours();
+			// les données seront conservées dans mon tableau des propriétés
+			// crée les propriétés (une par paramètre)
+			$ret .= '<ul data-role="listview" data-uidoc="' . $this -> getUUID() . '">';
+			$docs = SG_Dictionnaire::ObjetsDocument(true);
+			for($i = 0; $i < sizeof($args); $i++) {
+				$proprietes = explode(',',SG_Texte::getTexte($args[$i]));
+				// selon le format de la propriété
+				if (isset($proprietes[1]) and $proprietes[1] !== '' and strpos($proprietes[1], '.') !== false) {
+					// le type est du genre modele.propriété
+					$ipos = strpos($proprietes[1], '.');
+					$type = substr($proprietes[1], 0, $ipos);
+					$tmpdoc = SG_Rien::Nouveau($type);
+					$champ = new SG_Champ(substr($proprietes[1], $ipos + 1), $tmpdoc);
+					//$champ -> codeBase = SG_Dictionnaire::getCodeBase($type);
+					$champ -> document = $doc;
+					$champ -> codeDocument = $doc -> doc -> codeDocument;
+					$champ -> codeBase = $doc -> doc -> codeBase;
+					$champ -> refChamp = $champ -> codeBase . '/' . $champ -> codeDocument . '/' . $proprietes[0];
+					// bind the field to the current operation
+					//$champ -> initContenu();
+					$doc -> proprietes['@Type_' . $proprietes[0]] = SG_Dictionnaire::getCodeModele($proprietes[1]);
+				} else {
+					// c'est une propriété directe de l'objet
+					$champ = new SG_Champ('');
+					if (isset($proprietes[1]) and $proprietes[1] !== '') {
+						// on a un type de champ
+						$champ -> typeObjet = $proprietes[1];
+						// si c'est un @Document, on crée un champ de type lien
+						if(array_key_exists($proprietes[1], $docs -> elements)) {
+							$champ -> typeLien = $proprietes[1];
+						}
+					}
+					$champ -> libelle = $proprietes[0];
+					$champ -> codeChamp = $proprietes[0];
+					//$champ -> typeLien = '';
+					$champ -> multiple = false;
+					$champ -> valeur = '';
+					$doc -> proprietes['@Type_' . $champ -> codeChamp] = $champ -> typeObjet;
+					$champ -> codeBase = $doc -> doc -> codeBase;
+					$champ -> document = $doc;
+					$champ -> codeDocument = $doc -> doc -> codeDocument;
+					$champ -> refChamp = $champ -> codeBase . '/' . $champ -> codeDocument . '/' . $champ -> codeChamp;
+					// bind the field to the current operation
+					$champ -> initContenu();
+				}
+				if (isset($proprietes[2])) {
+					$champ -> libelle = $proprietes[2];
+				}
+				$ret .= '<li>' . $champ -> txtModifier() . '</li>';
+			}
+			$ret .= '</ul>';
+		}
+		$ret = new SG_HTML($ret);
+		$ret -> saisie = true;
+		return $ret;
+	}
+
+	/**
+	 * met l'objet comme principal de l'opération, éventuellement en modif.
+	 * Quand c'est un document, c'est sa référence que l'on met dans principal
+	 * 
+	 * @since 2.5 ajout
+	 * @version 2.6 ne traite plus le cas SG_Document et plus (voir dans ces classes)
+	 * @return SG_Objet $this
+	 */
+	function setPrincipal() {
+		$operation = SG_Pilote::OperationEnCours();
+		$operation -> setPrincipal($this);
+		return $this;
+	}
+
+	/**
+	 * ajoute une liste de valeurs possibles pour une saisie ultérieure
+	 * 
+	 * @since 2.5 ajout
+	 * @param SG_Formule $pFormule donne la liste des valeurs
+	 * @return $this
+	 */
+	function ValeursPossibles ($pFormule = '') {
+		$this -> proprietes['@vp'] = $pFormule;
+		return $this;
+	}
+
+	/**
+	 * Calcule une valeur d'un objet selon sa valeur actuelle.
+	 * Chaque couple de paramètre représente (une valeur, un résultat)
+	 * L'appel est donc objet->SiVaut(val1, res1, val2, res2, etc);
+	 * La comparaison est faite à partir du résultat de toString() ou  Titre()
+	 * Si la valeur n'est pas trouvée dans la liste, on retourne une erreur
+	 * 
+	 * @since 2.6
+	 * @param any $pValeur valeur
+	 * @param any $pResultat valeur tranformée
+	 * @return any le résultat
+	 */
+	function SiVaut($pValeur = '', $pResultat = '') {
+		$args = func_get_args();
+		$n = func_num_args() - 1;
+		$mavaleur = $this -> toString();
+		$ret = new SG_Erreur('0301',$mavaleur);
+		for ($i = 0; $i < $n; $i = $i + 2)  {
+			$oldval = SG_Texte::getTexte($args[$i]);
+			if ($mavaleur == $oldval) {
+				if ($arg[$i + 1] instanceof SG_Formule) {
+					$ret = $args[$i + 1] -> calculer();
+				} else {
+					$ret = $args[$i + 1];
+				}
+				break;
+			}
+		}
+		return $ret;
+	}		
+
 	// 2.3 complément de classe créée par compilation
 	use SG_Objet_trait;
 }
