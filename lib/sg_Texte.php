@@ -1,26 +1,36 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* Classe SynerGaia de traitement des textes
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia fichier de gestion de l'objet @Texte */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Texte_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Texte_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Texte_trait{};
 }
+
+/**
+ * Classe SynerGaia de traitement des textes
+ * 
+ * @version 2.4
+ */
 class SG_Texte extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Texte' */
 	const TYPESG = '@Texte';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Contenu texte de l'objet
+	/** string Contenu texte de l'objet */
 	public $texte = '';
 
-	/** 2.3 traite si parm est array
-	* Construction de l'objet
-	* @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_Texte est créé
-	* @level 0 sauf si objet ou formule en paramètre
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @version 2.4 correct si $val boolean
+	 * @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_Texte est créé
+	 * @level 0 sauf si objet ou formule en paramètre
+	 */
 	function __construct($pQuelqueChose = null) {
 		switch (getTypeSG($pQuelqueChose)) {
 			case 'integer' :
@@ -44,19 +54,24 @@ class SG_Texte extends SG_Objet {
 						if (is_string($val)) {
 							$this -> texte .= $val;
 						} else {
-							$this -> texte .= $val -> toString();
+							$this -> texte .= strval($val);
 						}
 					}
 				} else {
 					$this -> texte = '';
 				}
 		}
+		// cas des SG_HTML
+		if (property_exists($this, 'saisie') and is_object($pQuelqueChose) and property_exists($pQuelqueChose, 'saisie')) {
+			$this -> saisie = $pQuelqueChose -> saisie;
+		}
 	}
 
 	/**
-	* Conversion en chaine de caractères (=getTexte mais non static)
-	* @return string texte
-	*/
+	 * Conversion en chaine de caractères (=getTexte mais non static)
+	 * 
+	 * @return string texte
+	 */
 	function toString() {
 		$ret = '';
 		if (func_num_args() === 0) {
@@ -80,20 +95,21 @@ class SG_Texte extends SG_Objet {
 	}
 
 	/**
-	* Conversion valeur numérique
-	*
-	* @return float valeur numérique
-	*/
+	 * Conversion valeur numérique
+	 *
+	 * @return float valeur numérique
+	 */
 	function toFloat() {
 		$tmpNombre = new SG_Nombre($this -> texte);
 		return $tmpNombre -> valeur;
 	}
 
-	/** 2.1.1 SG_HTML
-	* Conversion en code HTML
-	*
-	* @return string code HTML
-	*/
+	/**
+	 * Conversion en code HTML
+	 * 
+	 * @version 2.1.1 SG_HTML
+	 * @return SG_HTML code HTML équivalent
+	 */
 	function toHTML() {
 		return new SG_HTML($this -> texte);
 	}
@@ -102,30 +118,28 @@ class SG_Texte extends SG_Objet {
 	 * Affichage
 	 *
 	 * @param string $pOption style d'affichage demandé
-	 *
 	 * @return string code HTML
 	 */
 	function Afficher($pOption = '') {
 		return $this -> afficherChamp($pOption);
 	}
 
-	/** 1.3.1 déplace js vers TexteFormule 
+	/**
 	 * Affichage d'un champ
-	 *
+	 * 
+	 * @version 1.3.1 déplace js vers TexteFormule 
 	 * @param string $pOption style d'affichage demandé
-	 *
-	 * @return string code HTML
+	 * @return SG_HTML code HTML
 	 */
 	function afficherChamp($pOption = '') {
 		$style = '';
-		$class = 'champ_Texte';
+		$class = 'sg-texte';
 		$ret = '';
 		$option = '';
 
 		// Lit l'option passée
 		if ($pOption !== '') {
-			$tmpOption = new SG_Texte($pOption);
-			$option = $tmpOption -> texte;
+			$option = SG_Texte::getTexte($pOption);
 
 			// Si ":" dans l'option => style sinon classe
 			if (strpos($option, ':') !== false) {
@@ -137,8 +151,16 @@ class SG_Texte extends SG_Objet {
 		$ret .= '<span class="' . $class . '" style="' . $style . '">' . htmlentities($this -> texte, ENT_QUOTES, 'UTF-8') . '</span>';
 		return new SG_HTML($ret);
 	}
-	/** 1.2 : ajout ; 1.3.1 SG_HTML
-	*/
+
+	/**
+	 * Affiche le texte entre des balises hi
+	 * 
+	 * @since 1.2 ajout
+	 * @version 1.3.1 SG_HTML
+	 * @param string|SG_Texte|SG_Formule $pBalise balise à utiliser (par défaut 'h1')
+	 * @param string|SG_Texte|SG_Formule $pOption options CSS complémentaires
+	 * @return SG_HTML
+	 */
 	function AfficherCommeTitre($pBalise = 'h1', $pOption = '') {
 		$balise = new SG_Texte($pBalise);
 		$balise = $balise -> texte;
@@ -153,25 +175,31 @@ class SG_Texte extends SG_Objet {
 		}
 		return new SG_HTML($ret);
 	}
-	/** 2.1 ajout
-	* @formula : .@Afficher("font-size:18pt;color:#A00;")
-	**/
+
+	/**
+	 * Affiche comm un titre rouge
+	 * @since 2.1 ajout
+	 * @formula : .@Afficher("font-size:18pt;color:#A00;")
+	 **/
 	function AfficherCommeTitreRouge() {
 		return $this -> Afficher("font-size:18pt;color:#A00;");
 	}
-	/** 1.3.2 test is_object au lieu de isObjetExiste (gain de plusieurs secondes) ; 2.0 stoppropagation dblclick
-	* Modification
-	*
-	* @param string $pRefChamp référence du champ HTML
-	* @param SG_Collection $pValeursPossibles collection des valeurs proposées
-	* @return string code HTML
-	*/
+
+	/**
+	 * Calcul le texte HTML de la modification du champ
+	 * 
+	 * @version 2.0 stoppropagation dblclick
+	 * @param string $pRefChamp référence du champ HTML
+	 * @param SG_Collection $pValeursPossibles collection des valeurs proposées
+	 * @return string code HTML
+	 * @uses SynerGaia.stopPropagation()
+	 */
 	function modifierChamp($pRefChamp = '', $pValeursPossibles = null) {
 		$ret = '';
 		// Si on a passé une liste de valeurs proposées
 		$valActuelle = $this -> toString();
 		if (getTypeSG($pValeursPossibles) === '@Collection') {
-			$ret = '<select class="champ_Texte" type="text" name="' . $pRefChamp . '">';
+			$ret = '<select class="sg-texte" type="text" name="' . $pRefChamp . '">';
 
 			$nbValeursPossibles = sizeof($pValeursPossibles -> elements);
 			for ($i = 0; $i < $nbValeursPossibles; $i++) {
@@ -199,18 +227,21 @@ class SG_Texte extends SG_Objet {
 
 			$ret .= '</select>';
 		} else {
-			$ret .= '<textarea class="champ_Texte" name="' . $pRefChamp . '" ondblclick="SynerGaia.stopPropagation(event);">' . $valActuelle . '</textarea>';
+			$ret .= '<textarea class="sg-texte" name="' . $pRefChamp . '" ondblclick="SynerGaia.stopPropagation(event);">' . $valActuelle . '</textarea>';
 		}
 
 		return $ret;
 	}
 
-	/** 1.0.7 ; 2.2 test exist mb_strtoupper
-	* Conversion en chaine de majuscules
-	* @param $pAccents boolean : garde les accents (par défaut)
-	* @return SG_Texte texte en majuscules
-	* @level 0 sauf si formule en paramètre
-	*/
+	/**
+	 * Conversion en chaine de majuscules
+	 * 
+	 * @since 1.0.7
+	 * @version 2.2 test exist mb_strtoupper
+	 * @param $pAccents boolean : garde les accents (par défaut)
+	 * @return SG_Texte texte en majuscules
+	 * @level 0 sauf si formule en paramètre
+	 */
 	function Majuscules($pAccents = true) {
 		$accents = $pAccents;
 		if(is_object($pAccents)) {
@@ -231,9 +262,10 @@ class SG_Texte extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7 ; 2.2 test exist mb_strtoloower ; 2.3 correction minuscules > majuscules...
+	/**
 	 * Conversion en chaine de minuscules
-	 *
+	 * @since 1.0.7
+	 * @version 2.3 correction minuscules > majuscules...
 	 * @return SG_Texte texte en minuscules
 	 * @level 0 sauf si formule en paramètre
 	 */
@@ -272,14 +304,17 @@ class SG_Texte extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.4 ajout ; 2.0 fonctionne sur des tableaux et des collections ; 2.1.1 test $elt nul
-	 * Comparaison à une liste de chaines
-	 *
+	/**
+	 * Comparaison à une liste de chaines. 
+	 * On travaille uniquement à partir de func_get_args()
+	 * 
+	 * @since 1.0.4
+	 * @version 2.1.1 test $elt nul
 	 * @param indéfini $pElements éléments
-	 *
 	 * @return SG_VraiFaux vrai si la chaine est présente dans la liste
 	 */
 	function EstParmi($pElements = null) {
+		// constitution d'un tableau d'éléments à partir des paramètres
 		$elements = array();
 		$nbElements = func_num_args();
 		if (func_num_args() == 1) {
@@ -308,27 +343,32 @@ class SG_Texte extends SG_Objet {
 		$ret = new SG_VraiFaux($retBool);
 		return $ret;
 	}
-	/** (1.3.1) garde le type de $this ; 2.3 get_class
+
+	/**
 	 * Concaténation à une autre chaine
+	 * 
+	 * @version 2.3 get_class
 	 * @param indéfini suite des textes à concaténer
-	 * @return (SG_Texte) concaténation des chaines
+	 * @return SG_Texte concaténation des chaines
 	 */
 	function Concatener() {
 		$modele = get_class($this);
 		$ret = new $modele($this -> texte);
 		$args = func_get_args();
 		foreach ($args as $arg) {
-			$ret -> texte .= SG_Texte::getTexte($arg);
+			$ret -> texte.= SG_Texte::getTexte($arg);
 		}
 		return $ret;
 	}
 	
-	/** 1.0.4 ajout ; 1.2 modification 2nd paramètre
+	/**
 	 * Contient permet de rechercher si une chaine de caractère appartient ou non au texte. 
 	 * Cette recherche ne tient compte ni de la casse ni des accents.
 	 * 
-	 * @param string la chaine à rechercher
-	 * @param string délimiteur du mot
+	 * @since 1.0.4 ajout
+	 * @version 1.2 modification 2nd paramètre
+	 * @param string $pQuelqueChose la chaine à rechercher
+	 * @param string $pMot délimiteur du mot
 	 * @return @VraiFaux selon que la chaine appartient ou non au texte
 	 */
 	function Contient($pQuelqueChose = '', $pMot = '') {
@@ -348,8 +388,12 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	 }
-	/** 1.1 : AJout
+
+	/**
 	 * transforme en nombre un texte numérique
+	 * @since 1.1 : AJout
+	 * @param boolean|SG_VraiFaux|SG_Formule $pForcer0
+	 * @return SG_Nombre|SG_Erreur
 	 */
 	function EnNombre($pForcer0 = false) {
 		$forcer0 = SG_VraiFaux::getBooleen($pForcer0);
@@ -362,14 +406,13 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 ; 2.3 suppression
-	function Tracer($pMsg = '') {
-		$msg = SG_Texte::getTexte($pMsg);
-		echo '<b>' . $msg . ' : (' . $this -> typeSG . ') </b>' . $this;
-		return $this;
-	}
-	*/
-	// normalise le nom en enlevant les caractères hors nomes et en compactant (restent lettres chiffres et _
+
+	/**
+	 * Normalise le nom en enlevant les caractères hors nomes et en compactant (restent lettres chiffres et _
+	 * 
+	 * @param string|SG_Texte|SG_Formule $pTexte texte à normaliser
+	 * @return string
+	 */
 	function Normaliser($pTexte = '') {
 		$texte = SG_Texte::getTexte($pTexte);
 		if ($texte  === '') {
@@ -385,10 +428,14 @@ class SG_Texte extends SG_Objet {
 		}
 		return $nomNormalise;
 	}
-	/** 1.2 ajout
-	* @param any $pDebut
-	* @return @VraiFaux : si $pDebut = '' : indéfini, sinon selon la comparaison
-	*/
+
+	/**
+	 * Indique si le SG_Texte commence par une chaine passée en paramètre
+	 * 
+	 * @since 1.2 ajout
+	 * @param string|SG_Texte|SG_Formule $pDebut
+	 * @return SG_VraiFaux : si $pDebut = '' : indéfini, sinon selon la comparaison
+	 */
 	function CommencePar($pDebut = '') {
 		$ret = new SG_VraiFaux(false);
 		$debut = SG_Texte::getTexte($pDebut);
@@ -403,17 +450,28 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.2 ajout
-	*/
+
+	/**
+	 * Remplace une chaine dans un SG_Texte
+	 * 
+	 * @since 1.2 ajout
+	 * @param string|SG_Texte|SG_Formule $pChaine
+	 * @param string|SG_Texte|SG_Formule $pValeur
+	 */
 	function Remplacer($pChaine = '', $pValeur = '') {
 		$this -> texte = str_replace(SG_Texte::getTexte($pChaine), SG_Texte::getTexte($pValeur), $this -> texte);
 		return $this;
 	}
-	/** 1.2 ajout ; 1.3.4 idRandom
-	*/
+
+	/**
+	 * Affiche le texte dans un arbre
+	 * @since 1.2 ajout
+	 * @version 2.6 SG_HTML
+	 * @return SG_HTML
+	 */
 	function AfficherArbre() {
 		// Identifiant unique du graphique
-		$idGraphique = 'arbre_' . SG_Champ::idRandom();
+		$idGraphique = 'arbre_' . SG_SynerGaia::idRandom();
 
 		$ret = '';
 		$ret .= '<div id="' . $idGraphique . '" class="arbre"></div>' . PHP_EOL;
@@ -421,9 +479,17 @@ class SG_Texte extends SG_Objet {
 		$ret .= ' var data_' . $idGraphique . ' = ' . $this -> texte . ';' . PHP_EOL;
 		$ret .= ' afficherArbre("#' . $idGraphique . '",data_' . $idGraphique . ');' . PHP_EOL;
 		$ret .= '</script>' . PHP_EOL;
-		return $ret;
+		return new SG_HTML($ret);
 	}
-	// 1.2 ajout ; 2.3 mb_substr
+
+	/**
+	 * Extrait les n premiers caractère du texte
+	 * 
+	 * @since 1.2 ajout
+	 * @version 2.3 mb_substr
+	 * @param integer|SG_Nombre|SG_Formule $pLongueur
+	 * @return SG_Texte
+	 */
 	function Debut($pLongueur = 1) {
 		$longueur = new SG_Nombre($pLongueur);
 		if (function_exists('mb_substr')) {
@@ -433,66 +499,75 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	//1.2 ajout
-	function ContientMotCle ($pMotCle = '') {
-		
-	}
-	//1.3.0 ajout ; 1.3.4 cas fichier et json_encode
+
+	/**
+	 * Extrait le texte d'un objet
+	 * @since 1.3.0 ajout
+	 * @version 2.6 traite les objets et les tableaux d'objets même composites
+	 * @todo voir d'où vient le traitement de fichier ?
+	 * @param any $pTexte l'objet dont il faut extraire le texte
+	 * @return string
+	 */
 	static function getTexte($pTexte = '') {
-		$ret = $pTexte;
-		$typesg = getTypeSG($ret);
+		$txt = $pTexte;
+		$typesg = getTypeSG($txt);
 		if ($typesg === '@Formule') {
-			$ret = $ret -> calculer();
-			$typesg = getTypeSG($ret);
+			$txt = $txt -> calculer();
+			$typesg = getTypeSG($txt);
 		}
-		if ($ret === null) {
-			$ret = 'NULL';
-		} elseif (is_string($ret)) {
-			$ret = $ret;
-		} elseif (is_array($ret)) {
-			try {
-				$ret = (string) implode(',', $ret);
-			} catch (Exception $e) {
-				$ok = false;
-				foreach($ret as $nom => $fic) {
-					if (is_object($fic)) {
-						$ret = SG_Texte::getTexte($fic);
-						$ok = true;
-					}elseif (isset($fic['content_type']) and isset($fic['data'])) {// en fait c'est un fichier
-						$fichier = new SG_Fichier($fic);
-						$ret = $fichier -> afficherChamp();
-						$ok = true;
-					}
-				}
-				if($ok === false) {
-					$ret = var_dump($ret); // pas fichier : on affiche tel quel
+		if ($txt === null) {
+			$txt = 'NULL';
+		} elseif (is_array($txt)) {
+			$ok = false;
+			$t = '';
+			$sep = '';
+			foreach($txt as $nom => $fic) {
+				if (is_object($fic)) {
+					$t.= self::getTexte($fic);
+					$ok = true;
+				} elseif (isset($fic['content_type']) and isset($fic['data'])) {// en fait c'est un fichier
+					$fichier = new SG_Fichier($fic);
+					$t = $fichier -> afficherChamp();
+					$ok = true;
 				}
 			}
-		} elseif (is_object($ret)) {
-			if (property_exists($ret, 'texte')) {
-				$ret = $ret -> texte;
+			$txt = $t;
+			/**
+			if($ok === false) {
+				$ret = var_dump($ret); // pas fichier : on affiche tel quel
+			}
+			* */
+		} elseif (is_object($txt)) {
+			if (property_exists($txt, 'texte')) {
+				$txt = $txt -> texte;
 			} elseif ($typesg !== 'string') {
-				$ret = $ret -> toString();
+				$txt = $txt -> toString();
 			}
-		} else {
-			
 		}
+		$ret = $txt;
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Retourne la longueur brute du texte
-	* @return (@Nombre) la longueur de @Texte->texte
-	**/
+
+	/**
+	 * Retourne la longueur brute du texte
+	 * 
+	 * @since 1.3.1 ajout
+	 * @return SG_Nombre la longueur de @Texte->texte
+	 */
 	function Longueur() {
 		$ret = new SG_Nombre(strlen($this -> texte));
 		return $ret;
 	}
-	/** 1.3.1 ajout ; 1.3.4 correction new SG_Texte
-	* Jusqua : Extrait la partie du texte jusqu'à la balise indiquée.
-	* @param (@Texte) : balise limite
-	* @param (@VraiFaux) : indique si la balise doit être incluse dans la réponse (par défaut : false)
-	* @return (@Texte) : le texte extrait 
-	**/
+
+	/**
+	 * Jusqua : Extrait la partie du texte jusqu'à la balise indiquée.
+	 * 
+	 * @since 1.3.1 ajout
+	 * @version 1.3.4 correction new SG_Texte
+	 * @param string|SG_Texte $pBalise balise limite
+	 * @param boolean|SG_VraiFaux $pIncluse indique si la balise doit être incluse dans la réponse (par défaut : false)
+	 * @return SG_Texte le texte extrait 
+	 */
 	function Jusqua ($pBalise = '', $pIncluse = false) {
 		$balise = SG_Texte::getTexte($pBalise);
 		$incluse = SG_VraiFaux::getBooleen($pIncluse);
@@ -511,20 +586,30 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Depuis : Extrait la partie du texte à partir de la balise indiquée.
-	* @param (@Texte) : balise limite
-	* @param (@VraiFaux) : indique si la balise doit être incluse dans la réponse (par défaut : false)
-	* @return (@Texte) : le texte extrait 
-	**/
-	function Depuis ($pBalise = '', $pIncluse = false) {
+
+	/**
+	 * Depuis : Extrait la partie du texte à partir de la balise indiquée.
+	 * 
+	 * @since 1.3.1 ajout
+	 * @version 2.4 paramètre $pSiPas
+	 * @param SG_Texte $pBalise balise limite
+	 * @param SG_VraiFaux $pIncluse indique si la balise doit être incluse dans la réponse (par défaut : false)
+	 * @param SG_VraiFaux $pIdemSiPas : indique ce que l'on fait si pas trouvé la balise (par défaut on ne change rien)
+	 * @return SG_Texte : le texte extrait 
+	 */
+	function Depuis ($pBalise = '', $pIncluse = false, $pIdemSiPas = true) {
 		$balise = SG_Texte::getTexte($pBalise);
 		$incluse = SG_VraiFaux::getBooleen($pIncluse);
+		$idemsipas = SG_VraiFaux::getBooleen($pIdemSiPas);
 		$ret = $this;
 		if($balise !== '') {
 			$needle = strpos($this -> texte, $balise);
 			if($needle === false) {
-				$texte = '';
+				if ($idemsipas === true) {
+					$texte = $this -> texte;
+				} else {
+					$texte = '';
+				}
 			} else {
 				if(!$incluse) {
 					$needle += strlen($balise);
@@ -536,10 +621,14 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.2 ajout ; 2.0 correction ; 2.3 initialise SG_Texte
+
+	/**
 	* Eclate le texte en collection de textes selon le séparateur fourni
-	* @param (@Texte) $pSep : séparateur (par défaut virgule)
-	* @return (@Collection)
+	* 
+	* @since 1.3.2 ajout
+	* @version 2.3 initialise SG_Texte
+	* @param SG_Texte $pSep séparateur (par défaut virgule)
+	* @return SGCollection
 	**/
 	function Eclater($pSep = ',') {
 		$sep = SG_Texte::getTexte($pSep);
@@ -548,35 +637,50 @@ class SG_Texte extends SG_Objet {
 		$ret -> elements = array_map($func, explode($sep, $this -> texte));
 		return $ret;
 	}
-	/** 1.3.3 ajout
-	* devient @HTML.AGauche
-	**/
+
+	/**
+	 * transforme en SG_HTML.AGauche
+	 * @since 1.3.3 ajout
+	 * @return SG_HTML
+	 */
 	function AGauche() {
 		$ret = new SG_HTML($this -> texte);
 		$ret -> AGauche();
 		return $ret;
 	}
-	/** 1.3.3 ajout
-	* devient @HTML.ADroite
-	**/
+
+	/**
+	 * transforme en SG_HTML.ADroite
+	 * @since 1.3.3 ajout
+	 * @return SG_HTML
+	 */
 	function ADroite() {
 		$ret = new SG_HTML($this -> texte);
 		$ret -> ADroite();
 		return $ret;
 	}
-	/* 2.0 ajout
-	* Mettre en forme un lien Internet
-	* @param (SG_Texte) lien visé
-	* @return (SG_HTML) balise <a> href
-	**/
+
+	/**
+	 * Mettre en forme un lien Internet
+	 * @since 2.0 ajout
+	 * @param SG_Texte $pLien lien visé
+	 * @param SG_Texte $pCible cadre cible visé
+	 * @return SG_HTML balise <a> href
+	 **/
 	function LienVers($pLien = '', $pCible = '') {		
 		$ret = new SG_HTML($this -> texte);
 		$ret -> LienVers($pLien, $pCible);
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 return $this
-	* Supprime les accents et signes diacritiques des caractères alphabétiques
-	**/
+
+	/** 
+	 * Supprime les accents et signes diacritiques des caractères alphabétiques
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.3 return $this
+	 * @param null|SG_Texte $pTexte eventuellement texte à traduire
+	 * @return SG_Texte $this
+	 */
 	function SansAccents($pTexte = null) {
 		if ($pTexte  === null) {
 			$texte = $this -> texte;
@@ -588,9 +692,13 @@ class SG_Texte extends SG_Objet {
 		$this -> texte = strtr(strtolower(utf8_decode($texte)), utf8_decode($orig), $dest);
 		return $this;
 	}
-	/** 2.1 ajout
-	* met l'initiale en majuscule
-	**/
+
+	/**
+	 * met l'initiale en majuscule
+	 * @since 2.1 ajout
+	 * @param null|SG_Texte $pTexte eventuellement texte à traduire
+	 * @return SG_Texte $this
+	 */
 	function NomPropre($pTexte = null) {
 		if ($pTexte  === null) {
 			$this -> texte = ucwords($this -> Minuscules() -> texte);
@@ -601,11 +709,14 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.2 ajout
-	* ce texte est-il inférieur ou égal au texte paramètre ?
-	* @param (@Texte) $pTexte : texte à comparer
-	* @return @VraiFaux : la réponse
-	**/
+
+	/**
+	 * ce texte est-il inférieur ou égal au texte paramètre ?
+	 * 
+	 * @since 2.2 ajout
+	 * @param SG_Texte $pTexte : texte à comparer
+	 * @return SG_VraiFaux : la réponse
+	 */
 	function InferieurA ($pTexte = '') {
 		$ret = new SG_VraiFaux(false);
 		$texte = self::getTexte($pTexte);
@@ -620,11 +731,14 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.2 ajout
-	* ce texte est-il supérieur ou égal au texte paramètre ?
-	* @param (@Texte) $pTexte : texte à comparer
-	* @return @VraiFaux : la réponse
-	**/
+
+	/**
+	 * ce texte est-il supérieur ou égal au texte paramètre ?
+	 * 
+	 * @since 2.2 ajout
+	 * @param SG_Texte $pTexte : texte à comparer
+	 * @return SG_VraiFaux : la réponse
+	 */
 	function SuperieurA ($pTexte = '') {
 		$ret = new SG_VraiFaux(false);
 		$texte = self::getTexte($pTexte);
@@ -639,10 +753,13 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* Enlève les blancs excédentaires (début fin et redoublés)
-	* @return : @Texte simplifié
-	**/
+
+	/**
+	 * Enlève les blancs excédentaires (début fin et redoublés)
+	 * 
+	 * @since 2.3 ajout
+	 * @return SG_Texte simplifié
+	 */
 	function Simplifier() {
 		$ret = $this;
 		$ret -> texte = str_replace('  ', ' ', trim($ret -> texte), $i);
@@ -651,12 +768,15 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* DepuisDernier : Extrait la partie du texte à partir de la dernière balise indiquée.
-	* @param (@Texte) : balise limite
-	* @param (@VraiFaux) : indique si la balise doit être incluse dans la réponse (par défaut : false)
-	* @return (@Texte) : le texte extrait 
-	**/
+
+	/**
+	 * DepuisDernier : Extrait la partie du texte à partir de la dernière balise indiquée.
+	 * 
+	 * @since 2.3 ajout
+	 * @param string|SG_Texte $pBalise balise limite
+	 * @param boolean|SG_VraiFaux $pIncluse indique si la balise doit être incluse dans la réponse (par défaut : false)
+	 * @return SG_Texte : le texte extrait 
+	 */
 	function DepuisDernier ($pBalise = '', $pIncluse = false) {
 		$balise = SG_Texte::getTexte($pBalise);
 		$incluse = SG_VraiFaux::getBooleen($pIncluse);
@@ -676,12 +796,15 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* Jusqua : Extrait la partie du texte jusqu'à la balise indiquée.
-	* @param (@Texte) : balise limite
-	* @param (@VraiFaux) : indique si la balise doit être incluse dans la réponse (par défaut : false)
-	* @return (@Texte) : le texte extrait 
-	**/
+
+	/**
+	 * JusquaDernier : Extrait la partie du texte jusqu'à la balise indiquée.
+	 * 
+	 * @since 2.3 ajout
+	 * @param SG_Texte $pBalise : balise limite
+	 * @param SG_VraiFaux $pIncluse : indique si la balise doit être incluse dans la réponse (par défaut : false)
+	 * @return SG_Texte : le texte extrait 
+	 */
 	function JusquaDernier ($pBalise = '', $pIncluse = false) {
 		$balise = SG_Texte::getTexte($pBalise);
 		$incluse = SG_VraiFaux::getBooleen($pIncluse);
@@ -700,6 +823,49 @@ class SG_Texte extends SG_Objet {
 		}
 		return $ret;
 	}
+
+	/**
+	 * ce texte est-il entre les bornes paramètres (incluses) ?
+	 * 
+	 * @since 2.4 ajout
+	 * @param SG_Texte $pDebut : texte inférieur ou égal à comparer
+	 * @param SG_Texte $pFin : texte supérieur ou égal à comparer
+	 * @return SG_VraiFaux : la réponse
+	 */
+	function Entre ($pDebut = '', $pFin = '') {
+		$ret = new SG_VraiFaux(false);
+		$debut = self::getTexte($pDebut);
+		$fin = self::getTexte($pFin);
+		if ($this -> texte === $debut or $this -> texte === $fin) {
+			$ret = new SG_VraiFaux(true);
+		} else {
+			if ($debut === '') {
+				$ret = new SG_VraiFaux(true);
+			} else {
+				$ret = new SG_VraiFaux($debut <= $this -> texte and $this -> texte <= $fin);
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	 * Retourne ou met à jour le titre du texte (ou dérivés)
+	 * 
+	 * @since 2.6
+	 * @param string|G_Texte|SG_Formule $pTitre formule ou valeur du titre
+	 * @return string|SG_Texte valeur du titre ou l'objet lui-même si maj
+	 */
+	function Titre($pTitre = null){
+		if($pTitre !== null) {
+			$res = self::getTexte($pTitre);
+			$this -> titre = $res;
+			$ret = $this;
+		} else {
+			$ret = new SG_Texte($this -> titre);
+		}
+		return $ret;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Texte_trait;	
 }
