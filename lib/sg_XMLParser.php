@@ -1,38 +1,77 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.1 (see AUTHORS file)
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @XMLParser */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/** (see AUTHORS file)
  * SG_XMLParser : Parser XML standardisé pour SynerGaïa
+ * @since 1.1
+ * @todo à terminer
  */
 class SG_XMLParser {
-	// Type SynerGaia
+	/** string Type SynerGaia '@XMLParser' */
 	const TYPESG = '@XMLParser';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
-	
+
+	/** xml_paser */
 	public $parser;
 
-	/** 1.1
+	/**
 	 * Construction de l'objet
+	 * @since 1.1
 	 */
 	function __construct() {
 		$this -> initParser();
-    }
-    // 1.1
-    function parse($data) {
-        xml_parse($this -> parser, $data);
-    }
+	}
 
-    function tagDebut($parser, $tag, $attributes) {
-        return false;
-    }
+	/**
+	 * Parse le texte XML
+	 * @since 1.1
+	 * @param string $data
+	 */
+	function parse($data) {
+		xml_parse($this -> parser, $data);
+	}
 
-    function cdata($parser, $cdata) {
-        return false;
-    }
+	/**
+	 * Parse le texte XML
+	 * @since 1.1
+	 * @param xml_parser $parser
+	 * @param string $tag
+	 * @param string $attributes
+	 * @return boolean
+	 */
+	function tagDebut($parser, $tag, $attributes) {
+		return false;
+	}
 
-    function tagFin($parser, $tag) {
-        return false;
-    }
+	/**
+	 * Parse le texte XML
+	 * @since 1.1
+	 * @param xml_parser $parser
+	 * @param string $cdata
+	 * @return boolean
+	 */
+	function cdata($parser, $cdata) {
+		return false;
+	}
+
+	/**
+	 * Parse le texte XML
+	 * @since 1.1
+	 * @param xml_parser $parser
+	 * @param string $tag
+	 * @return boolean
+	 */
+	function tagFin($parser, $tag) {
+		return false;
+	}
 	
-	//1.1 initialisation du parser
+	/**
+	 * Initialisation du parser
+	 * @since 1.1
+	 */
 	function initParser() {
 		if (! isset($this -> parser)) {
 			$this -> parser = xml_parser_create();
