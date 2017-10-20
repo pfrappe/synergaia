@@ -1,21 +1,31 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
- * fonctions basiques communes à tous les programmes
+<?php
+/**
+ * fonctions basiques communes à tous les programmes SynerGaïa
+ * @version 2.3
  */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
 
-/** 1.0.7
-* intercepte l'événement en erreur (défini dans core/ressources.php)
-*/
+/** 
+ * intercepte l'événement en erreur (défini dans core/ressources.php)
+ * @since 1.0.7
+ * @param integer $code code de l'erreur
+ * @param string $message message d'erreur
+ * @param string $file fichier php en erreur
+ * @param integer $line numéro de la ligne en erreur
+ */
 function errorHandler($code = 0, $message= '', $file= '', $line = 0) {
 	if (0 == error_reporting()) {
 		return;
 	}
 	throw new ErrorException($message, 0, $code, $file, $line);
 }
-/** 1.0.7
-* génère la trace de l'événement en erreur (défini dans core/ressources.php)
-*/
-function exceptionHandler($e) {  
+
+/**
+ * génère la trace de l'événement en erreur (défini dans core/ressources.php) 
+ * @version 1.0.7 json_encode
+ * @param Exception $e 
+ */
+function exceptionHandler($e) {
 	if ( !headers_sent() ) {
 		header("Content-type: text/html");
 		header( sprintf("HTTP/1.1 %d %s", 500, ' message 500') );
@@ -26,21 +36,31 @@ function exceptionHandler($e) {
 		@ob_flush();
 	}
 	catch( Exception $ignored ) {}
-	echo( '================= Stack Trace ===================');
+	$txt = '================= Stack Trace ===================';
 
 	$trace = array_reverse($e->getTrace());
 	$i=1;
 	foreach( $trace AS $k => $v ) {
-		echo( "<br>$i: " . (isset($v['file'])?'fichier : ' .$v['file']:'')  . (isset($v['line'])?', ligne ' . $v['line'] : '') . (isset($v['class'])?(', ' . $v['class']):'') . (isset($v['type'])?($v['type']):' ') . (isset($v['function'])?($v['function'] . '()'):'') );
+		$txt.= "<br>$i: " . (isset($v['file'])?'fichier : ' .$v['file']:'')  . (isset($v['line'])?', ligne ' . $v['line'] : '') . (isset($v['class'])?(', ' . $v['class']):'') . (isset($v['type'])?($v['type']):' ') . (isset($v['function'])?($v['function'] . '()'):'');
 		$i++;
 	}
-	echo( '<br>'.$e->getCode() . ' ' . $e -> getFile() . ', ligne ' . $e -> getLine() . ', '.$e -> getmessage()) ;
+	$txt.= '<br>'.$e->getCode() . ' ' . $e -> getFile() . ', ligne ' . $e -> getLine() . '<br>';
+	if (isset($e-> erreur)) {
+		$txt.= $e -> erreur -> getMessage(true);
+	} else {
+		$txt.= 'erreur n° ' . $e -> getmessage();
+	}
+	echo $txt;
 }
-/** 2.1 test args, pile appels, return
-* 1.2 shuntage possible test admin ; 1.3.1 supression fonctin synergaia pour éviter boucles dans SG_Formule ; 1.3.3 écrit dans $_SESSION['debug']['texte']
-* 1.3.4 : test isset [debug]
-* 1.1 class <pre>, test ->admin pour supprimer boucle possible
-*/
+
+/**
+ * fonction de debugging intégré à SynerGaïa
+ * 
+ * @since 0.2
+ * @version 2.6 htmlentities ; nom des fonctions
+ * @param any $arg liste des variables à deboguer
+ * @return string html résultant
+ */
 function tracer() {
 	$ok=false; // mettre true pour shunter test admin (ne pas oublier de remettre à false !)
 	$texte = '';
@@ -57,7 +77,7 @@ function tracer() {
 						$prm = '';
 						foreach($f['args'] as $key => $arg) {
 							if(getTypeSG($arg) === SG_Formule::TYPESG) {
-								$argument = $arg -> formule;
+								$argument = $arg -> texte;
 							} else {
 								$argument = getTypeSG($arg);
 							}
@@ -70,17 +90,17 @@ function tracer() {
 					}
 					$texte.=$prm . ')<br><i>' . @$f['file']  . '['.@$f['line'] . '].</i>';
 				} else {
-					$texte.='<br><i>' . @$f['file']  . '['.@$f['line'] . '].</i>';
+					$texte.= ')->' . @$f['function'] . '<br><i>' . @$f['file']  . '['.@$f['line'] . '].</i>';
 				}
 				$i++;
-				if ($i >= 10) break;
+				if ($i >= 15) break;
 			}
 			$args = func_get_args();
 			foreach ($args as $key => $arg) {
 				if ($arg === null) {
 					$texte .= '<br> valeur (' . $key . ') :<pre>null</pre>';
 				} else {
-					$texte .= '<br> valeur (' . $key . ') :<pre>' . print_r($arg, true) . '</pre>';
+					$texte .= '<br> valeur (' . $key . ') :<pre>' . htmlentities(print_r($arg, true)) . '</pre>';
 				}
 			}
 			if(isset($_SESSION['debug']['texte'])) {
@@ -93,7 +113,12 @@ function tracer() {
 	return $texte;
 }
 
-// 2.0 init $_SESSION['debug']['texte']
+/**
+ * Trace les appels à une fonction/ Met à jour $_SESSION['debug']['texte']
+ * @version 2.0 init $_SESSION['debug']['texte']
+ * @param string $pMessage texte à ajouter pour identifier l'appel (défaut '')
+ * @param integer $maxAppels nombre maximum d'appels imbriqués traités (défaut 0)
+ */
 function tracerAppels($pMessage = '', $maxAppels = 0) {
 	if (is_object($_SESSION['@Moi'] -> admin) and $_SESSION['@Moi'] -> admin -> estVrai() === true) {
 		if(!isset($_SESSION['tracerAppels'])) {// pour éviter les boucles
@@ -154,10 +179,10 @@ function tracerAppels($pMessage = '', $maxAppels = 0) {
 	}
 }
 
-/** 1.0.7
+/**
  * Détermine le type de l'objet SynerGaia passé, ou à défaut le type PHP
  * L'objet peut aussi avoir sa propre méthode getTypeSG() (voir SG_Notation, SG_Operation et SG_Formule)
- *
+ * @since 1.0.7
  * @param indéfini $pQuelqueChose objet
  * @return string type de l'objet
  */
@@ -188,15 +213,17 @@ function getTypeSG($pQuelqueChose = null) {
 	}
 	return $type;
 }
-/** 1.3.2 trace appel ; 2.3 trace appel minimum
+
+/**
  * Ajoute un message à la log et au debug si activé
- *
+ * @since 1.0.7
+ * @version 2.3 trace appel minimum
  * @param string : $pMessage Message à ajouter
  * @param boolean : Trace : ajouter la trace complète de l'appel à journaliser
  * @param integer : $pNiveau Niveau du message
  * @level 0
  */
-function journaliser($pMessage = "", $pTrace = true, $pNiveau = SG_LOG::LOG_NIVEAU_INFO) {
+function journaliser($pMessage = "", $pTrace = false, $pNiveau = SG_LOG::LOG_NIVEAU_INFO) {
 	$appeltxt = '';
 	$fonction = '';
 	$fonctionprec = '';
@@ -222,6 +249,12 @@ function journaliser($pMessage = "", $pTrace = true, $pNiveau = SG_LOG::LOG_NIVE
 }
 
 if (!function_exists('mime_content_type')) {
+	/** 
+	 * au cas ou mime_content_type n'existe pas
+	 * @since 0.2
+	 * @param string $filename
+	 * @return string
+	 */
 	function mime_content_type($filename) {
 		$ret = 'application/octet-stream';
 		$mime_types = array(
@@ -255,11 +288,13 @@ if (!function_exists('mime_content_type')) {
 		return $ret;
 	}
 }
-/*
-*   se charge de générer la page pour forcer le téléchargement d'un fichier dans tmp.
-*   sortie: true -> c'est bon
+
+/**
+* se charge de générer la page pour forcer le téléchargement d'un fichier dans tmp.
+* sortie: true -> c'est bon
 * 
-*   @param string $pFilename : nom du fichier
+* @param string $pFilename : nom du fichier
+* @return string
 */
 function generate_download_page($pFilename = null) {
 	// on désactive la compression en sortie
@@ -277,11 +312,13 @@ function generate_download_page($pFilename = null) {
 
 	return $ret;
 }
+
 /**
 * benchmark permpet de mesurer des temps d'exécution et un nombre de passage pour faire du benchmark
+* Met à jour $_SESSION['benchmark'][compteur]
 * 
-* @param string nom du compteur
-* @param boolean true : commencer la mesure et compter +1 ; false arrêter la mesure.
+* @param string $pCompteur nom du compteur
+* @param boolean $pFlag true : commencer la mesure et compter +1 ; false arrêter la mesure.
 */
 function benchmark($pCompteur = 'cpt1', $pFlag = true) {
 	if($pFlag) {
@@ -321,46 +358,6 @@ function benchmark($pCompteur = 'cpt1', $pFlag = true) {
 		}
 	}
 }
-/** 1.0.6
- */
-function faireObjetSynerGaia($pQuelqueChose = '', $pType = '') {
-	if (is_null($pQuelqueChose)) {
-		$ret = new SG_Rien();
-	} else {
-		if (is_array($pQuelqueChose)) {
-			$ret = new SG_Collection();
-			foreach ($pQuelqueChose as $valeur) {
-				$ret -> elements[] = faireObjetSynerGaia($valeur);
-			}
-		} else {
-			$type = getTypeSG($pQuelqueChose);
-			if ($type === SG_Formule::TYPESG) {
-				$ret = $pQuelqueChose -> calculer();
-			} else {
-				if ($type === 'string') {
-					$ret = new SG_Texte($pQuelqueChose);
-				} elseif ($type === 'integer' || $type === 'float') {
-					$ret = new SG_Nombre($pQuelqueChose);
-				} elseif ($type === 'bool') {
-					$ret = new SG_VraiFaux($pQuelqueChose);
-				} else {
-					// TODO distinguer le cas des dates et des heures
-					$ret = $pQuelqueChose;
-				}
-			}
-			if ($pType !== '') {
-				if ($type !== $pType) {                 
-					if (SG_Dictionnaire::isObjetSysteme($type)) {
-						$codeFonction = SG_Dictionnaire::getClasseObjet($pType);
-						// instancie un nouvel objet SynerGaia
-						$ret = new $codeFonction($ret);
-					}
-				}
-			}
-		}
-	}
-	return $ret;
-}
 
 /** 1.0.6
  * transforme la pvaleur donnée en paramètre en valeur booléenne.
@@ -389,8 +386,12 @@ function getBooleanValue($pQuelqueChose) {
 	}
 	return $ret;
 }
-//1.1 ajout
+
 if (!function_exists('json_last_error_msg')) {
+	/**
+	 * si json_last_error_msg manque
+	 * @since 1.1
+	 */
 	function json_last_error_msg() {
 		switch (json_last_error()) {
 			default:
