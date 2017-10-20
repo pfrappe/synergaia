@@ -1,40 +1,43 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* Classe SynerGaia de gestion d'un lien url
-*/
-// 2.3 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia fichier pour la gestion de l'objet @Lien */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Lien_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Lien_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Lien_trait{};
 }
+
+/**
+* Classe SynerGaia de gestion d'un lien url 
+* @version 2.3
+*/
 class SG_Lien extends SG_Texte {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Lien' */
 	const TYPESG = '@Lien';
-	// Type SynerGaia de l'objet
+	/** Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
 	/**
-	* Url liée
+	* string Url liée
 	*/
 	public $url = "";
 	/**
-	* Contenu du lien
+	* string Contenu du lien
 	*/
 	public $contenu = "";
 
 	/**
 	* Construction de l'objet
 	*
+	* @version 2.6 getTexte
 	* @param indéfini $pURL url de la cible du lien
 	* @param indéfini $pContenu contenu (texte) du lien
 	*/
 	function __construct($pURL = '', $pContenu = '') {
-		$tmpURL = new SG_Texte($pURL);
-		$this -> url = $tmpURL -> toString();
-
-		$tmpContenu = new SG_Texte($pContenu);
-		$this -> contenu = $tmpContenu -> toString();
+		$this -> url = SG_Texte::getTexte($pURL);
+		$this -> contenu = SG_Texte::getTexte($pContenu);
 	}
 
 	/**
@@ -49,28 +52,34 @@ class SG_Lien extends SG_Texte {
 	/**
 	* Conversion en code HTML
 	*
-	* @return string code HTML
+	* @return SG_HTML code HTML
 	*/
-
 	function toHTML() {
 		$ret = '<span class="champ_lien"><a href="' . $this -> url . '">' . $this -> contenu . '</a></span>';
 		return new SG_HTML($ret);
 	}
 
-	/** 2.3 ajout
-	* affiche le champ
-	**/
+	/**
+	 * Calcule le code HTML pour afficher le champ
+	 * 
+	 * @since 2.3 ajout
+	 * @return SH_HTML
+	 */
 	function afficherChamp() {
 		return $this -> toHTML();
 	}
 
-	/** 2.3 ajout
-	* 
-	*/
+	/**
+	 * Calcul le code HTML de la modification du lien
+	 * @since 2.3 ajout
+	 * @param string $pRefChamp
+	 * @return SH_HTML
+	 */
 	function modifierChamp($pRefChamp = '') {
 		$ret = '<textarea class="champ_lien" name="' . $pRefChamp . '" ondblclick="SynerGaia.stopPropagation(event);">' . $this -> toString() . '</textarea>';
 		return new SG_HTML($ret);
 	}
+	
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Lien_trait;
 }
