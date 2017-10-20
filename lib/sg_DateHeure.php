@@ -1,19 +1,29 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_DateHeure : Classe de gestion d'un couple date/heure
-*/
+<?php
+/** sg_DateHeure.php SynerGaia contient la classe SG_DateHeure de traitement des dates et heures */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 // 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_DateHeure_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_DateHeure_trait.php';
 } else {
+	/** trait vide par défaut */
 	trait SG_DateHeure_trait{};
 }
+
+/**
+ * SG_DateHeure : Classe de gestion d'un couple date/heure
+ * @version 2.6.0 _instant est un DateTime
+ */
 class SG_DateHeure extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@DateHeure';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Valeur interne de l'instant
+	/** Valeur interne de l'instant
+	 * @version 2.6 c'est un DateTime
+	 * @var DateTime
+	 */
 	public $_instant;
 
 	/**
@@ -32,8 +42,8 @@ class SG_DateHeure extends SG_Objet {
 
 			switch ($tmpTypeSG) {
 				case 'integer' :
-				case 'double' :
-					$this -> _instant = $q;
+				case 'double' : // timestamp unix
+					$this -> _instant = new DateTime('@' . $q);
 					break;
 				case 'string' :
 					$strDateHeure = '';
@@ -96,7 +106,8 @@ class SG_DateHeure extends SG_Objet {
 									if (is_numeric($heures)) {
 										if (is_numeric($minutes)) {
 											if (is_numeric($secondes)) {
-												$this -> _instant = mktime($heures, $minutes, $secondes, $mois, $jour, $annee);
+												$t = $annee . '-' . $mois . '-' . $jour . ' ' . $heures . ':' . $minutes . ':' . $secondes;
+												$this -> _instant = DateTime::createFromFormat('Y-m-d H:i:s', $t);
 											}
 										}
 									}
@@ -106,9 +117,13 @@ class SG_DateHeure extends SG_Objet {
 					}
 					break;
 				case '@Date' :
+					$this -> _instant = $q -> _date;
+					break;
 				case '@Heure' :
+					$this -> _instant = $q -> _heure;
+					break;
 				case '@DateHeure' :
-					$this -> _instant = $q -> getTimestamp();
+					$this -> _instant = $q -> _instant;
 					break;
 				default :
 					if (substr($tmpTypeSG, 0, 1) === "@") {
@@ -128,21 +143,27 @@ class SG_DateHeure extends SG_Objet {
 
 	/**
 	 * Renvoie le timestamp unix de l'objet
-	 *
+	 * @version 2.6 DateTime -> retourne +-aaaammjj.hhmnss
 	 * @return integer
 	 */
 	public function getTimestamp() {
-		return $this -> _instant;
+		if (is_null($this -> _instant)) {
+			$ret = false;
+		} else {
+			
+			$ret = $this -> _instant -> getTimeStamp();
+		}
+		return $ret;
 	}
 
 	/**
 	 * Conversion en chaine de caractères
-	 *
+	 * @version 2.6 DateTime
 	 * @return string texte
 	 */
 	function toString() {
 		if (!is_null($this -> _instant)) {
-			$ret = date('d/m/Y H:i', $this -> _instant);
+			$ret = $this -> _instant -> format('d/m/Y H:i');
 		} else {
 			$ret = '';
 		}
@@ -150,8 +171,9 @@ class SG_DateHeure extends SG_Objet {
 	}
 
 	/**
-	 * Conversion valeur numérique
-	 *
+	 * Conversion valeur numérique sous la forme aaaammjj.hhmnss
+	 * 
+	 * @since 0.1
 	 * @return float valeur numérique
 	 */
 	function toFloat() {
@@ -159,8 +181,7 @@ class SG_DateHeure extends SG_Objet {
 	}
 
 	/**
-	 * Conversion valeur numérique
-	 *
+	 * Conversion valeur numérique Unix
 	 * @return integer valeur numérique
 	 */
 	function toInteger() {
@@ -168,16 +189,18 @@ class SG_DateHeure extends SG_Objet {
 	}
 
 	/**
-	* Conversion en code HTML
-	*
-	* @return string code HTML
-	*/
+	 * Conversion en code HTML
+	 *
+	 * @return string code HTML
+	 */
 	function toHTML() {
 		return $this -> toString();
 	}
-	/** 1.0.7
-	* EstVide
-	*/
+	/**
+	 * EstVide
+	 * @since 1.0.7
+	 * @return SG_VrauFaux
+	 */
 	public function EstVide() {
 		$ret = new SG_VraiFaux($this -> _instant === null);
 		return $ret;
@@ -189,36 +212,65 @@ class SG_DateHeure extends SG_Objet {
 	* @return SG_Date Date
 	*/
 	function Date() {
-		return new SG_Date($this -> getTimestamp());
+		if (is_null($this -> _instant)) {
+			$ret = false;
+		} else {
+			$ret = new SG_Date($this -> _instant -> format('d/m/Y'));
+		}
+		return $ret;
 	}
 
 	/**
-	* Heure
-	*
-	* @return SG_Heure Heure
-	*/
+	 * Heure
+	 *
+	 * @return SG_Heure Heure
+	 */
 	function Heure() {
-		return new SG_Heure($this -> getTimestamp());
+		if (is_null($this -> _instant)) {
+			$ret = false;
+		} else {
+			$ret = new SG_Heure($this -> _instant -> format('H:i:s'));
+		}
+		return $ret;
 	}
-	/** 1.0.7
-	* Annee
-	*/
+	/**
+	 * Annee
+	 * @since 1.0.7
+	 * @return SG_Nombre
+	 */
 	public function Annee() {
-		return new SG_Nombre(intval(date('Y', $this -> _instant)));
+		if (is_null($this -> _instant)) {
+			$ret = new SG_Rien();
+		} else {
+			$ret = new SG_Nombre(intval($this -> _instant -> format('Y')));
+		}
+		return $ret;
 	}
-	/** 1.0.7
-	* Mois
-	*/
+	/**
+	 * Mois
+	 * @since 1.0.7
+	 * @return SG_Nombre
+	 */
 	public function Mois() {
-		$d = intval(date('m', $this -> _instant));
-		return new SG_Nombre($d);
+		if (is_null($this -> _instant)) {
+			$ret = false;
+		} else {
+			$ret = new SG_Nombre(intval($this -> _instant -> format('m')));
+		}
+		return $ret;
 	}
-	/** 1.0.7
-	* Jour
-	*/
+	/**
+	 * Jour
+	 * @since 1.0.7
+	 * @return SG_Nombre
+	 */
 	public function Jour() {
-		$d = intval(date('d', $this -> _instant));
-		return new SG_Nombre($d);
+		if (is_null($this -> _instant)) {
+			$ret = false;
+		} else {
+			$ret = new SG_Nombre(intval($this -> _instant -> format('d')));
+		}
+		return $ret;
 	}
 
 	/**
@@ -227,91 +279,104 @@ class SG_DateHeure extends SG_Objet {
 	 * @return string code HTML
 	 */
 	function afficherChamp() {
-		return '<span class="champ_DateHeure" dateheure="X">' . $this -> toHTML() . '</span>';
+		return '<span class="sg-dateheure" dateheure="X">' . $this -> toHTML() . '</span>';
 	}
 
-	/** 1.3.4 SynerGaia.initChampDateHeure() ; 2.0 stopPropagation ; idem mobile
-	* Modification d'un champ date heure
-	* @param $pRefChamp référence du champ HTML
-	* @return string code HTML
-	*/
+	/**
+	 * Modification d'un champ date heure
+	 * @param string $pRefChamp référence du champ HTML
+	 * @return string code HTML
+	 */
 	function modifierChamp ($pRefChamp = '') {
 		$auj = SG_Rien::Aujourdhui();
-		$id = SG_Champ::idRandom();
-		$ret = '';
-/*		if (SG_ThemeGraphique::ThemeGraphique() === 'mobile') {
-			$selector = '$("#' . $id . '")';
-			$ret = '<input class="dateheure" name="' . $pRefChamp . '" type="text" ';
-			$ret.= 'value="' . str_replace('"', '&quot;', $this -> toString()) . '" id="'. $id . '" ondblclick="SynerGaia.stopPropagation(event);"></input>';
-			$_SESSION['script'][$id] = $selector . '.DatePicker({format : "d/m/Y", current: "' . $auj -> toString() . '",
-			onBeforeShow: function(){' . $selector. '.DatePickerSetDate(' . $selector . '.val(), true);},
-			onChange: function(formated, dates){
-				var tmpdt = '.$selector . '.val();
-				'.$selector . '.val(formated + tmpdt.substring(tmpdt.indexOf(" ")));}
-			});';
-		} else { */
-			$ret = '<input id="' . $id . '" class="champ_DateHeure" type="text" name="' . $pRefChamp . '"';
-			$ret.= ' value="' . str_replace('"', '&quot;', $this -> toString()) . '" ondblclick="SynerGaia.stopPropagation(event);"/>';
-			$ret.= '<script>SynerGaia.initChampDateHeure("#' . $id . '")</script>';
-	//	}
+		$id = SG_SynerGaia::idRandom();
+		$ret = '<input id="' . $id . '" class="sg-dateheure" type="text" name="' . $pRefChamp . '"';
+		$ret.= ' value="' . str_replace('"', '&quot;', $this -> toString()) . '" ondblclick="SynerGaia.stopPropagation(event);"/>';
+		$ret.= '<script>SynerGaia.initChampDateHeure("#' . $id . '")</script>';
 		return $ret;
 	}
 
 	/**
-	* Intervalle avec le SG_DateHeure passé en paramètre
-	* @param $pQuelqueChose le temps du début de l'intervalle
-	* @return SG_Nombre intervalle en secondes
-	*/
+	 * Intervalle avec le SG_DateHeure passé en paramètre
+	 * @param SG_DateHeure|SG_Formule $pQuelqueChose le temps du début de l'intervalle
+	 * @return SG_Nombre intervalle en secondes
+	 */
 	function Intervalle ($pQuelqueChose = null) {
 		$tmp = new SG_DateHeure($pQuelqueChose);
 		$ret = new SG_Nombre($tmp -> toFloat() - $this -> toFloat());
 		return $ret;
 	}
-	/** 1.0.5
-	*/
+	
+	/** 
+	 * Compare avec la date heure passée en paramètre
+	 * @since 1.0.5
+	 * @param SG_DateHeure|SG_Formule $pQuelqueChose date-heure à comparer
+	 * @return SG_VraiFaux
+	 */
 	function SuperieurA ($pQuelqueChose = null) {
 		if ($pQuelqueChose === null) {
-			$date = new SG_DateHeure(now);
+			$date = new SG_DateHeure(new DateTime());
 		} else {
 			$date = new SG_DateHeure($pQuelqueChose);
 		}
 		$ret = new SG_VraiFaux( $this -> _instant >= $date -> _instant);
 		return $ret;
 	}
-	/** 1.0.5
-	*/
+	/**
+	 * Compare avec la date heure passée en paramètre
+	 * @since 1.0.5
+	 * @param SG_DateHeure|SG_Formule $pQuelqueChose date-heure à comparer
+	 * @return SG_VraiFaux
+	 */
 	function InferieurA ($pQuelqueChose = null) {
 		if ($pQuelqueChose === null) {
-			$date = new SG_DateHeure(now);
+			$date = new SG_DateHeure(new DateTime());
 		} else {
 			$date = new SG_DateHeure($pQuelqueChose);
 		}
 		$ret = new SG_VraiFaux( $this -> _instant <= $date -> _instant);
 		return $ret;
 	}
-	/** 1.0.5 ; 1.3.0 static
-	*/
+	/**
+	 * valide avec un format
+	 * @since 1.0.5
+	 * @param SG_DateHeure|SG_Formule $date date-heure à valider
+	 * @param string $format format de date à contrôler (par défaut 'Y-m-d H:i:s')
+	 * @return boolean
+	 */
 	static function validerTemps ($date, $format = 'Y-m-d H:i:s') {
 		$d = DateTime::createFromFormat($format, $date);
-		return $d && $d->format($format) == $date;
+		return $d and $d -> format($format) == $date;
 	}
-	/** 1.1 ajout
-	* [datetime] => 20100106T105820,38+01
-	*/
+	/**
+	 * initialise la date à partir d'un format Domino [datetime] => 20100106T105820,38+01
+	 * @since 1.1
+	 * @param SG_DateHeure|SG_Formule $dt date-heure à comparer
+	 * @return SG_DateHeure $this
+	 */
 	function setDateTimeDomino ($dt = '') {
 		if ($dt !== '') {
-			$this -> _instant = mktime(substr($dt,9,2), substr($dt,11,2), substr($dt,13,2), substr($dt,4,2), substr($dt,6,2), substr($dt,0,4));
+			$t = substr($dt,0,4) . '-' . substr($dt,4,2) . '-' . substr($dt,6,2) . ' ' . substr($dt,9,2) . ':' . substr($dt,11,2) . ':' . substr($dt,13,2);
+			$this -> _instant = DateTime::createFromFormat('Y-m-d h:i:s', t);
 		}
+		return $this;
 	}
-	/** 1.1 new
-	*/
+	/**
+	 * Calcule l'âge en années complètes
+	 * @since 1.1
+	 * @return SG_Nombre nombre d'années d'âge
+	 */
 	function Age() {
 		$now = new DateTime();
 		$interval = $now -> diff($this -> getDate());
 		return new SG_Nombre($interval -> y);
 	}
-	/** 1.1 new
-	*/
+	/**
+	 * Inidique si la date-heure est la même que celle passée en paramètre
+	 * @since 1.1 new
+	 * @param SG_DateHeure|SG_Formule date-heure à comparer
+	 * @return SG_VraiFaux
+	 */
 	function Egale($pAutreDate = '') {
 		if ($pAutreDate === '') {
 			$date = SG_Rien::Maintenant();
@@ -325,60 +390,77 @@ class SG_DateHeure extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 New
-	*/
-	function Ajouter($pQuantite = 0, $pUnite = 'heure') {
+
+	/**
+	 * Ajoute une quantité de temps à la date-heure (retourne un autre objet)
+	 * @since 1.1
+	 * @version 2.6 DateTime
+	 * @param SG_Nombre|SG_Formule|integer Quantité à ajouter
+	 * @param SG_Texte|SG_Formule|string unté de la quantité
+	 * @return SG_DateHeure la nouvelle date heure
+	 */
+	function Ajouter($pQuantite = 0, $pUnite = 'h') {
 		$qte = new SG_Nombre($pQuantite);
 		$qte = $qte -> valeur;
 		$unite = substr(strtolower(SG_Texte::getTexte($pUnite)),0,2);
 		$dt = new SG_DateHeure();
 		$dt -> _instant = $this -> _instant;
-		if ($qte !== 0) {
+		if ($dt -> _instant != null and $qte !== 0) {
 			switch ($unite) {
 				case 'h':
 				case 'he':
 				case 'ho':
-					$qte = $qte * 3600;
+					$q = 'T' . $qte . 'H';
 					break;
 				case 's':
 				case 'se':
+					$q = 'T' . $qte . 'S';
 					break;
 				case 'mn':
 				case 'mi':
-					$qte = $qte * 60;
+					$q = 'T' . $qte . 'M';
 					break;
 				case 'j':
-				case 'jo';
+				case 'jo':
 				case 'd':
 				case 'da':
-					$qte = $qte * 86400; // nb secondes dans jour
+					$q = $qte . 'D';
 					break;
 				case 'm':
 				case 'mo':
-					$qte = $qte * 2592000; // nb seconds dans 30 jours;
+					$q = $qte . 'M';
 					break;
 				case 'a':
 				case 'y':
 				case 'an':
 				case 'ye':
-					$qte = $qte * 31536000; // nb seconds dans 365 jours;
-				break;
+					$q = $qte . 'Y';
+					break;
+				default:
+					$q = '';
+					break;
+				
 			}
-			$dt -> _instant += $qte;
+			$dt -> _instant -> add(new DateInterval('P' . $q));
 		}
 		return $dt;
 	}
-	/** 2.1.1 ajout
-	* Indique si la date est de l'année en cours ou non
-	**/
+
+	/** 
+	 * Indique si la date est de l'année en cours ou non
+	 * @since 2.1.1
+	 * @return SG_VraiFaux 
+	 */
 	function CetteAnnee() {
 		return new SG_VraiFaux($this -> Annee() -> toString() === SG_Rien::Aujourdhui() -> Annee() -> toString());
 	}
-	/** 2.2 ajout
-	* éclater un intervalle en fonction de périodes annuelles
-	* @param (@Date ou @DateHeure) $pFin : fin de l'intervalle
-	* @return @Collection de deux dates heures : périodes @Debut, @Fin
-	**/
+
+	/**
+	 * éclater un intervalle en fonction de périodes annuelles
+	 * @since 2.2
+	 * @param SG_Date|SG_DateHeure|SG_Formule $pFin : fin de l'intervalle
+	 * @return SG_Collection de deux dates heures : périodes @Debut, @Fin
+	 */
 	function EclaterAnnees($pFin) {
 		$ret = new SG_Collection();
 		$andebut = $this -> Annee() -> valeur;
@@ -407,11 +489,14 @@ class SG_DateHeure extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* enlève la quantité fournie à la date et heure
-	* @param (@Nombre) : quantité à soustraire
-	* @param (@Texte) : code unité (seuls les 2 1ers caractères sont utilisés) h, he, ho, s, se, mn, mi, j, jo, d, da, m, mo, a, y, an, ye
-	*/
+	/** 
+	 * enlève la quantité fournie à la date et heure
+	 * @since 2.3
+	 * @version 2.6 DateTime
+	 * @param SG_Nombre|SG_Formule $pQuantite quantité à soustraire
+	 * @param SG_Texte|SG_Formule $pUnite code unité (seuls les 2 1ers caractères sont utilisés) h, he, ho, s, se, mn, mi, j, jo, d, da, m, mo, a, y, an, ye
+	 * @return SG_DateHeure Un objet après calcul
+	 */
 	function Soustraire($pQuantite = 0, $pUnite = 'h') {
 		$qte = new SG_Nombre($pQuantite);
 		$qte = $qte -> valeur;
@@ -423,54 +508,111 @@ class SG_DateHeure extends SG_Objet {
 				case 'h':
 				case 'he':
 				case 'ho':
-					$qte = $qte * 3600;
+					$q = 'T' . $qte . 'H';
 					break;
 				case 's':
 				case 'se':
+					$q = 'T' . $qte . 'S';
 					break;
 				case 'mn':
 				case 'mi':
-					$qte = $qte * 60;
+					$q = 'T' . $qte . 'M';
 					break;
 				case 'j':
 				case 'jo';
 				case 'd':
 				case 'da':
-					$qte = $qte * 86400; // nb secondes dans jour
+					$q = $qte . 'D';
 					break;
 				case 'm':
 				case 'mo':
-					$qte = $qte * 2592000; // nb seconds dans 30 jours;
+					$q = $qte . 'M';
 					break;
 				case 'a':
 				case 'y':
 				case 'an':
 				case 'ye':
-					$qte = $qte * 31536000; // nb seconds dans 365 jours;
-				break;
+					$q = $qte . 'Y';
+					break;
+				default:
+					$q = '';
+					break;
 			}
-			$dt -> _instant -= $qte;
+			$dt -> _instant -> sub (new DateInterval('P' . $q));
 		}
 		return $dt;
 	}
-	/** 2.3 AJout
-	* Détermine si deux @DateHeure sont sur la même journée (utile pour les agendas)
-	* @param $pDate : autre @Date ou @DateHeure à comparer. Si absent ou null, @Aujourdhui. Si @Texte, traduit en @Date
-	* @return @VraiFaux
-	**/
+
+	/** 
+	 * Détermine si deux @DateHeure sont sur la même journée (utile pour les agendas)
+	 * @since 2.3
+	 * @param $pDate : autre @Date ou @DateHeure à comparer. Si absent ou null, @Aujourdhui. Si @Texte, traduit en @Date
+	 * @return @VraiFaux
+	 */
 	function EstMemeDate ($pDate = '') {
 		if ($pDate === '') {
 			$date = SG_Rien::Aujourdhui();
 		} else {
 			$date = new SG_Date($pDate);
 		}
-		if ($date -> _date === $this -> Date() -> _date) {
+		if ($date -> _date -> format('Y-m-d') == $this -> Date() -> _date -> format('Y-m-d')) {
 			$ret = new SG_VraiFaux(true);
 		} else {
 			$ret = new SG_VraiFaux(false);
 		}
 		return $ret;
 	}
+
+	/**
+	 * Contrpole si une date-heure est située entre deux temps
+	 * @Vrai si la date est dans l'intervalle (bornes incluses)
+	 * @since 2.4
+	 * @param (date ou dateheure) borne inférieure (défaut 0)
+	 * @param (date ou dateheure) borne supérieure (défaut 0)
+	 * @return @VraiFaux
+	 */
+	public function Entre($pInf = 0, $pSup = 0) {
+		if($pInf === 0) {
+			$inf = SG_Rien::Maintenant();
+		} else {
+			$inf = new SG_DateHeure($pInf);
+		}
+		if($pSup === 0) {
+			$sup = SG_Rien::Maintenant();
+		} else {
+			$sup = new SG_DateHeure($pSup);
+		}
+		if (is_null($sup -> _instant) or is_null($inf -> _instant)) {
+			$ret = new SG_Erreur('0215');
+		} elseif ($inf > $sup) {
+			$ret = new SG_Erreur('0217');
+		} else {
+			try {
+				$ret = ($inf -> _instant <= $this -> _instant) and ($sup -> _instant >= $this -> _instant);
+				$ret = new SG_VraiFaux($ret);
+			} catch (Exception $e) {
+				$ret = new SG_Erreur('0216');
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	 * Format string pour tri et catégorisation (aaaa/mm)
+	 * 
+	 * @since 2.7
+	 * @return string
+	 **/
+	function AnMois() {
+		$ret = new SG_Texte('');
+		if (is_null($this -> _instant)) {
+			$ret = '';
+		} else {
+			$ret -> texte = $this -> _instant -> format('Y') . '/' . $this -> _instant -> format('m');
+		}
+		return $ret;
+	}
+	
 	// 2.1.1. complément de classe créée par compilation
 	use SG_DateHeure_trait;
 }
