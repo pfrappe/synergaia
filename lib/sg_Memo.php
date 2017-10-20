@@ -1,41 +1,54 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* Classe SynerGaia de gestion d'un mémo (mail)
-*/
-// 2.3 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Memo */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Memo_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Memo_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Memo_trait{};
 }
+
+/**
+ * Classe SynerGaia de gestion d'un mémo (mail)
+ * Nécessite que l'envoi de mail soit activé (envoi via php mail() )
+ * @version 2.3
+ */
 class SG_Memo extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Memo' */
 	const TYPESG = '@Memo';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
-	// Dernière erreur rencontrée
+	/** string Dernière erreur rencontrée */
 	public $Erreur = '';
-	// Expéditeur du message
+	/** string Expéditeur du message */
 	public $expediteur = '';
-	// Destinataires
+	/** array Destinataires */
 	public $destinataires = array();
-	// 2.3 ajout : Copie
+	/** @var array Copie à 
+	 * @since 2.3 ajout : */
 	public $copie = array();
-	// 2.3 ajout : Copie cachée
+	/** @var array : Copie cachée
+	 * @since 2.3 ajout */
 	public $bcc = array();
-	// Objet du message
+	/** string Objet du message */
 	public $objet = '';
-	// Contenu du message
+	/** string Contenu du message */
 	public $contenu = '';
 
 	/**
-	* Construction de l'objet
-	*/
+	 * Construction de l'objet
+	 */
 	function __construct() {
 	}
-	/** 2.0 err 106
-	* Ajouter un destinataire
-	* @param indéfini $pQuelquechose destinataire
-	*/
+
+	/**
+	 * Ajouter un destinataire
+	 * @version 2.0 err 106
+	 * @param indéfini $pQuelquechose destinataire
+	 * @return SG_Memo $this
+	 */
 	function AjouterDestinataire($pQuelquechose = null) {
 		$destinataire = '';
 		$typeSG = getTypeSG($pQuelquechose);
@@ -62,10 +75,13 @@ class SG_Memo extends SG_Objet {
 		return $this;
 	}
 
-	/** 2.1 simplifier
-	* Definir l'objet du message
-	* @param indéfini $pQuelquechose objet du message
-	*/
+	/**
+	 * Definir l'objet du message
+	 * 
+	 * @version 2.1 simplifier
+	 * @param string|SG_Texte|SG_Formule $pQuelquechose objet du message
+	 * @return SG_Memo $this
+	 */
 	function DefinirObjet($pQuelquechose = null) {
 		$this -> objet = SG_Texte::getTexte($pQuelquechose);
 		return $this;
@@ -74,7 +90,7 @@ class SG_Memo extends SG_Objet {
 	/** 2.1 simplifier
 	* Définir le contenu du message
 	*
-	* @param indéfini $pQuelquechose contenu du message
+	* @param string|SG_Texte|SG_Formule $pQuelquechose contenu du message
 	*/
 	function DefinirContenu($pQuelquechose = null) {
 		$this -> contenu = SG_Texte::getTexte($pQuelquechose);
@@ -82,18 +98,22 @@ class SG_Memo extends SG_Objet {
 	}
 
 	/** 2.1 simplifier
-	* Ajouter au contenu du message
-	*
-	* @param indéfini $pQuelquechose contenu de l'ajout
-	*/
+	 * Ajouter au contenu du message
+	 *
+	 * @param string|SG_Texte|SG_Formule $pQuelquechose contenu de l'ajout
+	 * @return SG_Memo $this
+	 */
 	function AjouterContenu($pQuelquechose = null) {
-		$this -> contenu .= SG_Texte::getTexte($pQuelquechose);
+		$this -> contenu.= SG_Texte::getTexte($pQuelquechose);
 		return $this;
 	}
 
-	/** 2.0 err 105 ; 2.3 copie et bcc, correction implode
-	* Envoyer le message
-	*/
+	/**
+	 * Envoyer le message
+	 * @version 2.0 err 105
+	 * @version 2.3 copie et bcc, correction implode
+	 * @return SG_VraiFaux|SG_Erreur résultat
+	 */
 	function Envoyer() {
 		$ret = new SG_VraiFaux(false);
 		//conditionnement de l'envoi par la configuration
@@ -134,10 +154,13 @@ class SG_Memo extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.3
-	* Ajouter un destinataire en copie
-	* @param indéfini $pQuelquechose destinataire
-	*/
+
+	/**
+	 * Ajouter un destinataire en copie
+	 * @since 2.3
+	 * @param string|SG_Texte|SG_Formule $pQuelquechose destinataire
+	 * @return SG_Memo $this
+	 */
 	function CopieA($pQuelquechose = null) {
 		$copie = '';
 		$typeSG = getTypeSG($pQuelquechose);
@@ -163,10 +186,14 @@ class SG_Memo extends SG_Objet {
 		}
 		return $this;
 	}
-	/** 2.3
-	* Ajouter un destinataire en copie cachée
-	* @param indéfini $pQuelquechose destinataire
-	*/
+
+	/**
+	 * Ajouter un destinataire en copie cachée
+	 * 
+	 * @since 2.3
+	 * @param string|SG_Texte|SG_Formule $pQuelquechose destinataire
+	 * @return SG_Memo $this
+	 */
 	function CopieCacheeA($pQuelquechose = null) {
 		$copie = '';
 		$typeSG = getTypeSG($pQuelquechose);
@@ -192,6 +219,7 @@ class SG_Memo extends SG_Objet {
 		}
 		return $this;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Memo_trait;
 }
