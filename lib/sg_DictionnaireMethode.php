@@ -1,25 +1,27 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @DictionnaireMethode */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_DictionnaireMethode : Classe de gestion d'une méthode du dictionnaire
+ * @version 2.1 
  */
 class SG_DictionnaireMethode extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@DictionnaireMethode' */
 	const TYPESG = '@DictionnaireMethode';
 
-	//Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Document physique associé
-	public $doc;
-
-	// Code de la méthode du dictionnaire
+	/** string Code de la méthode du dictionnaire */
 	public $code;
 
-	/** 1.0.6
-	* Construction de l'objet
-	* @param string $pCode code de la méthode demandée
-	* @param array $pTableau tableau éventuel de propriétés
-	*/
+	/**
+	 * Construction de l'objet
+	 * @since 1.0.6
+	 * @param string $pCode code de la méthode demandée
+	 * @param array $pTableau tableau éventuel de propriétés
+	 */
 	public function __construct($pCode = null, $pTableau = null) {
 		$tmpCode = new SG_Texte($pCode);
 		$base = SG_Dictionnaire::getCodeBase('@DictionnaireMethode');
@@ -32,39 +34,55 @@ class SG_DictionnaireMethode extends SG_Document {
 		$this -> setValeur('@Type', '@DictionnaireMethode');
 	}
 
-	/** 2.0 parm
-	* Conversion en chaine de caractères
-	* @return string code de la méthode
-	*/
+	/**
+	 * Conversion en chaine de caractères
+	 * @version 2.0 parm
+	 * @param any $pDefaut inutilisé (compatibilité)
+	 * @return string code de la méthode
+	 */
 	function toString($pDefaut = null) {
 		return $this -> code;
 	}
-	/** 1.1 : ajout
+
+	/**
 	 * texte de la formule
+	 * @since 1.1 : ajout
+	 * @return string texte de la méthode
 	 */
 	function Formule() {
 		return $this -> getValeur('@Action','');
 	}
-	/** 2.1 ajout ; 2.1.1 tous les codes vides ; 2.3 err 0193
-	 * @formula : .@Code=.@Objet.@Texte.@Concatener(".",.@Methode);
+
+	/**
+	 * Traitement avant enregistrement : calcul du code
+	 * formule SG : .@Code=.@Objet.@Texte.@Concatener(".",.@Methode);
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.1.1 tous les codes vides
+	 * @version 2.3 err 0193
+	 * @version 2.6 recalcul systématique du code
+	 * @return SG_VraiFaux|SG_Erreur
 	*/
 	function preEnregistrer() {
 		$objet = $this -> getValeurPropriete('@Objet');
-		if ($objet === '@Rien') {
+		if (getTypeSG($objet) === '@Rien') {
 			$ret = new SG_Erreur('0193');
 		} else {
 			$codeObjet = $objet -> getValeur('@Code');
 			$code = $this -> getValeur('@Code','');
-			if ($code === '') { // seulement les objets qui n'ont pas encore de code
-				$this -> setValeur('@Code', $codeObjet . '.' . $this -> getValeur('@Methode'));
-			}
+			$this -> setValeur('@Code', $codeObjet . '.' . $this -> getValeur('@Methode'));
 			$ret = new SG_VraiFaux(true);
 		}
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 $ret
-	* Recompilation de l'objet en entier (seulement les objets non système)
-	*/
+
+	/**
+	 * Traitement après enregistrement : 
+	 * - Recompilation de l'objet en entier (seulement les objets non système)
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.3 $ret
+	 */
 	function postEnregistrer() {
 		$ret = false;
 		$objet = $this -> getValeurPropriete('@Objet');
@@ -73,15 +91,21 @@ class SG_DictionnaireMethode extends SG_Document {
 			$ret = $objet -> compiler();
 		} else {
 			$compil = new SG_Compilateur();
+			$compil -> titre = 'Méthode : ' . $this -> toString();
 			$ret = $compil -> compilerObjetSysteme($objet);
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Modification dans un ordre préparé
-	* @param : 
-	* @formula : .@Modifier(.@Titre,.@Objet,.@Methode,.@Action,.@Modele,.@Description)
-	**/
+
+	/**
+	 * Calcul du code html pour modifier le document éventuellement dans un ordre préparé
+	 * formule SynerGaïa : .@Modifier(.@Titre,.@Objet,.@Methode,.@Action,.@Modele,.@Description)
+	 * 
+	 * @since 2.1 ajout
+	 * @param SG_Texte|SG_Formule parm liste de paramètres de champs à modifier 
+	 * 
+	 * @return SG_HTML
+	 */
 	function Modifier () {
 		$args = func_get_args();
 		if (sizeof($args) === 0) { 
@@ -91,10 +115,14 @@ class SG_DictionnaireMethode extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* @param : liste des formules à afficher
-	* @formula : .@Afficher(.@Titre,.@Objet,.@Methode,.@Action,.@Modele,.@Description)
-	**/
+
+	/**
+	 * Calcul du code html pour l'affichage de la méthode
+	 * formule SynerGaïa : .@Afficher(.@Titre,.@Objet,.@Methode,.@Action,.@Modele,.@Description)
+	 * @since 2.1 ajout
+	 * @param : liste des formules à afficher
+	 * @return SG_HTML
+	 */
 	function Afficher() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) { 
