@@ -1,40 +1,50 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_DocumentCouchDB : Classe SynerGaia de gestion d'un document CouchDB
-*/
+<?php
+/** fichier contenant les classes pour gérer un @DocumentCouchDB */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 // 2.3 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_DocumentCouchDB_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_DocumentCouchDB_trait.php';
 } else {
+	/** trait vide par défaut */
 	trait SG_DocumentCouchDB_trait{};
 }
+
+/**
+ * SG_DocumentCouchDB : Classe SynerGaia de gestion d'un document CouchDB
+ * @since 0.0
+ * @version 2.3
+ */
 class SG_DocumentCouchDB extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@DocumentCouchDB' */
 	const TYPESG = '@DocumentCouchDB';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Code de la base
+	/** string Code de la base */
 	public $codeBase;
 
-	// Code complet de la base avec prefixe
+	/** string Code complet de la base avec prefixe */
 	public $codeBaseComplet = '';
 
-	// Code du document (en fait l'id physique)
+	/** string Code du document (en fait l'id physique) */
 	public $codeDocument;
 
-	// Révision (version) du document
+	/** string Révision (version) du document */
 	public $revision = '';
 
-	// Tableau des propriétés du document et de leurs valeurs
+	/** array Tableau des propriétés du document et de leurs valeurs */
 	public $proprietes;
 
-	/** 1.0.7 ; 2.1 setTableau simplifié
-	* Construction de l'objet
-	*
-	* @param string $pCodeBase code de la base (ou codebase/codedocument)
-	* @param string $pCodeDocument code du document
-	* @param array $pTableau tableau des propriétés à créer
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * @since 2.1 setTableau simplifié
+	 * @version 2.6 test json sg_erreur
+	 * @param string $pCodeBase code de la base (ou codebase/codedocument)
+	 * @param string $pCodeDocument code du document
+	 * @param array $pTableau tableau des propriétés à créer
+	 */
 	public function __construct($pCodeBase = null, $pCodeDocument = null, $pTableau = null) {
 		$this -> proprietes = array();
 		if ($pTableau) {
@@ -61,38 +71,48 @@ class SG_DocumentCouchDB extends SG_Objet {
 					$this -> codeDocument = $codeDocument;
 					$url = $this -> urlCouchDB(true);
 					$json = $sgbd -> requete($url, "GET");
-			ini_set('memory_limit', '512M'); // 2.1 pour répertoire //TODO Supprimer ?
-					$tableau = json_decode($json, true);
-			ini_restore('memory_limit');
-					$this -> setTableau($tableau);
+					if ($json instanceof SG_Erreur) {
+						$tableau = array();
+					} else {
+				ini_set('memory_limit', '512M'); // 2.1 pour répertoire //TODO Supprimer ?
+						$tableau = json_decode($json, true);
+						$this -> setTableau($tableau);
+				ini_restore('memory_limit');
+					}
 				}
 			}
 		}
-		if (method_exists($this,"initSpecifique")) {
+		if (method_exists($this,'initSpecifique')) {
 			$this -> initSpecifique();
 		}
 	}
-	/** 1.0.6 ; 2.3 getCodeBaseComplet
-	* setBase : Construction des identifiants de type base du document
-	*
-	* @param string $pCodeBase code de la base
-	*/
+
+	/**
+	 * setBase : Construction des identifiants de type base du document
+	 * @since 1.0.6
+	 * @version 2.3 getCodeBaseComplet
+	 * @param string $pCodeBase code de la base
+	 */
 	function setBase ($pCodeBase = null) {	
 		// Si pas de base définie => base par défaut
 		$codeBase = $pCodeBase;
-		if (!$codeBase) {
-			$codeBase = SG_Base::CODEBASE;
+		if (is_null($codeBase) or $codeBase === '') {
+			if (isset($this -> proprietes['@TypeSG'])) {
+				$codeBase = SG_Dictionnaire::getCodeBase($this -> proprietes['@TypeSG']);
+			} else {
+				$codeBase = SG_Base::CODEBASE;
+			}
 		}
 		$this -> codeBase = $codeBase;
 		$this -> codeBaseComplet = SG_Config::getCodeBaseComplet($codeBase);
 	}
 
-	/** 1.0.6 ; 2.1 simplifié
-	* setTableau : contenu du document à partir d'un json
-	*
-	* @param string $pCodeBase code de la base
-	* @param string $pCodeDocument code du document
-	*/
+	/**
+	 * setTableau : contenu du document à partir d'un json
+	 * @since 1.0.6
+	 * @version 2.1 simplifié
+	 * @param array $pTableau tableau de propriétés
+	 */
 	function setTableau($pTableau) {
 		// Si on a bien un document existant
 		if (is_array($pTableau)) {
@@ -106,11 +126,11 @@ class SG_DocumentCouchDB extends SG_Objet {
 			}
 		}
 	}
+
 	/**
-	* Document existe ?
-	*
-	* @return SG_VraiFaux document existe
-	*/
+	 * Document existe ?
+	 * @return SG_VraiFaux document existe
+	 */
 	public function Existe() {
 		$retBool = false;
 		if ($this -> revision !== '') {
@@ -120,40 +140,44 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 traitement des composites (.)
-	* Définition de la valeur d'un champ du document
-	*
-	* @param string $pChamp code du champ
-	* @param indéfini $pValeur valeur du champ
-	*/
+	/**
+	 * Définition de la valeur d'un champ du document
+	 * @version 1.1 traitement des composites (.)
+	 * @todo vior si param forceFormule encore utile ??
+	 * @param string $pChamp code du champ
+	 * @param indéfini $pValeur valeur du champ
+	 * @param boolean $forceFormule vrai s'il faut forcer l'enregistrement d'une formule
+	 * @return any valeur du champ
+	 */
 	public function setValeur($pChamp = '', $pValeur = null, $forceFormule = false) {
-
 		// Convertit les types SynerGaia en type "simples" pour l'enregistrement
 		$valeur = $pValeur;
 		$tmpTypeValeur = getTypeSG($pValeur);
 		if (substr($tmpTypeValeur, 0, 1) === '@' and $forceFormule === false) {
 			$valeur = $pValeur -> toString();
 		}
-
 		$champs = explode('.', $pChamp);		
 		for($i = &$this -> proprietes; $key = array_shift($champs); $i = &$i[$key]) {
 			if (!isset($i[$key])) {
 				$i[$key] = array();
 			}
 		}
-		$i = $valeur;
+		$i = $valeur; // attention : $i est $this -> proprietes (voir 5 lignes ci-dessus au 'for' )
 		return $valeur;
 	}
 
-	/** 1.1 : $pType ; traitement des composites (.) ; 2.2 fichiers multiples
-	* Insertion d'un fichier dans un champ d'un document
-	*
-	* @param string $pChamp code du champ de stockage
-	* @param string $pEmplacement emplacement actuel du fichier (chemin complet)
-	* @param string $pNom nom du fichier dans le document
-	* @param strint $pType type du fichier (seuls utilisés : image/jpeg, image/png, image/gif pour créer vignette)
-	*/
+	/**
+	 * Insertion d'un fichier dans un champ d'un document
+	 * @version 2.2 fichiers multiples
+	 * @version 26 return nb fichiers
+	 * @param string $pChamp code du champ de stockage
+	 * @param string $pEmplacement emplacement actuel du fichier (chemin complet)
+	 * @param string $pNom nom du fichier dans le document
+	 * @param strint $pType type du fichier (seuls utilisés : image/jpeg, image/png, image/gif pour créer vignette)
+	 * @return integer nbre de fichiers traités
+	 */
 	public function setFichier($pChamp = '', $pEmplacement = '', $pNom = '', $pType = '') {
+		$ret = 0;
 		if ($pEmplacement !== '') {
 			// traitement du nom du champ
 			$fichier_champ = SG_Texte::getTexte($pChamp);
@@ -187,6 +211,7 @@ class SG_DocumentCouchDB extends SG_Objet {
 			// Charge le contenu du ou des fichiers
 			for ($i = 0; $i < sizeof($fichier_emplacement); $i++) {
 				if ($fichier_emplacement[$i] !== '') {
+					$ret++;
 					$fichier_contenu = base64_encode(file_get_contents($fichier_emplacement[$i]));
 					$fichier[$fichier_nom[$i]] = array('content_type' => $fichier_type[$i], 'data' => $fichier_contenu);
 					switch ($fichier_type[$i]) {
@@ -208,16 +233,17 @@ class SG_DocumentCouchDB extends SG_Objet {
 			}
 			$n = $fichier;// affectation dans la propriété
 		}
-		return true;
+		return $ret;
 	}
 
-	/** 1.1 _attachments ; 1.3.0 SYNERGAIA_PATH_TO_APPLI
-	*  Acquisition du contenu d'un champ fichier et stockage dans une destination du serveur
-	* 
-	*  @param string $pChamp nom du champ dans lequel se trouve le fichier
-	*  @param string $pFichier nom du fichier à récupérer
-	*  @param string $pDestination répertoire de destination (par défaut ./tmp)
-	*/
+	/**
+	 * Acquisition du contenu d'un champ fichier et stockage dans une destination du serveur
+	 * @version 1.3.0 SYNERGAIA_PATH_TO_APPLI
+	 * @param string $pChamp nom du champ dans lequel se trouve le fichier
+	 * @param string $pFichier nom du fichier à récupérer
+	 * @param string $pDestination répertoire de destination (par défaut ./tmp)
+	 * @return boolean|SG_Erreur
+	 */
 	public function DetacherFichier($pChamp = null, $pFichier = '', $pDestination = 'tmp') {
 		$ret = false;
 		if (substr($pDestination, 0, 1) === '/') {
@@ -277,14 +303,13 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 traitement des composites (.) ; 2.3 msg 0195
-	* Lecture de la valeur d'un champ du document
-	*
-	* @param string $pChamp code du champ
-	* @param indéfini $pValeurDefaut valeur si le champ n'existe pas
-	*
-	* @return indéfini valeur du champ
-	*/
+	/**
+	 * Lecture de la valeur d'un champ du document
+	 * @version 2.3 msg 0195
+	 * @param string $pChamp code du champ
+	 * @param indéfini $pValeurDefaut valeur si le champ n'existe pas
+	 * @return indéfini valeur du champ
+	 */
 	public function getValeur($pChamp = null, $pValeurDefaut = null) {
 		$ret = $pValeurDefaut;
 		$champs = explode('.', $pChamp);
@@ -316,11 +341,12 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.1 creer si null et force
-	* Lecture du code du document
-	* @param (boolean) $pForce : (true) créer l'ID si vide, (false defaut) rendre même si vide
-	* @return string code du document
-	*/
+	/**
+	 * Lecture du code du document
+	 * @version 2.1 creer si null et force
+	 * @param boolean $pForce : (true) créer l'ID si vide, (false defaut) rendre même si vide
+	 * @return string code du document
+	 */
 	public function getCodeDocument($pForce = false) {
 		if ($pForce and ($this -> codeDocument === null or $this -> codeDocument === '')) {
 			$this -> codeDocument = $sgbd -> getUUID();
@@ -328,11 +354,12 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $this -> codeDocument;
 	}
 
-	/** 1.0.5 ; 1.3.0 chang $infos ; 1.3.1 suppression champs vides ; 1.3.4 retour doc ou SG_Erreur
-	* Enregistrement du document
-	*
-	* @return SG_VraiFaux résultat de l'enregistrement
-	*/
+	/**
+	 * Enregistrement du document
+	 * @version 1.3.4 retour doc ou SG_Erreur
+	 * @version 2.6 test $resultat SG_Erreur
+	 * @return SG_DocumentCouchDB|SG_Erreur résultat de l'enregistrement
+	 */
 	public function Enregistrer() {
 		$ret = $this;
 		$couchdb = $_SESSION['@SynerGaia'] -> sgbd;
@@ -362,7 +389,9 @@ class SG_DocumentCouchDB extends SG_Objet {
 		}
 		if ($ok === true) {
 			$resultat = $couchdb -> requete($url, "PUT", $contenu);
-			if (strlen($resultat) !== 0) {
+			if ($resultat instanceof SG_Erreur) {
+				$ret = $resultat;
+			} elseif (strlen($resultat) !== 0) {
 				$infos = json_decode($resultat);
 				$this -> revision = $infos -> rev;  // avant 1.3.0 _rev
 				$this -> setValeur('_rev', $this -> revision);
@@ -374,22 +403,26 @@ class SG_DocumentCouchDB extends SG_Objet {
 				if ($infos -> ok !== true) {
 					$ret = new SG_Erreur('0100',$tmpCodeDocument);
 				}
+			} else {
+				$ret = new SG_Erreur('0219');
 			}
 		}
 		return $ret;
 	}
 
 	/**
-	* Suppression du document
-	*
-	* @return SG_VraiFaux résultat de la suppression
-	*/
+	 * Suppression du document
+	 * @version 2.6 test SG_Erreur
+	 * @return SG_VraiFaux résultat de la suppression
+	 */
 	public function Supprimer() {
 		$retBool = false;
 		$couchdb = $_SESSION['@SynerGaia'] -> sgbd;
 		$url = $couchdb -> url . $this -> codeBaseComplet . '/' . $this -> codeDocument . '?rev=' . $this -> revision;
 		$resultat = $couchdb -> requete($url, "DELETE");
-		if (strlen($resultat) !== 0) {
+		if($resultat instanceof SG_Erreur) {
+			$ret = $resultat;
+		} elseif (strlen($resultat) !== 0) {
 			$infos = json_decode($resultat);
 			$tmpOk = $infos -> ok;
 			if (is_null($tmpOk)) {
@@ -402,13 +435,19 @@ class SG_DocumentCouchDB extends SG_Objet {
 				$tmpCodeDocument = '';
 			}
 			$retBool = $retBool and ($tmpCodeDocument === $this -> codeDocument);
+			$ret = new SG_VraiFaux($retBool);
 		}
-
-		$ret = new SG_VraiFaux($retBool);
 		return $ret;
 	}
 
-	// 1.1 ajout _attachments ; 1.3.3 getTexte() ; 1.3.4 urlencode
+	/** 
+	 * récupère un fichier dans le document
+	 * @since 1.1 ajout
+	 * @version 1.3.4 urlencode
+	 * @param string $pChamp nom de champ
+	 * @param string $pFichier nom de fichier
+	 * @return string|SG_Erreur conteniu du fichier pour injection dans un code HTML ou erreur
+	 */
 	function getFichier ($pChamp = null, $pFichier = null) {
 		$ret = false;
 		$nom = SG_Texte::getTexte($pChamp);
@@ -442,8 +481,13 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.5 ; 2.1 return, static
+	/**
 	* Journaliser la dernière erreur json rencontrée
+	* @since 1.0.5
+	* @version 2.1 return, static
+	* @param string $ou
+	* @param SG_Document $pDoc
+	* @return string texte de l'erreur json
 	*/
 	static function jsonLastError($ou = '', $pDoc = null) {
 		$texte = '@DocumentCouchDB.' . $ou . ' ERREUR (';
@@ -484,14 +528,19 @@ class SG_DocumentCouchDB extends SG_Objet {
 		if ($pDoc !== null) {
 			$texte .= ' doc = ' . $pDoc -> codeBaseComplet . '/' . $pDoc -> codeDocument;
 		}
-		journaliser($texte);
+journaliser($texte);
+journaliser($pDoc);
 		return $texte;
 	}
 
-	/** 1.0.7 
-	* remplacerID (nouvel id, champ ancien id)
-	*/
-	function remplacerID($pNouvelID = '', $pChampSave = '') {
+	/**
+	 * remplacerID (nouvel id, champ ancien id)
+	 * @since 1.0.7 
+	 * @todo voir si utilisée ??
+	 * @param string $pNouvelID
+	 * @return boolean
+	 */
+	function remplacerID($pNouvelID = '') {
 		$ret = false;
 		$newDoc = new SG_DocumentCouchDB($this -> codeBase, $pNouvelID);
 		if ($newDoc -> Existe() -> estVrai()) {
@@ -512,8 +561,12 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.1 ajout
-	*/
+	/**
+	 * retourne l'url du document dans couchdb
+	 * @since 1.1 ajout
+	 * @param boolean $creerBase vrai s'il faut créer la base si elle n'existe pas (par défaut false)
+	 * @return string
+	 */
 	function urlCouchDB($creerBase = false) {
 		$couchdb = $_SESSION['@SynerGaia'] -> sgbd;
 		if (!$couchdb -> BaseExiste($this -> codeBaseComplet)) {
@@ -524,11 +577,15 @@ class SG_DocumentCouchDB extends SG_Objet {
 		return $couchdb -> url . $this -> codeBaseComplet . '/' . $this -> codeDocument;
 	}
 
-	/** 1.3.4 ajout
-	**/
+	/**
+	 * retourne UUID du document
+	 * @since 1.3.4 ajout
+	 * @return string
+	 **/
 	function getUUID() {
 		return $this -> codeBase . '/' . $this -> codeDocument;
 	}
+
 	// 2.3 complément de classe créée par compilation
 	use SG_DocumentCouchDB_trait;
 }
