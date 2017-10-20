@@ -1,39 +1,50 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.2 (see AUTHORS file)
-* Classe SynerGaia de gestion d'un fichier joint
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Fichier */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Fichier_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Fichier_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Fichier_trait{};
 }
+
+/**
+ * Classe SynerGaia de gestion d'un fichier joint
+ * @version 2.2
+ */
 class SG_Fichier extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Fichier' */
 	const TYPESG = '@Fichier';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// Nom du fichier
+	/** string Nom du fichier */
 	public $reference = '';
 	
-	// Contenu (['content-type'], ['data']) éventuel
+	/** array Contenu (['content-type'], ['data']) éventuel */
 	public $contenu;
 	
-	// Position courante de lecture
+	/** integer Position courante de lecture */
 	public $position = 0;
 	
-	// Séparateur du CSV
+	/** string Séparateur du CSV */
 	public $separateur = ',';
 	
-	// Format du fichier
+	/** string Format du fichier */
 	public $format = '';
 	
-	// 2.2 multiple ?
+	/** boolean le fichier est-il multiple ?
+	 * @since 2.2
+	 */
 	public $multiple = false;
 
-	/** 1.3.4 contenu ; 2.0 libellé 0110
+	/**
 	 * Construction de l'objet
-	 *
+	 * 
+	 * @version 1.3.4 contenu
+	 * @version 2.0 libellé 0110
 	 * @param indéfini $pQuelqueChose valeur à partir de laquelle créer le fichier
 	 */
 	public function __construct($pQuelqueChose = null) {
@@ -75,17 +86,18 @@ class SG_Fichier extends SG_Objet {
 	}
 
 	/**
-	* Conversion en chaine de caractères
-	* @return string texte
-	*/
+	 * Conversion en chaine de caractères
+	 * @return string texte
+	 */
 	function toString() {
 		return $this -> reference;
 	}
 
-	/** 1.3.1
-	* Conversion en code HTML
-	* @return string code HTML
-	*/
+	/**
+	 * Conversion en code HTML
+	 * since 1.3.1
+	 * @return string code HTML
+	 */
 	function toHTML() {
 		if ($this -> index !== '') {
 			$refChamp = substr($this -> index, strrpos($this -> index, '/') + 1);
@@ -96,19 +108,19 @@ class SG_Fichier extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.0 dbclick ; 2.1 fichiers
-	* Affichage du fichier
-	* @param $pRefChamp (string) référence complète du champ pour le cas d'un fichier à télécharger. si '' : vient de _attachments
-	* @return string code HTML
-	*/
+	/**
+	 * Affichage du fichier
+	 * 
+	 * @version 2.0 dbclick
+	 * @version 2.1 fichiers
+	 * @param $pRefChamp (string) référence complète du champ pour le cas d'un fichier à télécharger. si '' : vient de _attachments
+	 * @return string code HTML
+	 */
 	function afficherChamp($pRefChamp = '') {
 		// Création d'un id aléatoire pour ce fichier
 		$tmpNomFic = $this -> toString();
 		$tmpID = '' . rand(1000,1000000);
-		// stockage dans une variable de session avec les données d'accès au fchier
-		//$_SESSION['fichiers'][$tmpID] = array($pRefChamp , $tmpNomFic);
-		$operation = SG_Navigation::OperationEnCours();
-		//$formule = '.@Principal.@TelechargerFichier("' . $pRefChamp . '","' . $tmpNomFic .'")';
+		$operation = SG_Pilote::OperationEnCours();
 		$formule = array('fic', $pRefChamp, $tmpNomFic); // 2.1 
 
 		$code = sha1(implode($formule));
@@ -130,15 +142,25 @@ class SG_Fichier extends SG_Objet {
 		$ret .= '>' . $this -> toString() . '</a></span>';
 		return $ret;
 	}
-	/** 1.3.4 présentation, suppression ; 2.2 multiple
-	* Modification d'un champ upload de fichier(s)
-	*
-	* @param $pRefChamp référence du champ HTML
-	* @return string code HTML
-	*/
-	function modifierChamp($pRefChamp = '') {
+
+	/**
+	 * Modification d'un champ upload de fichier(s)
+	 * 
+	 * @version 1.3.4 présentation, suppression
+	 * @version 2.2 multiple
+	 * @version 2.4 parm id
+	 * @param string $pRefChamp référence du champ HTML
+	 * @param string $pID id de la division affichée
+	 * @return string code HTML
+	 * @uses SynerGaia.effacerfichier(), SynerGaia.inputFileOnChange()
+	 */
+	function modifierChamp($pRefChamp = '', $pID = '') {
 		$ret = '';
-		$id = sha1(microtime(true) . mt_rand(0, 900000));
+		if ($pID === '') {
+			$id = sha1(microtime(true) . mt_rand(0, 900000));
+		} else {
+			$id = $pID;
+		}
 		if ($this -> reference === '') {
 			$display = "none";
 		} else {
@@ -159,18 +181,15 @@ class SG_Fichier extends SG_Objet {
 		$ret.= '<span class="instructions">, annuler <a type="button" name="clear" title="Annuler le remplacement ?" onclick="SynerGaia.effacerfichier(event,\''.$id.'\', false)">';
 		$ret.= '<img src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/cancel.png"></img></a>)</span>';
 		$ret.= '<span class="fileupload-reponse" id="' . $id . '_rep"></span>';
-		$ret.= '<input id="' . $id . '_btn" type="button" onclick="SynerGaia.initUpload(\'2\',\'' . $id . '\')" value="Upload"></input>';
-	/*	$ret.= '<script>var target = document.getElementByID("' . $id.'");
-		target.addEventListener("dragover", function(event) {event.preventDefault();},false);
-		target.addEventListener("drop",function(event) {
-			event.preventDefault();
-			target.files=event.dataTransfer.files;
-			},false);</script>'; 
-	*/
 		$_SESSION['script']['dropzone'] = 'dropzone_init();' . PHP_EOL;
 		return $ret;
 	}
-	//1.2 $ret vide si erreur
+
+	/**
+	 * Récupère le code du document contenbant le fichier - si possible...
+	 * @version 1.2 $ret vide si erreur
+	 * @return string
+	 */
 	function getRefDocument() {
 		$ret = '';
 		if ($this -> contenant !== null) {
@@ -180,22 +199,31 @@ class SG_Fichier extends SG_Objet {
 		}
 		return $ret;
 	}
-	//1.2 ajout
-	// tente de transformer le fichier en objet SynerGaïa
+
+	/**
+	 * Tente de transformer le fichier en objet SynerGaïa
+	 * @since 1.2 ajout
+	 * @return SG_Collection
+	 */
 	function Charger() {
 		$ret = new SG_Collection();
 		if($this->format === 'csv') {
-			if(isset($this->proprietes[$this->reference]['data'])) {
-				$data = base64_decode($this->proprietes[$this->reference]['data']);
+			if(isset($this->proprietes[$this -> reference]['data'])) {
+				$data = base64_decode($this->proprietes[$this -> reference]['data']);
 				$tableau = $this->parse_csv($data);
 				$ret -> elements = $tableau;
 			}
 		}
 		return $ret;
 	}
-	// voir Ryan Rubley sur http://fr2.php.net/manual/fr/function.str-getcsv.php
-	// str_getcsv ne traite pas correctement tous les cas rencontrés notamment les retours de ligne entre doublequote
-	//parse a CSV file into a two-dimensional array
+
+	/**
+	 * source initiale Ryan Rubley sur http://fr2.php.net/manual/fr/function.str-getcsv.php
+	 * str_getcsv ne traite pas correctement tous les cas rencontrés notamment les retours de ligne entre doublequote
+	 * parse a CSV file into a two-dimensional array
+	 * @param string $str
+	 * @return array
+	 */
 	function parse_csv($str) {
 		$str = preg_replace_callback('/([^"]*)("((""|[^"])*)"|$)/s',
 			function ($matches) {
@@ -224,9 +252,13 @@ class SG_Fichier extends SG_Objet {
 			$tableau);
 		return $ret;
 	}
-	/** (1.3.1) Afficher ; 1.3.4 -> contenu
-	* Afficher pour download
-	**/
+
+	/**
+	 * Afficher pour download via echo direct
+	 * @since Afficher
+	 * @version 1.3.4 -> contenu
+	 * @return SG_Fichier $this
+	 */
 	function Afficher() {
 		if(is_null($this -> contenu)) {
 			$this -> contenu = file_get_contents($this -> reference);
@@ -241,9 +273,13 @@ class SG_Fichier extends SG_Objet {
 		echo $this -> contenu;
 		return $this;
 	}
-	/** 2.2 ajout
-	* Donne ou met à jour le titre du fichier
-	**/
+
+	/**
+	 * Donne ou met à jour le titre du fichier
+	 * @since 2.2 ajout
+	 * @param string|SG_Texte|SG_Formule $pTitre titre du fichier
+	 * @return SG_Texte|SG_Fichier titre ou le fichier selon le paramètre
+	 */
 	function Titre ($pTitre = null) {
 		if ($pTitre === null) {
 			$ret = new SG_Texte($this -> reference);
@@ -253,6 +289,7 @@ class SG_Fichier extends SG_Objet {
 		}
 		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Fichier_trait;
 }
