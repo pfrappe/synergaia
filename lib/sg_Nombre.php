@@ -1,30 +1,38 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Nombre : Classe de gestion d'un nombre
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia contient la classe SG_Nombre de traitement des nombres */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Nombre_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Nombre_trait.php';
 } else {
+	/** trait vide par défaut */
 	trait SG_Nombre_trait{};
 }
+/**
+ * SG_Nombre : Classe SynerGaia de gestion d'un nombre
+ * @since 0.0
+ * @version 2.6
+ */
 class SG_Nombre extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Nombre' */
 	const TYPESG = '@Nombre';
+	/** string Type SynerGaia  */
 	public $typeSG = self::TYPESG;
 
-	// Valeur interne du nombre
-	public $valeur = null;
+	/** integer|float Valeur interne du nombre (null par défaut) */
+	public $valeur;
 	
-	// Unité de mesure (pas géré encore)
+	/** string Unité de mesure (pas encore géré) */
 	public $unite = '';
 
-	/** 1.0.7
-	* Construction de l'objet
-	*
-	* @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_Nombre est créé
-	* @param indéfini $pUnite code unité ou ou objet @Unite de la quantité
-	*/
+	/**
+	 * Construction de l'objet
+	 * @since 1.0.7
+	 * @version 2.4 si rien : 0
+	 * @param any $pQuelqueChose valeur à partir de laquelle le SG_Nombre est créé
+	 * @param any $pUnite code unité ou ou objet @Unite de la quantité
+	 */
 	function __construct($pQuelqueChose = null, $pUnite = null) {
 		$tmpTypeSG = getTypeSG($pQuelqueChose);
 
@@ -42,7 +50,7 @@ class SG_Nombre extends SG_Objet {
 					$floatString = str_replace(",", ".", $floatString);
 					$this -> valeur = floatval($floatString);
 				} else {
-					$this -> valeur = null;
+					$this -> valeur = 0;
 				}
 				break;
 			case '@Formule' :
@@ -54,7 +62,7 @@ class SG_Nombre extends SG_Objet {
 				$this -> unite = $pQuelqueChose -> unite;
 				break;
 			case 'NULL' :
-				$this -> valeur = null;
+				$this -> valeur = 0;
 				break;
 			default :
 				// Si objet SynerGaia
@@ -67,11 +75,11 @@ class SG_Nombre extends SG_Objet {
 		}
 	}
 
-	/** 1.0.7
-	* Conversion en chaine de caractères
-	*
-	* @return string texte
-	*/
+	/**
+	 * Conversion en chaine de caractères
+	 * @since 1.0.7
+	 * @return string texte
+	 */
 	function toString() {
 		$ret = (string)$this -> valeur;
 		if($this -> unite !== '' and $this -> unite !== null) {
@@ -80,11 +88,12 @@ class SG_Nombre extends SG_Objet {
 		return $ret;
 	}
 
-	/** 1.0.7 ; 2.1.1 SG_HTML
-	* Conversion en code HTML
-	*
-	* @return string code HTML
-	*/
+	/**
+	 * Conversion en code HTML
+	 * @since 1.0.7
+	 * @version 2.1.1 SG_HTML
+	 * @return string code HTML
+	 */
 	function toHTML() {
 		return new SG_HTML($this -> toString());
 	}
@@ -104,7 +113,7 @@ class SG_Nombre extends SG_Objet {
 	 * @return integer valeur numérique
 	 */
 	function toInteger() {
-		return (integer)$this -> toFloat();
+		return (integer)$this -> valeur;
 	}
 
 	/**
@@ -113,18 +122,17 @@ class SG_Nombre extends SG_Objet {
 	 * @return string code HTML
 	 */
 	function afficherChamp() {
-		return '<span class="champ_Nombre">' . $this -> toHTML() -> texte . '</span>';
+		return '<span class="sg-nombre">' . $this -> toHTML() -> texte . '</span>';
 	}
 
 	/**
-	 * Modification
+	 * Modification en HTML
 	 *
-	 * @param $pRefChamp référence du champ HTML
-	 *
+	 * @param string $pRefChamp référence du champ HTML
 	 * @return string code HTML
 	 */
 	function modifierChamp($pRefChamp = '') {
-		return '<input class="champ_Nombre" type="text" name="' . $pRefChamp . '" value="' . $this -> toString() . '"/>';
+		return '<input class="sg-nombre" type="text" name="' . $pRefChamp . '" value="' . $this -> toString() . '"/>';
 	}
 
 	/**
@@ -137,20 +145,24 @@ class SG_Nombre extends SG_Objet {
 		$autreNombre = new SG_Nombre($pQuelqueChose);
 		return new SG_VraiFaux($this -> valeur === $autreNombre -> valeur);
 	}
-	/** 1.0.7
+
+	/**
 	* EstVide si aucune valeur attribuée
+	* @since 1.0.7
+	* @return SG_VraiFaux
 	*/
 	public function EstVide() {
 		$ret = new SG_VraiFaux($this -> valeur === null);
 		return $ret;
 	}
+
 	/**
 	 * Comparaison à un autre nombre
-	 *
+	 * @version 2.4 Inferieur => InferieurA
 	 * @param indéfini $pQuelqueChose objet avec lequel comparer
 	 * @return SG_VraiFaux vrai si les deux nombres sont égaux
 	 */
-	function Inferieur($pQuelqueChose = 0) {
+	function InferieurA($pQuelqueChose = 0) {
 		$autreNombre = new SG_Nombre($pQuelqueChose);
 		$comparaison = null;
 		if ($this -> valeur !== null) {
@@ -165,11 +177,11 @@ class SG_Nombre extends SG_Objet {
 
 	/**
 	 * Comparaison à un autre nombre
-	 *
+	 * @version 2.4 Superieur => SuperieurA
 	 * @param indéfini $pQuelqueChose objet avec lequel comparer
 	 * @return SG_VraiFaux vrai si les deux nombres sont égaux
 	 */
-	function Superieur($pQuelqueChose = 0) {
+	function SuperieurA($pQuelqueChose = 0) {
 		$autreNombre = new SG_Nombre($pQuelqueChose);
 		$comparaison = null;
 		if ($this -> valeur !== null) {
@@ -182,30 +194,43 @@ class SG_Nombre extends SG_Objet {
 		return new SG_VraiFaux($comparaison);
 	}
 
-	/** 1.0.7 ajout ; 1.3 : incrémente sur lui-même
+	/**
 	 * Incrémentation du nombre
-	 *
-	 * @param indéfini $pQuelqueChose valeur de l'incrément (par défaut 1)
-	 * @return le @Nombre modifié
+	 * 
+	 * @since 1.0.7
+	 * @version 1.3 : incrémente sur lui-même
+	 * @version 2.6 test integer ; getNombre ; return $this
+	 * @param integer|SG_Nombre|SG_Formule $pNbre valeur de l'incrément (par défaut 1)
+	 * @return SG_Nombre le SG_Nombre modifié
 	 */
-	function Incrementer($pQuelqueChose = 1) {
-		$autreNombre = new SG_Nombre($pQuelqueChose);
-		$this -> valeur += $autreNombre -> valeur;
-		return '';
+	function Incrementer($pNbre = 1) {
+		if (is_integer($pNbre)) {
+			$this -> valeur += $pNbre;
+		} else {
+			$this -> valeur += SG_Nombre::getNombre($pNbre);
+		}
+		return $this;
 	}
 
-	/** 1.0.7
+	/**
 	 * Ajout d'un autre nombre
+	 * @since 1.0.7
+	 * @version 2.4 liste param
 	 * @param indéfini $pQuelqueChose valeur du nombre à ajouter
 	 * @return SG_Nombre résultat de l'addition
 	 */
 	function Ajouter($pQuelqueChose = 0) {
-		$autreNombre = new SG_Nombre($pQuelqueChose);
-		return new SG_Nombre($this -> valeur + $autreNombre -> valeur, $this -> unite);
+		$args = func_get_args();
+		$val = $this -> valeur;
+		foreach ($args as $arg) {
+			$val+= SG_Nombre::getNombre($arg);
+		}
+		return new SG_Nombre($val, $this -> unite);
 	}
 
-	/** 1.0.7
+	/**
 	 * Soustraire un autre nombre
+	 * @since 1.0.7
 	 * @param indéfini $pQuelqueChose valeur du nombre à soustraire
 	 * @return SG_Nombre résultat de la soustraction
 	 */
@@ -214,40 +239,60 @@ class SG_Nombre extends SG_Objet {
 		return new SG_Nombre($this -> valeur - $autreNombre -> valeur, $this -> unite);
 	}
 
-	/** 1.0.7
-	* Multiplier par un autre nombre
-	* @param indéfini $pQuelqueChose valeur du nombre à multiplier
-	* @return SG_Nombre résultat de la multiplication
-	*/
+	/**
+	 * Multiplier par un autre nombre
+	 * @since 1.0.7
+	 * @param SG_Nombre|SG_Formule $pQuelqueChose valeur du nombre à multiplier
+	 * @return SG_Nombre résultat de la multiplication
+	 */
 	function MultiplierPar($pQuelqueChose = 1) {
 		$autreNombre = new SG_Nombre($pQuelqueChose);
 		return new SG_Nombre($this -> valeur * $autreNombre -> valeur, $this -> unite);
 	}
 
-	/** 1.0.7
-	* Diviser par un autre nombre
-	* @param indéfini $pQuelqueChose valeur du nombre diviseur
-	* @return SG_Nombre résultat de la division
-	*/
+	/**
+	 * Diviser par un autre nombre.
+	 * Si le diviseur est nul, on renvoie une erreur '0304'
+	 * 
+	 * @since 1.0.7
+	 * @version 2.6 test diviseur erreur 0304
+	 * @param SG_Nombre|SG_Formule $pQuelqueChose valeur du nombre diviseur
+	 * @return SG_Nombre|SG_Erreur résultat de la division
+	 */
 	function DiviserPar($pQuelqueChose = 1) {
-		$autreNombre = new SG_Nombre($pQuelqueChose);
-		return new SG_Nombre($this -> valeur / $autreNombre -> valeur, $this -> unite);
+		if ($pQuelqueChose instanceof SG_Erreur) {
+			$ret = $pQuelqueChose;
+		} else {
+			$diviseur = new SG_Nombre($pQuelqueChose);
+			if ($diviseur instanceof SG_Erreur) {
+				$ret = $diviseur;
+			} elseif ($diviseur -> valeur === 0) {
+				$ret = new SG_Erreur('0304');
+			} else {
+				$ret = new SG_Nombre($this -> valeur / $diviseur -> valeur, $this -> unite);
+			}
+		}
+		return $ret;
 	}
 
-	/** 1.0.7
-	* Arrondir un nombre à un nombre de décimales
-	* @param $pQuelqueChose nombre de décimales
-	* @return SG_Nombre résultat
-	*/
+	/**
+	 * Arrondir un nombre à un nombre de décimales
+	 * @since 1.0.7
+	 * @param SG_Nombre|SG_Formule $pQuelqueChose nombre de décimales
+	 * @return SG_Nombre résultat
+	 */
 	function Arrondir($pQuelqueChose = 0) {
 		$nbDecimales = new SG_Nombre($pQuelqueChose);
 		return new SG_Nombre(round($this -> valeur, $nbDecimales -> valeur), $this -> unite);
 	}
-	/** 1.0.7 ; 2.3 arrondi
-	* Donne le pourcentage d'un nombre par rapport à un autre
-	* @param $pQuelqueChose nombre de référence
-	* @return SG_Nombre résultat
-	*/
+	/**
+	 * Donne le pourcentage d'un nombre par rapport à un autre
+	 * @since 1.0.7
+	 * @version 2.3 arrondi
+	 * @param SG_Nombre|SG_Formule $pQuelqueChose nombre de référence
+	 * @param SG_Nombre|SG_Formule $pArrondi nombre de décimales acceptées (défaut 1)
+	 * @return SG_Nombre résultat
+	 */
 	function PourcentageDe($pQuelqueChose = 0, $pArrondi = 1) {
 		$nb = new SG_Nombre($pQuelqueChose);
 		$ret = new SG_Nombre(0, '%');
@@ -266,23 +311,29 @@ class SG_Nombre extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.0 ajout
-	* @Vrai si le nombre est dans l'intervalle (bornes incluses)
-	* @param (nombre) borne inférieure
-	* @param (nombre) borne supérieure
+
+	/**
+	* Retourne @Vrai si le nombre est dans l'intervalle (bornes incluses)
+	* @since 1.3.0 sous le nom EstDans
+	* @version 2.4 EstDans => Entre
+	* @param SG_Nombre|SG_Formule $pInferieur borne inférieure (défaut 0)
+	* @param SG_Nombre|SG_Formule $pSuperieur borne supérieure (défaut 0)
 	* @return @VraiFaux
 	*/
-	public function EstDans($pInferieur = 0, $pSuperieur = 0) {
+	public function Entre($pInferieur = 0, $pSuperieur = 0) {
 		$inf = new SG_Nombre($pInferieur);
 		$sup = new SG_Nombre($pSuperieur);
 		$n = $this -> toFloat();
 		$ret = new SG_VraiFaux($inf -> toFloat() <= $n and $sup -> toFloat() >= $n);
 		return $ret;
 	}
-	/** 2.2 ajout
-	* @param valeur à traduire
-	* @return nombre
-	**/
+
+	/**
+	 * retourne en numérique la valeur passée en paramètre
+	 * @since  2.2 ajout
+	 * @param string|integer|float|SG_Nombre|SG_Formule $pValeur valeur à traduire
+	 * @return nombre
+	 **/
 	static function getNombre($pValeur) {
 		if (is_numeric($pValeur)) {
 			$ret = $pValeur;
@@ -300,17 +351,38 @@ class SG_Nombre extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.3 ajout
-	* Permet la concaténation de texte directement
-	* @param texte à concatener
-	* @return SG_Texte
-	**/
+
+	/**
+	 * Permet la concaténation de texte directement derrière un nombre et retourne un SG_Texte
+	 * @since 2.3 ajout
+	 * @param SG_Objet texte à concatener
+	 * @return SG_Texte nombre + texte
+	 **/
 	function Concatener() {
 		$args = func_get_args();
 		$ret = new SG_Texte($this -> toString());
 		$ret = call_user_func_array(array($ret,'Concatener'), $args);
 		return $ret;
 	}
+
+	/**
+	 * Crée une collection qui énumère les entiers depuis le nombre jusqu'à la fin.
+	 * Si les nombres ne sont pas des entiers, on prend la valeur basse.
+	 * 
+	 * @since 2.4 ajout
+	 * @param integer|SG_Nombre|SG_Formule $pFin le nombre de fin.
+	 * @return la SG_Collection
+	 **/
+	function Jusqua ($pFin = 0) {
+		$debut = $this -> toInteger();
+		$fin = (integer) SG_Nombre::getNombre($pFin);
+		$ret = new SG_Collection();
+		for ($i = $debut; $i <= $fin; $i++) {
+			$ret -> elements[] = new SG_Nombre($i);
+		}
+		return $ret;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Nombre_trait;
 }
