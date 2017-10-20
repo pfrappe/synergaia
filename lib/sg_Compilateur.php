@@ -1,36 +1,71 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* Classe SynerGaia de compilation de requêtes et de formule
-* max //069(pour l'indication des lignes)
-*/
-class SG_Compilateur extends SG_Objet{
-	// Type SynerGaia
-	const TYPESG = '@Compilateur';
-	public $typeSG = self::TYPESG;
-	
-	public $phrase = '';  // la phrase à traduire ou en cours de traduction
-	public $etapes = array(); // fonctions étapes de la phrase
-	public $formats;
-	public $fonctions = array();
-	public $php = '';
-	public $erreur = ''; // message d'erreur ou SG_Erreur
-	public $contexte = ''; // 'o' formule d'opération, 'm' formule de méthode, 'p' valeurs possibles, 'f' formule directe simple, 'd' valeurs par défaut
-	
-	private $niveau = 0;//*** pour contrôler les boucles
-	private $limiteBoucle = 3000; // nombre maximum de directives traitées avant arrêt
-	private $cursor = 0;
-	private $position = 0; // indice de l'erreur de syntaxe
-	private $positionerreur = 0; // indice aux environs de l'erreur
-	private $fin; // longueur de la chaine à traduire
-	private $noformule = 0;
-	private $noetape = 0;
-	private $methode = ''; // méthode utilisée pour le dernier résultat. Elle servira pour le calcul des titres
+<?php
+/** fichier contenant la gestion du compilateur traduisant du langage SynerGaïa en PHP */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
 
-	/** 1.0.6 ajout
-	* Construction de l'objet
-	*
-	* @param indéfini $pQuelqueChose valeur à partir de laquelle créer la date
-	**/
+// n° libres pour l'indication des lignes : 059 062 067 068 070 071 082+
+/**
+ * Classe SynerGaia de compilation de requêtes et de formule
+ * @since 1.0.6
+ * @version 2.6
+ */
+class SG_Compilateur extends SG_Objet{
+	/** string Type SynerGaia '@Compilateur' */
+	const TYPESG = '@Compilateur';
+	/** string préfixe des fonctions d'étapes - peut être nécessaire si ambiguité dans les noms ? */
+	const PREFIXE_FONCTION = '';
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+	/** string la phrase à traduire ou en cours de traduction */
+	public $phrase = '';
+	/** array appels des étapes de la phrase */
+	public $appels = array();
+	/** array fonctions étapes de la phrase */
+	public $etapes = array();
+	/** string formats possibles après une objet */ 
+	public $formats;
+	/** array liste des fonctions php créées */
+	public $fonctions = array();
+	/** string texte php généré */
+	public $php = '';
+	/** string|SG_Erreur  message d'erreur ou SG_Erreur */
+	public $erreur = '';
+	/** array liste des étapes suivantes
+	 * @since 2.6 */
+	public $aliascodesetapes = array();
+	/** array texte des clauses "case" du switch principal
+	 * @since 2.6 */
+	public $cases = array();
+	/**
+	 * string Contexte de la demande de compilation
+	 * 'o' formule d'opération, 'm' formule de méthode, 'p' valeurs possibles, 'f' formule directe simple, 'd' valeurs par défaut
+	 */
+	public $contexte = '';
+	/** integer Niveau de profondeur d'appel pour contrôler les boucles */
+	private $niveau = 0;
+	/** integer nombre maximum de directives traitées avant arrêt (3000)*/
+	private $limiteBoucle = 3000;
+	/** integer cursor dans la phrase à compiler */
+	private $cursor = 0;
+	/** integer indice de l'erreur de syntaxe */
+	private $position = 0;
+	/** integer indice aux environs de l'erreur */
+	private $positionerreur = 0;
+	/** integer longueur de la chaine à traduire */
+	private $fin;
+	/** integer numéro de la formule en cours */
+	private $noformule = 0;
+	/** integer numéro de la branche en cours */
+	private $nobranche = 0;
+	/** integer numéro de l'étape en cours */
+	private $noetape = 0;
+	/** string méthode utilisée pour le dernier résultat. Elle servira pour le calcul des titres */
+	private $methode = '';
+
+	/**
+	 * Construction de l'objet
+	 * @since 1.0.6 ajout
+	 * @param string $pPhrase texte de la phrase à traduire
+	 */
 	public function __construct($pPhrase = '') {
 		$this -> phrase = SG_Texte::getTexte($pPhrase);
 		$this -> fin = strlen($this -> phrase);
@@ -64,20 +99,34 @@ class SG_Compilateur extends SG_Objet{
 		$this -> noformule = 0;
 		$this -> initialiser();
 	}
-	
+
+	/**
+	 * Initialise diverses variables de l'obejt SG_Compilateur
+	 * @since 1.0.6 ajout
+	 */	
 	function initialiser() {
 		$this -> noetape = 1;
 		$this -> fonctions = array();
 		$this -> niveau = 0;
 	}
 
+	/**
+	 * Retourne la phrase à compiler
+	 * @since 1.0.6 ajout
+	 * @return string texte de la pĥrase
+	 */	
 	function toString() {
 		return $this -> phrase;
 	}
-	
+
+	/**
+	 * Afficher dans un navigateur
+	 * @since 1.0.6 ajout
+	 * @return SG_HTML texte de la pĥrase et du php
+	 */	
 	function Afficher() {
 		$ret = '<div id="compilateur" data-role="panel" ><ul data-role="listview"><li data-role="list_divider">Compilateur</li><li>Langage : PHP</li></ul></div>';
-		$ret .= '<richtext>';
+		$ret .= '<richtext class="sg-richtext">';
 		$ret .= $this -> toHTML();
 		if ($this -> erreur !== '') {
 			$ret.= '<pre>'.$this -> phrase . '
@@ -88,22 +137,28 @@ class SG_Compilateur extends SG_Objet{
 		return new SG_HTML($ret);
 	}
 	
-	/** 1.0.6
-	* toHTML : Affiche les blocs comme liste UL imbriquées
-	**/	
+	/**
+	 * toHTML : Affiche les blocs comme liste UL imbriquées
+	 * @since 1.0.6
+	 * @return string html du php obtenu
+	 */	
 	function toHTML() {
 		$v = str_replace(PHP_EOL, '<br>', $this -> php);
 		$ret = '<pre>' . $v . '</pre>';
 		return $ret;
 	}
 
-	/** 1.0.6 @Traduire
-	* Traduit la phrase en blocs exécutables dans le langage du compilateur
-	* @param (string ou @Texte) : Phrase = Branche | '(' Phrase ')'
-	* @param (string) $pOptions : '' : modèle d'opération, 'd' fonctions d'un document 
-	**/
+	/**
+	 * Traduit la phrase en blocs exécutables dans le langage du compilateur
+	 * @since 1.0.6 @Traduire
+	 * @version 2.6 sup $btn
+	 * @param string|SG_Texte|SG_Formule $pPhrase = Branche | '(' Phrase ')'
+	 * @param string|SG_Texte|SG_Formule $pOptions : '' : modèle d'opération, 'd' fonctions d'un document 
+	 * @return SG_Compilateur|SG_Erreur
+	 */
 	public function Traduire($pPhrase = '', $pOptions = '') {
 		$ret = $this;
+		$this -> erreur = '';
 		$phrase = SG_Texte::getTexte($pPhrase);
 		if($phrase !== '') {
 			$this -> phrase = $phrase;
@@ -115,22 +170,24 @@ class SG_Compilateur extends SG_Objet{
 		// démarrage branche principale ($this = opération en cours)
 		$p = PHP_EOL . '		';
 		$php = $p . '$resultat = array();//001'; // sera pour l'affichage
-		$php.= $p . '$this -> etape = $etape;';
 		if($pOptions === '') {
 			$this -> initialiser();
+			$php.= $p . 'if ($this -> prochainPrincipal !== null) {//002';
+			$php.= $p . '	$this -> setPrincipal($this -> prochainPrincipal);';
+			$php.= $p . '	$this -> prochainPrincipal = null;';
+			$php.= $p . '}';
 			$php.= $p . 'if (!property_exists($this, \'objet\') or $this -> objet === null) {';
-			$php.= $p . '	$objet = $this -> Principal();//002';
-			$php.= $p . '	if (($this -> etape === \'\' or $this -> etape === \'1\') and $objet -> EstVide() -> estVrai()) {$objet = $this;}';
+			$php.= $p . '	$objet = $this -> Principal();';
+			$php.= $p . '	if (($this -> etape === \'br00_01\') and $objet -> EstVide() -> estVrai()) {$objet = $this;}';
 			$php.= $p . '} else {';
 			$php.= $p . '	$objet = $this -> objet;';
 			$php.= $p . '}';
-			$php.= $p . 'if (getTypeSG($objet) === \'@Erreur\') {';
+			$php.= $p . 'if ($objet instanceof SG_Erreur) {';
 			$php.= $p . '	$resultat[] = $objet;';
 			$php.= $p . '	return $resultat;';
 			$php.= $p . '}';
-			$php.= $p . '$btn = \'\';';
 			$php.= $p . '$_SESSION[\'saisie\'] = false;';
-			$php.= $p . 'switch ($this -> etape) {' . $p . '	case \'\':';
+			$php.= $p . 'switch ($this -> etape) {';
 		} elseif ($pOptions === 'd') {
 			$php.= $p . '$objet = $this;//003';
 		}
@@ -161,8 +218,8 @@ class SG_Compilateur extends SG_Objet{
 						$mot = $this -> Branche($i);
 				}
 				if (isset($mot['Erreur'])) {
-					//$detail[] = $mot;
-					$erreur = $mot['Erreur'];
+					$this -> erreur = $mot['Erreur'];
+					$this -> STOP($i, $mot['Erreur']);
 					break;
 				} else {
 					if (isset($mot['php'])) {
@@ -180,119 +237,217 @@ class SG_Compilateur extends SG_Objet{
 			if ($erreur !== '') {
 				$this -> erreur = $erreur;
 			}
-			// par défaut si un lien va plus loin, on utilise Consulter
-			if ($this -> noetape > 1) {
-				$php.= $p.'	case \''. $this -> noetape . '\'://004';
-				$php.= $p.'		if (method_exists($objet, \'FN_Consulter\')){$ret = $objet -> FN_Consulter();';
-				$php.= $p.'		} elseif (method_exists($objet, \'Consulter\')){$ret = $objet -> Consulter();};';
-				$php.= $p.'		$resultat["operation"] = $ret;';
+			foreach($this -> appels as $btnphp) {
+				$php.= $btnphp;
 			}
-			$php.= $p.'	default:'.$p.'}//005';
+			/**** étapes standards ****/
+			// par défaut, en fin de branche, si un lien va plus loin, on utilise Consulter
+			$php.= $p.'	case \'consulter\'://004';
+			$php.= $p.'		if (method_exists($objet, \'FN_Consulter\')){$ret = $objet -> FN_Consulter();';
+			$php.= $p.'		} elseif (method_exists($objet, \'Consulter\')){$ret = $objet -> Consulter();};';
+			$php.= $p.'		$resultat[\'operation\'] = $ret;';
+			$php.= $p.'		break;';
+			// si code étape inconnu
+			$php.= $p.'	default:'.$p.'		$resultat = new SG_Erreur(\'0295\',$this -> etape);'.$p.'}';
+
+			// on ajoute au début du php la correspondance entre les alias de codes étapes et le code réel (br99_99)
+			$txt = $p . 'if ($etape === \'\') {//044' . $p . '	$this -> etape = \'br00_01\';';
+			foreach ($this -> aliascodesetapes as $key => $val) {
+				$txt.=  $p . '} elseif ($etape === \'' . $key . '\') {' . $p . '	$this -> etape = \'' . $val . '\';';
+			}
+			$txt.= $p . '} else {' . $p . '	$this -> etape = $etape;' . $p . '}';
+			// on le place au début
+			$php = $txt . $php;
 			$this -> php = $php;
 		} catch (Exception $e) {
-			$ret = $this -> catchErreur($e);
+			$cpl = $this -> catchErreur($e);
+			if (! $this -> erreur instanceof SG_Erreur) {
+				$this -> erreur = new SG_Erreur('0161', $cpl);
+			} else {
+				$this -> erreur -> trace = $cpl;
+			}
+			$ret = $this -> erreur;
 		}
 		return $ret;
 	}
 	
-	/** 1.0.6 ; 2.0 test sur Branche
-	* Branche : suite linéaire d'instructions séparées par des chevrons 
-	* @param integer $pDebut début de la partie de phrase à analyser
-	* @param string : caractère fermant un bloc attendu (sinon jusqu'à la fni de phrase
-	* @return array la première fonction reconnue ou erreur
-	**/
-	function Branche($pDebut) {
+	/**
+	 * Branche : [codeetape,titre] suite linéaire d'instructions séparées par des chevrons
+	 * elle est codée dans la fonction etape_n (2.4 avec éventuellement des controles en ctrl_etape_n)
+	 * 
+	 * @since 1.0.6
+	 * @version 2.4 controles
+	 * @version 2.6 code branche 'br99' ; simplification test fin étape (vers 008) ; sup $btn ; code étape
+	 * @param integer $pDebut début de la partie de phrase à analyser
+	 * @param integer $pFin caractère où arrêter la traduction de la branche (par défaut '')
+	 * @param string $pCode code de la branche par défaut 'etape'
+	 * @return array : ['php'] la première fonction reconnue ou erreur ; ['ctl'] la fonction de controle associée ; ['code'] 1ere étape
+	 * @todo voir si c'est dans cette fonction qu'on doit faire $this -> noformule++; (plutôt SuiteInstruction ?)
+	 */
+	function Branche($pDebut, $pFin = '') {
 		if ($this -> testerBoucle('Branche', $pDebut)) {
 			$ret = new SG_Erreur('0099');
 		} else {
+			// calcul du code de la branche
+			$codebr = 'br' . $this -> format99($this -> nobranche) . '_';
+			$this -> nobranche++;
+			$noetape = 0;
 			$ifin = strlen($this -> phrase) - 1;
 			$i = $pDebut;
 			$longueur=0;
-			$noformuleprincipale = $this -> noformule;
 			$this -> noformule++;
 			$php = '';
 			$p = PHP_EOL . '			';			
-			$ret = Array('Type'=>'Branche', 'Mot'=> '', 'Longueur'=> 0);
+			$ret = Array('Type'=>'Branche', 'Mot'=> '', 'Longueur'=> 0, 'debut' => $codebr . '01');
+			$break = false; // faut-il ajouter un break (fin de case) ?
 			while ($i < $ifin) {
 				// boucle sur les suites d'instructions
 				// skip spaces
 				$n = $this -> sauterEspaces($i);
 				$longueur+= $n;
 				$i += $n;
-				$c = $this -> phrase[$i];
-				// fin de branche ? pas possible (testé dans Traduire)
-				if($c === ')' or $c === ']' or $c === '}') {
-					throw new Exception (SG_Libelle::getLibelle('0171')); // ferme sans ouvrir
-				}
-				// SuiteInstructions
-				$this -> noformule++;
-				$mot = $this -> tester($i, 'S');
-				if($mot === false) {
-					throw new Exception (SG_Libelle::getLibelle('0122')); // suite instructions erronée
-				} elseif($mot['Longueur'] === 0) {
+				// fin de la phrase ?
+				if($i >= $ifin) {
 					break;
+				}
+				$c = $this -> phrase[$i];
+				// fin de branche ? (fin de parenthèse ou fin du paramètre)
+				if($c === ')' or ($pFin !== '' and $c === $pFin)) {
+					break;
+				}
+				if ($c === ']' or $c === '}') {
+					$this -> STOP($i, '0171');// pas possible (testé dans Traduire)
+				}
+				// nouvelle étape
+				$noetape++;
+				$codeetape = $codebr . $this -> format99($noetape); // code étape calculé
+				$codemanuel = '';
+				// y a-t-il un code d'étape manuel : [xxx ]...
+				if ($c === '[') {
+					// code étape différent fourni
+					$mot = $this -> BlocCrochets($i);
+					if ($mot === false) {
+					} elseif ($mot instanceof SG_Erreur) {
+						$this -> STOP($i, $mot); 
+					} elseif($mot['Longueur'] === 0) {
+						break;
+					} else {
+						$longueur+= $mot['Longueur'];
+						$i += $mot['Longueur'];
+					}
+					// sauter les espaces
+					$n = $this -> sauterEspaces($i);
+					$longueur+= $n;
+					$i += $n;
+					if($i >= $ifin) {
+						break;
+					}
+					$codemanuel = $mot['Mot'];
+					$this -> aliascodesetapes[$codemanuel] = $codeetape;
+				}
+				// ajout du code de la première étape pour l'appel du début de branche via url
+				if(! isset($ret['code']) or $ret['code'] === '') {
+					$ret['code'] = $codeetape;
+				}
+				// décodage de la suite des instructions de l'étape
+				$this -> noformule++;
+				$mot = $this -> SuiteInstructions($i);
+				// calcul du code de l'étape suivante
+				$suivant = $codebr . $this -> format99($noetape + 1);
+				// suite instructions erronée ou vide
+				if($mot === false) {
+					$this -> STOP($i, '0122');
+				} elseif ($mot instanceof SG_Erreur) {
+					$this -> STOP($i, $mot); 
 				} else {
+					// on a	 bien quelque chose
 					$longueur+= $mot['Longueur'];
+					// comme ce n'était pas la dernière étape de la branche, 
+					// terminer le case de l'étape précédente (on est dans le switch)
+					if ($break === true) {
+						$php.= $p.'	break;//009';
+						$break = false;
+					}
 					if(isset($mot['php'])) {
-						$php.= $p . 'case \'' . $this -> noetape . '\'://006';
-						// préparer envoi vers l'étape suivante (peut être modifié dans l'étape)
-						$php.= $p.'	if($typeres === \'\') {$_SESSION[\'page\'][\'etape_prochaine\'] = \'' . ($this -> noetape + 1) . '\';}';
-						// appel de la fonction d'étape
-						$php.= $p . '	$resultat = $this -> etape_' . $this -> noetape . ' ($objet, $typeres);';//$mot['php'];
-						// écriture de la fonction d'étape
-						$fonction = PHP_EOL . '	function etape_' . $this -> noetape . ' ($objet, $typeres = \'\') {//007';
-						$fonction.= PHP_EOL . '		$ret = false;';
-						$fonction.= PHP_EOL . '		$resultat = array();';
-						$fonction.= $mot['php'];
-						// si formule, retourner le dernier résultat obtenu
-						$fonction.= PHP_EOL . '		if ($typeres === \'f\') {//063';
-						$fonction.= PHP_EOL . '			$resultat = $ret;'; 
-						// si aucun résultat HTML à afficher, lister le dernier résultat obtenu
-						$fonction.= PHP_EOL . '		} elseif ($resultat === array()) {' . PHP_EOL . '			$resultat[] = new SG_HTML($ret);' . PHP_EOL . '		}'; 
-						$fonction.= PHP_EOL . '		return $resultat;';
-						$fonction.= PHP_EOL . '	}' . PHP_EOL;
-						$this -> etapes[] = $fonction;
+						// $php : rédaction appel de la fonction d'étape
+						$php.= $p . 'case \'' . $codeetape . '\'://006';
+						if ($codemanuel !== '') {
+							// on ajoute l'alias
+							$php.= $p . 'case \'' . $codemanuel . '\':';
+						}
+						$break = true;
+						if ($mot['Longueur'] === 0) {
+							// étape vide : on ne fait rien mais on renvoie quand même vers la suivante
+							$php.= $p . '	$resultat = $this -> traiterEtape(\'rien\',$objet, $typeres, \'' . $suivant . '\');//055';
+						} else {
+							$php.= $p . '	$resultat = $this -> traiterEtape(\'' . $codeetape . '\',$objet, $typeres, \'' . $suivant . '\');';
+							// $fonction : rédaction et stockage de la fonction d'étape
+							$fonction = PHP_EOL . '	function ' . self::PREFIXE_FONCTION . $codeetape . ' ($objet, &$dernierresultat) {//007';
+							$fonction.= PHP_EOL . '		$resultat = array();';
+							$fonction.= $mot['php'];
+							/* si à la fin on a aucun résultat on retourne le résultat de la dernière fonction
+							$fonction.= PHP_EOL . '			$resultat[] = new SG_HTML($ret);';*/
+							$fonction.= PHP_EOL . '		$dernierresultat = $ret;//057';
+							$fonction.= PHP_EOL . '		return $resultat;';
+							$fonction.= PHP_EOL . '	}';
+							$this -> etapes[] = $fonction;
+						}
 						$this -> noetape++;
 					}
 					$i+= $mot['Longueur'];
-				}
-				
+				}		
 				// Etiquette ?
 				$mot = $this -> Etiquette($i);
 				if($mot === false) {
-					throw new Exception (SG_Libelle::getLibelle('0121')); // étiquette erronée
+					$this -> STOP($i, '0121'); // étiquette erronée
 				} elseif($mot['Longueur'] === 0) {// sortie
 					break;
+				} elseif (isset($mot['ctl'])) {// y a-t-il des contrôles
+					$ret['ctl'] = $mot['ctl'];
 				}
+				// oui
 				$longueur += $mot['Longueur'];
 				if($mot['Mot'] !== '') {
 					// ajout de l'envoi du bouton vers l'étape suivante
-					$php.= $p . '	$btn = \'' . $mot['Mot'] .'\';//008';
-					$php.= $p . '	if ($btn === \'>\'){'.$p.'		if (isset($_SESSION[\'saisie\']) and $_SESSION[\'saisie\'] === true){';
-					$php.= $p . '			$btn = SG_Libelle::getLibelle(\'0116\', false);'.$p.'		} else {';
-					$php.= $p . '			$btn = SG_Libelle::getLibelle(\'0117\', false);'.$p.'		}'.$p.'	}';
-					$php.= $p . '	$resultat[\'submit\'] = $btn;'.PHP_EOL;
+					$php.= $p . '	if (! $resultat instanceof SG_Erreur) {//008';
+					if ($mot['Mot'] === '>') {
+						$php.= $p . '			if (isset($_SESSION[\'saisie\']) and $_SESSION[\'saisie\'] === true){';
+						$php.= $p . '				$resultat[\'submit\'] = SG_Libelle::getLibelle(\'0116\', false);'.$p.'		} else {';
+						$php.= $p . '				$resultat[\'submit\'] = SG_Libelle::getLibelle(\'0117\', false);'.$p.'			}';
+					} else {
+						$php.= $p . '		$resultat[\'submit\'] = \''. $mot['Mot'] . '\';';
+					}
+					$php.= $p . '	}';
 				}
-				$php.= $p.'	break;//009';
 				$i += $mot['Longueur'];
 			}
-			if (getTypeSG($ret) !== '@Erreur') {
-				// si saisie sur dernière étape, ajouter un bouton
-				$php.= $p.'	if (($btn === \'>\' or $btn === \'\') and isset($_SESSION[\'saisie\']) and $_SESSION[\'saisie\'] === true) {//010';
-				$php.= $p.' 	if (! is_array($resultat)) {'. $p.' 	$resultat = array($resultat);' . $p.'		}';
+			// on est dans la dernière étape de la branche
+			if (! $ret instanceof SG_Erreur) {
+				// si saisie sur dernière étape, ajouter un bouton submit pour enregistrer les données saisies
+				$php.= $p.'	if (isset($_SESSION[\'saisie\']) and $_SESSION[\'saisie\'] === true) {//010';
+				$php.= $p.'		if (! is_array($resultat)) {$resultat = array($resultat);}';
 				$php.= $p.'		$resultat[\'submit\'] = SG_Libelle::getLibelle(\'0118\',false);'.$p.'	}';
 				$php.= $p.'	break;';
-				$ret = Array('Type'=>'Branche', 'Mot'=> substr($this -> phrase, $pDebut, $longueur), 'Longueur'=> $longueur);
+				// par défaut, en fin de branche, si un lien va plus loin, on utilise Consulter
+				$this -> aliascodesetapes[$codebr . $this -> format99($noetape + 1)] = 'consulter';
 				$ret['php'] = $php;
+				$ret['Mot'] = substr($this -> phrase, $pDebut, $longueur);
+				$ret['Longueur'] = $longueur;
 			}
 		}
 		return $ret;
 	}
-	/** 1.0.6
-	* SuiteInstructions : instructions séparées par des virgules donnant une collection de résultats
-	* @param integer $pDebut début de la partie de phrase à analyser
-	* @return array la première fonction reconnue ou erreur
-	**/
+
+	/**
+	 * SuiteInstructions : instructions séparées par des virgules ou des points-virdules donnant une collection de résultats
+	 * La fin d'une suite d'instruction est soit une parenthèqe fermante ou une étiquette, ou la fin de la phrase.
+	 * 
+	 * @since 1.0.6
+	 * @version 2.4 supp collection à partir de virgules car trop ambigu
+	 * @param integer $pDebut début de la partie de phrase à analyser
+	 * @param $cSep string : caractère séparateur de suite d'instructions (cas des paramètres par exemple)
+	 * @return array la première fonction reconnue ou erreur
+	 */
 	function SuiteInstructions($pDebut, $cSep = null) {
 		$ifin = strlen($this -> phrase) - 1;
 		$detail = array();
@@ -304,6 +459,7 @@ class SG_Compilateur extends SG_Objet{
 		$premier = true;
 		$ponctuation = false;
 		$collection = false;
+		$p = PHP_EOL . '		';
 		while ($i < $ifin) {
 			$this -> testerBoucle('SuiteInstructions', $i);
 			// skip spaces
@@ -317,16 +473,11 @@ class SG_Compilateur extends SG_Objet{
 				break; // fin de paramètre
 			} elseif ($c === ')' or $c === '|' or $c === '>') {
 				break; // fin de bloc
-			} elseif ($c === ',') {
-				$i++;
-				$mot = $this -> Collection($i, $mot);
-				$php.= $mot['php'];
-				$ponctuation = true;
 			} elseif ($c === ';') {
 				$mot = array('Type' => 'PointVirgule', 'Mot' => ';', 'Longueur' => 1 );
 				$ponctuation = true;
 			} elseif ($c === ':') { // titre de colonne
-				$titre = 
+				$titre = '';
 				$mot = array('Type' => 'DeuxPoints', 'Mot' => ':', 'Longueur' => 1 );
 				$ponctuation = true;
 			} else {
@@ -345,19 +496,21 @@ class SG_Compilateur extends SG_Objet{
 				} else {
 					$ret['Type'] = 'SuiteInstructions';
 				}
-				// titre pour les colonnes (après le :)
+				// titre pour les colonnes (après le ':')
 				if(isset($mot['titre'])) {
 					$ret['titre'] = $mot['titre'];
 				}
 				if(isset($mot['php'])){
 					$php.= $mot['php'];
 				}
+				
+
 				if(!$ponctuation and $cSep !== ',') {
 					// si resultat HTML, saut de ligne
-					$php.= PHP_EOL . '		if (is_object($ret) and $ret -> estHTML()) {//058'.PHP_EOL.'			$ret -> rupture = \'p\';'.PHP_EOL.'		}';
-					// stockage dans $resultat
-					$php.= PHP_EOL . '		if (is_array($ret)){$resultat = array_merge($resultat,$ret);}//011';
-					$php.= PHP_EOL . '		elseif (is_object($ret) and $ret -> estHTML()){$resultat[] = $ret;}'.PHP_EOL;
+					$php.= $p . 'if ($ret instanceof SG_HTML) {//058'.$p.'	$ret -> rupture = \'p\';';
+					$php.= $p . '	$resultat[] = $ret;' . $p . '} elseif (is_array($ret)){';
+					$php.= $p . '	$resultat = array_merge($resultat,$ret);';
+					$php.= $p.'}';
 				} else {
 					$ponctuation = false;
 				}
@@ -371,12 +524,15 @@ class SG_Compilateur extends SG_Objet{
 		$this -> position = $pDebut + $longueur;
 		return $ret;
 	}
-	/** 1.0.6
-	* Instruction : recherche une fonction ou valeur puis suite de pointfonction
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string extrait (avec les bornes) ou false si pas trouvé
-	**/	
-	function Instruction($pDebut = 0, $pCible = '') {
+
+	/**
+	 * Instruction : recherche une fonction ou valeur puis suite de pointfonction
+	 * @since 1.0.6
+	 * @todo récupérer le cas où on n'est pas une PointFonction et qu'on devrait (cas lorsque sauterespace ne sautait pas ord(9))
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return array extrait (avec les bornes) ou false si pas trouvé
+	 */	
+	function Instruction($pDebut = 0) {
 		$ret = array('Type' => 'Instruction', 'Mot' => '', 'Longueur' => 0);
 		$ifin = strlen($this -> phrase) - 1;
 		$affectation = true;
@@ -418,14 +574,15 @@ class SG_Compilateur extends SG_Objet{
 						} else {
 							$mot = $this -> PointFonction($i);
 							if (!isset($mot['Erreur'])) {
-								$php.=$p.'$o = $objet;' .$mot['php'];
+								$php.=$p.'$o = $objet;//011' .$mot['php'];
 							} else {
 								$mot = $this -> FonctionInitiale($i);
 								if (!isset($mot['Erreur'])) {
-									$php.= $p.'$o = $objet;' . $mot['php'];
+									$php.= $p.'$o = $objet;//017' . $mot['php'];
 									$variable = true;
 								} else {
-									$ret['Erreur'] = SG_Libelle::getLibelle('0172');// attendu " ou 9 ou . ou H'
+									$ret['Erreur'] = $mot['Erreur'];// attendu " ou 9 ou . ou H'
+									break;
 								}
 							}
 						}
@@ -438,11 +595,9 @@ class SG_Compilateur extends SG_Objet{
 					$ret['Type'] = 'Affectation';
 					// affectation
 					if ($dejaaffectation or ! $affectation) {	
-						$ret['Erreur'] = SG_Libelle::getLibelle('0124');
-						break;
+						$this -> STOP($i, '0124');
 					} elseif ($mot['Type'] === 'ChaineEntreQuotes' or $mot['Type'] === 'Nombre'){	
-						$ret['Erreur'] = SG_Libelle::getLibelle('0125', true, $mot['Type']);
-						break;
+						$this -> STOP($i, '0125', $mot['Type']);
 					} else {
 						if($variable) {
 							$affect = $p.'$this -> proprietes[\''.$mot['Mot'] . '\'] = $ret;//012';
@@ -506,11 +661,14 @@ class SG_Compilateur extends SG_Objet{
 		$this -> position = $pDebut + $longueur;
 		return $ret;
 	}
-	/** 1.0.6
-	* tester : essaie si l'une des posibilités est exacte. S'arrête dès la première rencontrée.
-	* @param integer $pDebut début de la partie de phrase à analyser
-	* @return array la première fonction reconnue ou erreur
-	**/	
+
+	/**
+	 * tester : essaie si l'une des posibilités est exacte. S'arrête dès la première rencontrée.
+	 * @since 1.0.6
+	 * @param integer $pDebut début de la partie de phrase à analyser
+	 * @param string : liste de codes de cas à tester
+	 * @return array la première fonction reconnue ou erreur
+	 */	
 	function tester($pDebut = 0, $cas = '') {
 		$mot = false;
 		for($i = 0; $i < strlen($cas); $i++) {
@@ -518,21 +676,22 @@ class SG_Compilateur extends SG_Objet{
 			if(isset($this->formats[$c])) {
 				$attendu = $this->formats[$c];
 				$mot = $this -> $attendu($pDebut);
-				if(getTypeSG($mot) === '@Erreur' or !isset($mot['Erreur'])) { // arrêt si trouvé ou erreur grave
+				if($mot instanceof SG_Erreur or !isset($mot['Erreur'])) { // arrêt si trouvé ou erreur grave
 					break;
 				}
 			} else {
-				$mot = new SG_Erreur('0126', $c);
-				break;
+				$this -> STOP($i, '0126', $c);
 			}
 		}
 		return $mot;
 	}
-	/** 1.0.6
-	* PointFonction : recherche un point et une fonction
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string extrait (avec le point) ou false si pas trouvé
-	**/
+
+	/**
+	 * PointFonction : recherche un point et une fonction
+	 * @since 1.0.6
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return string extrait (avec le point) ou false si pas trouvé
+	 */
 	function PointFonction($pDebut = 0) {
 		$this -> testerBoucle('PointFonction', $pDebut);
 		$ret = array('Type'=>'PointFonction', 'Mot'=>'', 'Longueur' => 0);
@@ -544,7 +703,7 @@ class SG_Compilateur extends SG_Objet{
 		$i += $n;
 		if ($i < $ifin) {
 			if ($this -> phrase[$i] !== '.') {
-				$ret['Erreur'] = SG_Libelle::getLibelle('0127',true, $this -> phrase[$i]);
+				$ret['Erreur'] = new SG_Erreur('0127', substr($this -> phrase, $i, 15));
 			} else {
 				$i ++;
 				$longueur++;
@@ -556,7 +715,7 @@ class SG_Compilateur extends SG_Objet{
 					if (getTypeSG($mot) === '@Erreur') {
 						$ret = $mot;
 					} elseif ($mot === false) {
-						$ret['Erreur'] = SG_Libelle::getLibelle('0128');
+						$ret['Erreur'] = new SG_Erreur('0128');
 					} elseif (isset($mot['Erreur'])) {
 						$ret = $mot;
 					} else {
@@ -570,12 +729,17 @@ class SG_Compilateur extends SG_Objet{
 		$ret['Longueur'] = $longueur;
 		return $ret;
 	}
-	/** 2.3 test $nomf != $nom
-	* 1.0.6 ; 2.1.1 si ni terme ni motsysteme : mieux récupéré ; 2.2 .@Propriete("") ; test @Erreur ; //014 : recherche dictionnaire
-	* Fonction : recherche soit un motsystème ou terme seul, avec paramètres (c'est à dire pas de valeur directe)
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string extrait (avec les bornes) ou false si pas trouvé
-	**/	
+
+	/**
+	 * Fonction : recherche soit un motsystème ou terme seul, avec paramètres (c'est à dire pas de valeur directe)
+	 * 
+	 * @since 1.0.6
+	 * @version 2.4 $txtvide
+	 * @version 2.6 partie de texte mis dans SG_Operation::execFonction... ; @Clic
+	 * @todo vérifier que le $nom est acceptable pour PHP
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return array|SG_Erreur extrait (avec les bornes) ou false si pas trouvé
+	 **/	
 	function Fonction($pDebut = 0) {
 		$this -> testerBoucle('Fonction', $pDebut);
 		$ret = array('Type'=>'Fonction', 'Mot'=>'', 'Longueur' => 0);
@@ -586,29 +750,46 @@ class SG_Compilateur extends SG_Objet{
 		$php = '';
 		$p = PHP_EOL . '	';
 		if ($mot === false) {
-			throw new Exception (SG_Libelle::getLibelle('0129'));
+			$this -> STOP($i, '0129');
 		} elseif (isset($mot['Erreur'])) {
-			throw new Exception ($mot['Erreur']);
+			$this -> STOP($i, $mot['Erreur']);
 		} else {
 			$longueur += $mot['Longueur'];
 			$i += $mot['Longueur'];
 			$nom = $mot['Mot']; // terme ou mot système
 			$ret['Mot'] = $nom;
+			// il faut repérer si on doit chercher la méthode sur l'objet ou sur le parent SynerGaïa (si @)
+			// cette façon n'est pas très sûre ici car on ne connait pas encore l'objet sur lequel on travaille...
+			if ($mot['Type'] === 'MotSysteme') {
+				$nomp = '@' . $nom;
+				$nomf = $nom;// méthode sysème ? (methode)
+			} else {
+				$nomp = $nom;
+				$nomf = 'FN_' . $nom;// méthode spécifique de l'application ? (FN_methode)
+			}
 			$this -> methode = $mot['Methode']; // garder la méthode du dernier résultat
 			// sauter les espaces
 			$n = $this -> sauterEspaces($i);
 			$longueur+= $n;
 			$i += $n;
+			// traiter les paramètres éventuels
 			$prm = '';
 			if ($i < $ifin) {
-				// traiter les paramètres
-				$param = $this -> Parametres($i);
+				// fonctions particulières où un paramètre peut-être une branche
+				if ($nomp === '@Clic') {
+					$noparam = 1;
+				} else {
+					$noparam = 0;
+				}
+				// traduire les paramètres
+				$param = $this -> Parametres($i,$noparam);
+				$btn = '';
 				if ($param !== false) {
 					$noformule = $this -> noformule;
 					if ($param === false) {
-						$ret['Erreur'] = SG_Libelle::getLibelle('0130');
+						$this -> STOP($i, '0130');
 					} elseif (isset($param['Erreur'])) {
-						$ret['Erreur'] = SG_Libelle::getLibelle('0131', true, $param['Erreur']);
+						$this -> STOP($i, '0131', $param['Erreur']);
 					} elseif (isset($param['php'])) {
 						$prm = '(';
 						if (isset($param['Detail'])) {
@@ -622,47 +803,24 @@ class SG_Compilateur extends SG_Objet{
 						$prm.= ')';
 						$longueur += $param['Longueur'];
 					} else {
-						$ret['Erreur'] = SG_Libelle::getLibelle('0132');
+						$this -> STOP($i, '0132');
 						$longueur += $param['Longueur'];
 					}
 				}
 			}
 			if ($prm === '') {$prm = '()';}
-			// il faut repérer si on doit chercher la méthode sur l'objet ou sur le parent SynerGaïa (si @)
-			// cette façon n'est pas très sûre ici car on ne connait pas encore l'objet sur lequel on travaille...
-			if ($mot['Type'] === 'MotSysteme') {
-				$nomp = '@' . $nom;
-				$nomf = $nom;// méthode sysème ? (methode)
-			} else {
-				$nomp = $nom;
-				$nomf = 'FN_' . $nom;// méthode spécifique de l'application ? (FN_methode)
-			}
+			// @todo vérifier que le $nom est acceptable pour PHP
 			if($prm === '()') {
-				// TODO traitement des preenregistrer et postenregistrer pas clair... à revoir et généraliser dans fonctioninitiale
-				$php.= $p.'	if (!is_object($o)) {//014';
-				$php.= $p.'		$ret = new SG_Erreur(\'0166\',\'' . $nomp .  ' \' . SG_Texte::getTexte($o));';
-				$php.= $p.'	} elseif (isset($o -> proprietes[\'' . $nomp . '\'])) {';//propriete locale; 
-				$php.= $p.'		$ret = $o -> getValeurPropriete(\'' . $nomp . '\', \'\');';
-				$php.= $p.'	} elseif (SG_Dictionnaire::isProprieteExiste(getTypeSG($o),\'' . $nomp . '\')) {';// propriété au dictionnaire
-				$php.= $p.'		$ret = $o -> getValeurPropriete(\'' . $nomp . '\', \'\');';
-				$php.= $p.'	} elseif (isset($this -> proprietes[\'' . $nomp . '\'])) {'; // propriété de l'objet en cours d'exécution : opération (ou document)
-				$php.= $p.'		$ret = $this -> proprietes[\'' . $nomp . '\'];';
-				$php.= $p.'	} elseif (method_exists($o,\'' . $nomf . '\')){'. $p.'		$ret = $o ->' . $nomf . '();';// méthode spécifique FN_
-				if ($nomf !== $nom) {
-					$php.= $p.'	} elseif (method_exists($o,\'' . $nom . '\')){'. $p.'		$ret = $o ->' . $nom . '();';// méthode spécifique telle quelle
-				}
-				$php.= $p.'	} else {'.$p.'		$ret = $o -> getValeurPropriete(\'' . $nomp . '\', \'\');'. $p.'	}';// sinon propriété du document
+				$php.= $p.'	$ret = SG_Operation::execFonctionSansParametre($this, $o,\'' . $nomp . '\',\'' . $nomf . '\',\'' . $nom . '\');//014';
 			} else {
-				// avec paramètres
+				// avec paramètres sous la forme $prm = '($p14,$p16,$p19,$p24,$p27)';
 				$php.= $param['php'];
-				$php.= $p.'	if (SG_Dictionnaire::isProprieteExiste(getTypeSG($o), \'' . $nomp . '\')) {//015';
-				$php.= $p.'		$ret = $o -> MettreValeur(\''.$nomp.'\',' .substr($prm, 1) . ';';
-				$php.= $p.'	} elseif (method_exists($o,\'' . $nomf . '\')){'. $p.'		$ret = $o -> ' . $nomf . $prm.';';
-				if ($nomf !== $nom) {
-					$php.= $p.'	} elseif (method_exists($o,\'' . $nom . '\')){'. $p.'		$ret = $o -> ' . $nom . $prm.';';
+				if(isset($param['code'])) {
+					// si on a un paramètre qui peut être une branche, il faut mettre à jour son code pour l'exécution
+					$php.= $p.'	$p' . $param['Detail'][$noparam - 1] . ' -> code = \'' . $param['code'] . '\';';
 				}
-				$php.= $p.'	} elseif (getTypeSG($o) === \'@Erreur\') {'. $p.'		$ret = $o;';
-				$php.= $p.'	} else {'.$p.'		$ret = new SG_Erreur(\'0150\',getTypeSG($o) .\'.' . $nomf . '\');'. $p.'	}';
+				$php.= $p.'	$prm = array' . $prm . ';//015';
+				$php.= $p.'	$ret = SG_Operation::execFonctionAvecParametres($o,\''.$nom.'\',\''.$nomf.'\',\''.$nomp.'\',$prm);';
 			}
 			$ret['Longueur'] = $longueur;
 		}
@@ -670,13 +828,17 @@ class SG_Compilateur extends SG_Objet{
 		$this -> position = $pDebut + $longueur;
 		return $ret;
 	}
-	/** 1.0.6 ; 2.3 init $contexte ; traite $nomsyst=$nom ; correct si $1 vide
-	* FonctionInitiale : début d'instruction
-	* recherche soit un motsystème ou terme seul, avec paramètres (c'est à dire pas de valeur directe)
-	* si mot n'est pas une méthode de SG_Rien, c'est un new d'objet
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string extrait (avec les bornes) ou false si pas trouvé
-	**/	
+
+	/**
+	 * FonctionInitiale : début d'instruction
+	 * recherche soit un motsystème ou terme seul, avec paramètres (c'est à dire pas de valeur directe)
+	 * si mot n'est pas une méthode de SG_Rien, c'est un new d'objet
+	 * 
+	 * @since 1.0.6
+	 * @version 2.6 test gravité 0234 ; test SG_Parametre ; si @Bouton, parm 2 peut être une branche
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return array extrait (avec les bornes) ou false si pas trouvé
+	 */	
 	function FonctionInitiale($pDebut = 0) {
 		$this -> testerBoucle('FonctionInitiale',$pDebut);
 		$ret = array('Type'=>'FonctionInitiale', 'Mot'=>'', 'Longueur' => 0);
@@ -687,149 +849,154 @@ class SG_Compilateur extends SG_Objet{
 		$php = '';
 		$p = PHP_EOL . '		';
 		if ($mot === false) {
-			$ret['Erreur'] = SG_Libelle::getLibelle('0133');
+			$this -> STOP($i, '0133');
+		} elseif (isset($mot['Erreur'])) {
+			$this -> STOP($i, $mot['Erreur']);
 		} else {
-			if (! isset($mot['Erreur'])) {
-				$longueur += $mot['Longueur'];
-				$i += $mot['Longueur'];
-				$nom = $mot['Mot']; // terme ou mot système
-				$nomsyst = $nom;
-				if($mot['Type']==='MotSysteme') {
-					$nomsyst = '@' . $nom;
+			$longueur += $mot['Longueur'];
+			$i += $mot['Longueur'];
+			$nom = $mot['Mot']; // terme ou mot système
+			$nomsyst = $nom;
+			if($mot['Type']==='MotSysteme') {
+				$nomsyst = '@' . $nom;
+			}
+			$ret['Mot'] = $nom;
+			$this -> methode = $mot['Methode']; // garder la méthode du dernier résultat
+			$n = $this -> sauterEspaces($i);
+			$longueur+= $n;
+			$i += $n;
+			$prm = '';
+			$nbprm = 0;
+			// dans le cas d'un bouton, le paramètre 2 peut être une branche, donc o traite à part
+			$param = array('php' => '');
+			// traitement des paramètres éventuels
+			// résultat php dans $param['php'], liste des paramètres dans $prm sous la forme 'p1,p2,etc'
+			if ($i < $ifin) {
+				$prmbranche = 0;
+				// cas où un paramètre peut être une branche
+				if ($nomsyst === '@Bouton') {
+					$prmbranche = 2;
 				}
-				$ret['Mot'] = $nom;
-				$this -> methode = $mot['Methode']; // garder la méthode du dernier résultat
-				$n = $this -> sauterEspaces($i);
-				$longueur+= $n;
-				$i += $n;
-				$prm = '';
-				// traitement des paramètres éventuels
-				$param = array('php' => '');
-				if ($i < $ifin) {
-					$param = $this -> Parametres($i);
-					if ($param !== false) {
-						$prm = '(';
-						if (isset($param['Erreur'])) {
-							$ret['Erreur'] = SG_Libelle::getLibelle('0135', true, $param['Erreur']);
-						} elseif (isset($param['Detail'])) {
-							foreach ($param['Detail'] as $noformule) {
-								if(strlen($prm) > 1) {
-									$prm .= ',';
-								}
-								$prm.= '$p' . $noformule;
+				$param = $this -> Parametres($i, $prmbranche);
+				if ($param !== false) {
+					if (isset($param['Erreur'])) {
+						$ret['Erreur'] = new SG_Erreur('0135', $param['Erreur']);
+					} elseif (isset($param['Detail'])) {
+						foreach ($param['Detail'] as $noformule) {
+							if(strlen($prm) > 1) {
+								$prm .= ',';
 							}
-							$longueur += $param['Longueur'];
-						} else {
-							$ret['Erreur'] = SG_Libelle::getLibelle('0136');
-							$longueur += $param['Longueur'];
+							$prm.= '$p' . $noformule;
+							$nbprm++;
 						}
-						$prm.= ')';
+						$longueur += $param['Longueur'];
+					} else {
+						$ret['Erreur'] = new SG_Erreur('0136');
+						$longueur += $param['Longueur'];
 					}
 				}
-				// calcul de la fonction initiale
+			}
+			$php.= $param['php'];
+			// calcul de la fonction initiale (php pour fonction dans $f)
+			if ($nom === 'Arreter') { // demander d'interruption d'un processus
+				$php.= $p . self::Arreter($i);
+			} elseif ($nom === 'EtapeEnCours') { // cas particulier de @EtapeEnCours ?
+				$php.= $p.'$ret = new SG_Texte($this -> etape);//016';
+			} elseif (method_exists('SG_Rien',$nom)){ // soit c'est une méthode synergaia de SG_Rien ?
+				$php.= $p.'$ret = SG_Rien::' . $nom . '(' . $prm . ');//018';
+			} elseif (method_exists('SG_Rien','FN_' . $nom)){ // soit c'est une méthode applicative de SG_Rien ?
+				$php.= $p.'$rien = new SG_Rien();$ret = $rien -> FN_' . $nom . '(' . $prm . ');//060';
+			} else {
 				$f = '';
-				if ($nom === 'EtapeEnCours') { // cas particulier de @EtapeEnCours ?
-					$f = $p.'$ret = new SG_Texte($this -> etape);//016';
-				} elseif (method_exists('SG_Rien',$nom)){ // soit c'est une méthode synergaia de SG_Rien ?
-					if ($prm === '') {
-						$f = $p.'$ret = SG_Rien::' . $nom . '();//017';
-					} else {
-						$f = $p.'$ret = SG_Rien::' . $nom . $prm . ';//018';
-					}
-				} elseif (method_exists('SG_Rien','FN_' . $nom)){ // soit c'est une méthode applicative de SG_Rien ?
-					if ($prm === '') {
-						$f = $p.'$rien = new SG_Rien();$ret = $rien -> FN_' . $nom . '();//059';
-					} else {
-						$f = $p.'$rien = new SG_Rien();$ret = $rien -> FN_' . $nom . $prm . ';//060';
-					}
+				if($nom === '') { // cas impossible
+					$this -> STOP($i, '0137');
 				} else {
 					if($mot['Type']==='MotSysteme') { // soit new d'une classe d'objet SynerGaïa
 						$c = 'SG_' . $nom; // SG_Dictionnaire::getClasseObjet('@' . $nom);
 						$nom = '@' . $nom;
-						if (class_exists($c)) {
-							if ($prm === '') {
-								$prm = '()';
-							}
-							$f = $p.'$ret = new ' . $c . $prm . ';//019';
-						} else {
-							$this -> positionerreur = $i;
-							$erreur = new SG_Erreur('0174', $nom); // TODO
-							throw new Exception ($erreur -> getMessage());
-						}
 					} else { // soit c'est un type d'objet de l'application
-						$c = $nom; //SG_Dictionnaire::getClasseObjet($nom);
-						if (SG_Dictionnaire::isObjetDocument($nom) === true) {
-							if ($prm === '') {
-								$f = $p.'	$ret = new ' . $c . '();//068';
-							} else {
-								$f = $p.'	$ret = SG_Rien::Chercher(\'' . $c . '\', ' . $prm . ');//020';
-								$f.= $p.'	if (sizeof($ret -> elements) === 1) {'.$p.'	$ret = $ret -> elements[0];'.$p.'}';
+						$c = $nom;
+					}
+					if (class_exists($c)) { // une classe existe : on la privilégie car c'est l'initialisation d'un objet standard
+						if ($prm === '' or SG_Dictionnaire::isObjetDocument($nom) === false) {
+							$php.= $p.'$ret = new ' . $c . '(' . $prm . ');//021';
+							if (isset($param['code'])) {
+								$php.= $p.'$ret -> code = \'' . $param['code'] . '\';';
 							}
-						} else {
-							if (substr($c, 0, 1) === '$') {
-								$f = $p.'	$ret = new SG_Erreur(\'0160\',\''. $c . '\');//021';
-							} else {
-								$f = $p.'	if (class_exists(\'' . $c . '\')) {//056';
-								if ($prm === '') {
-									$f.= $p.'		$ret = new ' . $c . '();//022';
+						} else { // si c'est un document, le ou les paramètres sont des codes
+							if ($nbprm === 1) { // recherche d'un document par code
+								// si SG_Parametre, on crée si pas trouvé
+								if ($nom === SG_Parametre::TYPESG) {
+									$creer = 'true';
 								} else {
-									$f.= $p.'		$ret = new ' . $c . $prm . ';//055';
+									$creer = 'false';
 								}
-								$f.= $p.'	} else {//057';
-								$f.= $p.'		$ret = new SG_Erreur(\'0170\',\''. $c . '\');';
-								$f.= $p.'	}';
+								$php.= $p.'$ret = $_SESSION[\'@SynerGaia\'] -> sgbd -> getObjetParCode(\'\', \'' . $nom . '\', ' . $prm . ', true, ' . $creer . ');//019';
+							} elseif ($nbprm === 2) { // recherche d'une collection entre 2 codes
+								$php.= $p.'$ret = $_SESSION[\'@SynerGaia\'] -> sgbd -> getCollectionObjetsParCode(\'' . $nom . '\', ' . $prm . ');//077';
+							} else {
+								$this -> STOP($i, '0240', $nom); // Trop de paramètres
 							}
 						}
-					}
-					if($c === '') { // cas impossible
-						$ret['Erreur'] = SG_Libelle::getLibelle('0137', true, $nom);
-					}
-				}
-				if ($prm === '') {
-					// propriété locale de la formule (variable)
-					if (substr($nomsyst,0,1) === '$') { // paramètre de la formule
-						$novariable = intval(substr($nomsyst,1)) - 1;
-						$php.= $p.'if (isset($contexte[' . $novariable . '])) {//067';
-						$php.= $p.'	$ret = $contexte[' . $novariable . '];';
-						$php.= $p.'} elseif (isset($this -> proprietes[\'' . $nomsyst . '\'])) {';
 					} else {
-						$php.= $p.'if (isset($this -> proprietes[\'' . $nomsyst . '\'])) {//023';
+						if ($prm === '') { // pas de paramètres : sans doute propriété locale de la formule (variable)
+							if (substr($nomsyst,0,1) === '$') { // paramètre de la formule
+								$novariable = intval(substr($nomsyst,1)) - 1;
+								$php.= $p.'$ret = new SG_Texte();//079';
+								$php.= $p.'if (isset($contexte[' . $novariable . '])) {';
+								$php.= $p.'	$ret = $contexte[' . $novariable . '];';
+								$php.= $p.'} elseif (isset($o -> contexte[' . $novariable . '])) {';
+								$php.= $p.'	$ret = $o -> contexte[' . $novariable . '];';
+								$php.= $p.'} elseif (isset($this -> proprietes[\'' . $nomsyst . '\'])) {';
+							} else {
+								$php.= $p.'$ret = new SG_Erreur(\'0251\', \'' . $nomsyst .'\');//078';
+								$php.= $p.'if (isset($this -> proprietes[\'' . $nomsyst . '\'])) {';
+							}
+							$php.= $p.'	$ret = $this -> proprietes[\'' . $nomsyst . '\'];';
+							if ($nomsyst !== $nom) {
+								$php.= $p.'} elseif (isset($this -> proprietes[\'' . $nom . '\'])) {';
+								$php.= $p.'	$ret = $this -> proprietes[\'' . $nom . '\'];';
+							}
+							// fin
+							$php.= $p.'}';// else {' . $f .$p.'}'.PHP_EOL;	
+						} else {
+							$this -> STOP($i, '0174', $nom); // classe inexistante.. on ne voit pas
+						}
 					}
-					$php.= $p.'	$ret = $this -> proprietes[\'' . $nomsyst . '\'];';
-					if ($nomsyst !== $nom) {
-						$php.= $p.'} elseif (isset($this -> proprietes[\'' . $nom . '\'])) {';
-						$php.= $p.'	$ret = $this -> proprietes[\'' . $nom . '\'];';
-					}
-					// méthode de la classe d'objet
-					$php.= $p.'} else {' . $f .$p.'}'.PHP_EOL;					
-					$php.= $p.'if ($ret === \'\' or $ret === null) {$ret = new SG_Texte();} //069';
-				} else {
-					$php.= $param['php'] . $f;
+					$php.= $p.'if (is_null($ret) or $ret === \'\') {$ret = new SG_Texte();} //069';
+					$php.= $p.'if (getTypeSG($ret) === \'@Erreur\' and $ret -> gravite >= SG_Erreur::ERREUR_STOP){$this->STOP($ret);}';
 				}
-				$ret['Longueur'] = $longueur;
 			}
+			$ret['Longueur'] = $longueur;
+			$ret['php'] = $php;
 		}
-		$ret['php'] = $php;
 		$this -> position = $pDebut + $longueur;
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Parametres : instructions séparées par des virgules donnant un tableau de formules
-	* @param integer $pDebut début de la partie de phrase à analyser
-	* @return array la première fonction reconnue ou erreur
-	**/
-	function Parametres($pDebut) {
+
+	/**
+	 * Parametres : instructions séparées par des virgules donnant un tableau de formules
+	 * Le n° de paramètre indique un paramètre qui peut être une branche (@Bouton, @Clic, etc)
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.6 SG_Formule->preparer ; $pNoParm
+	 * @param integer $pDebut début de la partie de phrase à analyser
+	 * @param integer $pNoParm n° du paramètre qui peut être une branche (par défaut 0 : aucun)
+	 * @return array la première fonction reconnue ou erreur
+	 */
+	function Parametres($pDebut, $pNoParm = 0) {
 		$this -> testerBoucle('Parametres', $pDebut);
 		$i = $pDebut + $this -> sauterEspaces($pDebut);
 		$ret = false;
+		$longueur = 0;
 		if ($this -> phrase[$i] === '(') {
 			$i++;
 			$ifin = strlen($this -> phrase) - 1;
 			$detail = array();
 			$erreur = '';
-			$longueur = 0;
 			$ret = array('Type' => 'Parametres', 'Mot' => '', 'php'=>'', 'Longueur' => 99999);
 			$php = '';
+			$noparm = 1;
 			while ($i <= $ifin) {
 				// skip spaces
 				$n = $this -> sauterEspaces($i);
@@ -839,61 +1006,75 @@ class SG_Compilateur extends SG_Objet{
 				if ($c === ')') {
 					break; //fin des paramètres
 				} elseif ($c === '|' or $c === '>') {
-					break; // fin de bloc : on laisse traiter par la fonction appelante
+					break; // fin de bloc : on laisse traiter par la fonction appelante (normalement c'est une erreur !!)
 				} elseif ($c === ',') {
 					$mot = array('Type' => 'Virgule', 'Mot' => ',', 'Longueur' => 1 );
+					$noparm++;
 				} elseif ($c === ';') {
 					$mot = array('Type' => 'PointVirgule', 'Mot' => ';', 'Longueur' => 1 );
 				} else {
-					$no = '$p' . $this -> noformule;
-					$mot = $this -> SuiteInstructions($i, ','); // chaque instruction s'arrête sur une virgule
-					if (getTypeSG($mot) === '@Erreur') {
-						break;
-					} elseif (isset($mot['Erreur'])) {
-						$erreur = $mot['Erreur'];
-						break;				
-					} else {
-						// écriture de la fonction du paramètre
-						$fn = true;
-						$txt = '';
-						$no = '$p' . $this -> noformule;
-						$p = PHP_EOL . '		' . $no;
-						// écritre du titre (pour les entête de colonnes notamment)
-						if(isset($mot['Erreur'])){
-							$ret['Erreur'] = $mot['Erreur'];
+					if ($noparm === $pNoParm) {
+						// le paramètre peut être une branche à exécuter
+						$mot = $this -> Branche($i,',');
+						if ($mot instanceof SG_Erreur) {
 							break;
-						} elseif (!isset($mot['titre']) and ($mot['Type'] === 'Nombre' or $mot['Type'] === 'ChaineEntreQuotes')) {
-							// résultat direct Nombre ou Chaine
-							// TODO traiter les dates
-							$php.= $mot['php'];
-							$php.= PHP_EOL . '		' . $no . ' = $ret;//065';
-						} else {
-							// prépa de la @Formule du paramètre pour la fonction
-							$php.= PHP_EOL.$p. ' = new SG_Formule();//024';
-							$php.= $p . ' -> fonction = \'fn' . $this -> noformule . '\';'; // fonction d'exécution du paramètre
-							$php.= $p . ' -> methode = \'.' . $this -> methode . '\';';
-							$php.= $p . ' -> objet = $objet;' . $p . ' -> setParent($this);';
-							$php.= $p . ' -> operation = $this;';
-							$php.= PHP_EOL . '		if (isset($contexte)) {';
-							$php.= $p . ' 	-> contexte = $contexte;';
-							$php.= PHP_EOL . '		}';
-							if (isset($mot['titre'])) {
-								$php.= $p .' -> titre = \''.addslashes($mot['titre']).'\';//025';
-							}
-							// prépare la fonction elle-même
-							$txt = $mot['php']; //addslashes($mot['php']);
-							$this -> fonctions['fn' . $this -> noformule] = $txt; //$php;
+						} elseif (isset($mot['Erreur'])) {
+							$erreur = $mot['Erreur'];
+							break;				
 						}
-						$detail[] = $this -> noformule;
-						$this -> noformule++;
+						if (isset($mot['php'])) {
+							$this -> appels[] = $mot['php'];
+						}
+						if (isset($mot['code']) and $mot['code'] !== '') {
+							$ret['code'] = $mot['code'];
+						}
+					} else {
+						$mot = $this -> SuiteInstructions($i, ','); // chaque instruction s'arrête sur une virgule
+						if (getTypeSG($mot) === '@Erreur') {
+							break;
+						} elseif (isset($mot['Erreur'])) {
+							$erreur = $mot['Erreur'];
+							break;				
+						}
+						// prépare la fonction elle-même
+						if ($mot['php'] !== '') {
+							$txt = $mot['php'];
+							$this -> fonctions['fn' . $this -> noformule] = $txt;
+						}
 					}
+					// écriture de la fonction du paramètre
+					$fn = true;
+					$txt = '';
+					$no = '$p' . $this -> noformule;
+					$p = PHP_EOL . '		' . $no;
+					// écritre du titre (pour les entête de colonnes notamment)
+					if(isset($mot['Erreur'])){
+						$ret['Erreur'] = $mot['Erreur'];
+						break;
+					} elseif (!isset($mot['titre']) and ($mot['Type'] === 'Nombre' or $mot['Type'] === 'ChaineEntreQuotes')) {
+						// résultat direct Nombre ou Chaine
+						// TODO traiter les dates
+						$php.= $mot['php'];
+						$php.= PHP_EOL . '		' . $no . ' = $ret;//065';
+					} else {
+						// prépa de la @Formule du paramètre pour la fonction
+						$php.= PHP_EOL . '		if (isset($contexte)) {//020';
+						$php.= $p. ' = SG_Formule::preparer(\'' . $this -> noformule . '\',\'' . $this -> methode . '\', $this, $objet, $contexte);';
+						$php.= PHP_EOL . '		} else {';
+						$php.= $p. ' = SG_Formule::preparer(\'' . $this -> noformule . '\',\'' . $this -> methode . '\', $this, $objet);';
+						$php.= PHP_EOL . '		}';
+						if (isset($mot['titre'])) {
+							$php.= $p .' -> titre = \''.self::addslashes($mot['titre']).'\';';
+						}
+					}
+					$detail[] = $this -> noformule;
+					$this -> noformule++;
 				}
 				$longueur += $mot['Longueur'];
 				$i += $mot['Longueur'];
 			}
 			if ($c !== ')') { // mal terminé
-				$erreur = new SG_Erreur('0169', $pDebut);
-				throw new Exception ($erreur -> getMessage());
+				$this -> STOP($i, '0169', strval($pDebut) . ' : trouvé ' . $c);
 			} else {
 				$i++; // sauter la parenthèse fermante
 			}
@@ -909,11 +1090,15 @@ class SG_Compilateur extends SG_Objet{
 		$this -> position = $i;
 		return $ret;
 	}
-	/** 1.0.6 ; 2.1 param 2
-	* BlocParentheses : recherche la phrase entre parenthèses
-	* @param integer $idebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
-	* @return le test ou false si pas trouvé de parenthèse fermante
-	**/
+
+	/**
+	 * BlocParentheses : recherche la phrase entre parenthèses
+	 * @since 1.0.6
+	 * @version 2.1 param 2
+	 * @param integer $pDebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
+	 * @param string $pContenu type de contenu ('B' branche 'C'
+	 * @return array|boolean le test ou false si pas atrouvé de parenthèse fermante
+	 */
 	function BlocParentheses($pDebut = 0, $pContenu = 'B') {
 		$ret = $this -> blocFerme($pDebut, '(', ')', $pContenu);
 		if(!isset($ret['Erreur'])) {
@@ -924,10 +1109,20 @@ class SG_Compilateur extends SG_Objet{
 		}
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 addslashes -> str_replace ; try
-	* Crée une classe SG_Operation à partir d'un modèle opération compilé
-	**/
+
+	/** 
+	 * Crée une classe SG_Operation à partir d'un modèle opération compilé
+	 * Le résultrat est stocké dans ../var de l'application
+	 * @since 2.1
+	 * @version 2.3 addslashes -> str_replace ; try
+	 * @param string $pNom
+	 * @param string $pFormule
+	 * @param string $pPHP
+	 * @param string $pPrefixe
+	 * @return boolean|SG_Erreur le retour de l'enregistrement du modèle d'opération
+	 */
 	function compilerOperation($pNom = '', $pFormule = '', $pPHP = '', $pPrefixe = 'MO_') {
+		$this -> erreur = '';
 		try {
 			$ret = false;
 			$php = '<?php defined("SYNERGAIA_PATH_TO_ROOT") or die(\'403.14 - Directory listing denied.\');//026' . PHP_EOL;
@@ -940,12 +1135,12 @@ class SG_Compilateur extends SG_Objet{
 			$p = PHP_EOL . '		';
 			$php.= PHP_EOL . '	function Formule() {//064'.$p.'return new SG_Texte(\'' . str_replace('\'', '\\\'', $pFormule) . '\');'.PHP_EOL.'	}'.PHP_EOL;
 			//$php.= '	/**' . PHP_EOL . $pFormule . PHP_EOL . '	**/'.PHP_EOL;
-			$php.= '	function traiterSpecifique($etape = \'\', $typeres=\'\') {';
+			$php.= '	function traiterSpecifique($etape = \'\', $typeres=\'\') {//023';
 			$php.= $p . '$this -> rien = new SG_Rien();';
 			$php.= $p . '$ret = false;';
 			$php.= $pPHP;
 			if( $this -> erreur !== '') {
-				$php.= $p.'$resultat = new SG_Erreur(\'' . str_replace('\'', '\\\'', $this -> erreur) . '\');//027';
+				$php.= $p.'$resultat = new SG_Erreur(\'' . str_replace('\'', '\\\'', SG_Texte::getTexte($this -> erreur)) . '\');//027';
 			}
 			$php.= $p . 'return $resultat;' . PHP_EOL . '	}//028';
 			// etapes
@@ -957,18 +1152,24 @@ class SG_Compilateur extends SG_Objet{
 				$php.= PHP_EOL.'	function ' . $nom .'($objet) {//029' . $texte . $p . 'return	$ret;//045'.PHP_EOL.'	}' . PHP_EOL;
 			}
 			$php.= PHP_EOL . '}//037' . PHP_EOL . '?>';
-			$ret = file_put_contents(SYNERGAIA_PATH_TO_APPLI . '/var/' . $pPrefixe . $pNom . '.php', $php);	
+			$ret = file_put_contents(SYNERGAIA_PATH_TO_APPLI . '/var/' . $pPrefixe . $pNom . '.php', $php);
 		} catch (Exception $e) {
 			$ret = $this -> catchErreur($e);
 		}											
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 try
-	* Crée une classe spécifique à l'objet
-	* @param (string) $pNom : nom de l'objet SynerGaïa à compiler
-	**/
+
+	/**
+	 * Crée une classe spécifique à l'objet
+	 * @since 2.1 ajout
+	 * @version 2.3 try
+	 * @version 2.6 err 0294
+	 * @param (string) $pNom : nom de l'objet SynerGaïa à compiler
+	 */
 	function compilerObjet($pNom = '') {
 		$ret = false;
+		$this -> erreur = '';
+		$lieuerreur = 'objet';
 		try {
 			// si nécessaire, lire l'objet
 			if (is_string($pNom)) {
@@ -978,7 +1179,6 @@ class SG_Compilateur extends SG_Objet{
 				$objet = $pNom;
 				$nom = $objet -> getValeur('@Code','inconnu');
 			}
-			
 			// créer l'entête de la classe (déduire la class Extends et le type général)
 			$php = '<?php defined("SYNERGAIA_PATH_TO_ROOT") or die(\'403.14 - Directory listing denied.\');//030' . PHP_EOL;
 			$php.= '/** SynerGaia ' . SG_SynerGaia::VERSION . ' (see AUTHORS file)' . PHP_EOL;
@@ -1001,6 +1201,7 @@ class SG_Compilateur extends SG_Objet{
 			$proprietes = SG_Dictionnaire::getProprietesObjet($nom,'', true);
 			foreach($proprietes as $nompropriete => $modele) {
 				$propriete = SG_Dictionnaire::getPropriete($nom, $nompropriete);
+				$lieuerreur = $nompropriete;
 				if ($propriete === '') {
 					$ret = new SG_Erreur('0162', $nompropriete);
 				} else {
@@ -1010,106 +1211,138 @@ class SG_Compilateur extends SG_Objet{
 					if($vd !== '') {
 						$txt = $this -> compilerPhrase($vd, $nompropriete . '_defaut');
 						if ($this -> erreur === '') {
-							$php.= '	/** //032' . PHP_EOL;
+							$php.= PHP_EOL . '	/** //032' . PHP_EOL;
 							$php.= '	* @formula : ' . $vd . PHP_EOL;
 							$php.= '	**/' . PHP_EOL;
 							$php.= $txt;
 						} else {
-							$ret = new SG_Erreur($this -> erreur . ' sur ' . $nompropriete);
+							$ret = new SG_Erreur(SG_Texte::getTexte($this -> erreur) . ' sur ' . $nompropriete);
 						}
 					}
 					$vp = $propriete -> getValeur('@ValeursPossibles', '');
 					if($vp !== '') {
 						$txt = $this -> compilerPhrase($vp, $nompropriete . '_possibles');
 						if ($this -> erreur === '') {
-							$php.= '	/** //033' . PHP_EOL;
+							$php.= PHP_EOL . '	/** //033' . PHP_EOL;
 							$php.= '	* @formula : ' . $vp . PHP_EOL;
 							$php.= '	**/' . PHP_EOL;
 							$php.= $txt;
 						} else {
-							$ret = new SG_Erreur($this -> erreur . ' sur ' . $nompropriete);
+							$ret = new SG_Erreur(SG_Texte::getTexte($this -> erreur) . ' sur ' . $nompropriete);
 						}
 					}
 				}
 			}
 			// lire les méthodes et chercher les formules d'action
-			$methodes = $_SESSION['@SynerGaia'] -> sgbd -> getMethodesObjet($nom);	
+			$methodes = $_SESSION['@SynerGaia'] -> sgbd -> getMethodesObjet($nom);
 			foreach($methodes -> elements as $methode) {
-				$action = SG_Dictionnaire::getActionMethode($nom, $methode['nom'], true);
-				if($action !== '') {
-					$txt = $this -> compilerPhrase($action, 'FN_' . $methode['nom']);
-					if (getTypeSG($txt) === '@Erreur') {
-						$ret = $txt;
-					} elseif ($this -> erreur === '') {
-						$php.= '	/** //034' . PHP_EOL;
-						$php.= '	* @formula : ' . $action . PHP_EOL;
-						$php.= '	**/' . PHP_EOL;
-						$php.= $txt;
-					} else {
-						$ret = new SG_Erreur($this -> erreur . ' sur ' . $methode['nom']);
+				if (! isset($methode['nom'])) {
+					$this -> STOP(0,$nom,'méthode incomplète sur ' . $nom);
+				} else {
+					$action = SG_Dictionnaire::getActionMethode($nom, $methode['nom'], true);
+					$lieuerreur = $methode['nom'];
+					if($action !== '') {
+						$txt = $this -> compilerPhrase($action, 'FN_' . $methode['nom']);
+						if (getTypeSG($txt) === '@Erreur') {
+							$ret = $txt;
+						} elseif ($this -> erreur === '') {
+							$php.= PHP_EOL . '	/** //034' . PHP_EOL;
+							$php.= '	* @formula : ' . $action . PHP_EOL;
+							$php.= '	**/' . PHP_EOL;
+							$php.= $txt;
+						} else {
+							$ret = new SG_Erreur(SG_Texte::getTexte($this -> erreur) . ' sur ' . $methode['nom']);
+						}
 					}
 				}
 			}
 			// fonctions associées
 			$p = PHP_EOL . '		';
 			foreach ($this -> fonctions as $id => $texte) {
-				$php.= PHP_EOL.'	function ' . $id .'($objet) {//046' . $texte . $p . 'return	$ret;'.PHP_EOL.'	}//035' . PHP_EOL;
+				$php.= PHP_EOL.'	function ' . $id .'($objet, $contexte = null) {//046';
+				$php.= $texte;
+				$php.= $p . 'return	$ret;//035'.PHP_EOL.'	}' . PHP_EOL;
 			}
 			$php.= PHP_EOL . '}//036' . PHP_EOL . '?>';
 			$ret = file_put_contents(SYNERGAIA_PATH_TO_APPLI . '/var/' . $nom . '.php', $php);
 		} catch (Exception $e) {
-			$ret = $this -> catchErreur($e);
+			$cpl = $this -> catchErreur($e);
+			if (! $this -> erreur instanceof SG_Erreur) {
+				$this -> erreur = new SG_Erreur('0294', $lieuerreur . ' : ' . $cpl);
+			} else {
+				$this -> erreur -> trace = $cpl;
+			}
+			$ret = $this -> erreur;
 		}
 		return $ret;
 	}
-	/** 1.0.6
+
+	/**
 	* BlocAccolades : recherche la phrase entre parenthèses
-	* @param integer $idebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
-	* @return le test ou false si pas truvé de parenthèse fermante
+	* @since 1.0.6
+	* @param integer $pDebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
+	* @return array|SG_Erreur le test ou false si pas trouvé de parenthèse fermante
 	**/
 	function BlocAccolades($pDebut = 0) {
 		return $this -> blocFerme($pDebut, '{', '}');
 	}
-	/** 1.0.6
-	* BlocCrochets : recherche la phrase entre crochets
-	* @param integer $idebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
-	* @return le test ou false si pas truvé de parenthèse fermante
-	**/
+
+	/**
+	 * BlocCrochets : recherche la phrase entre crochets
+	 * @since 1.0.6
+	 * @param integer $pDebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
+	 * @return array|SG_Erreur le test ou false si pas truvé de parenthèse fermante
+	 */
 	function BlocCrochets($pDebut = 0) {
 		return $this -> blocFerme($pDebut, '[', ']');
 	}
-	/** 1.0.6
-	* ChaineEntreQuotes : extrait une chaine entre quotes
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return array extrait ou null si pas trouvé du tout, ou Erreur si pas 2 double quotes
-	**/
+
+	/**
+	 * ChaineEntreQuotes : extrait une chaine entre quotes
+	 * @since 1.0.6
+	 * @version 2.6 escape \"
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return array extrait ou null si pas trouvé du tout, ou Erreur si pas 2 double quotes
+	 */
 	function ChaineEntreQuotes($pDebut = 0) {
 		$this -> testerBoucle('ChaineEntreQuotes', $pDebut);
 		$ret = false;
 		$i = $pDebut;
 		if ($this -> phrase[$pDebut] === '"') {
 			$ret = array('Type'=>'ChaineEntreQuotes', 'Mot' => '', 'Longueur' => 0);
-			$ipos = strpos($this -> phrase, '"', $i + 1);
+			$ok = false;
+			$ipos = $i + 1;
+			while (! $ok) {
+				$ipos = strpos($this -> phrase, '"', $ipos);
+				if ($ipos === false) {
+					break;
+				}
+				if (substr($this -> phrase, $ipos - 1, 1) === '\\') {
+					$ipos++;
+				} else {
+					$ok = true;
+				}
+			}
 			if ($ipos !== false) {
 				$txt = substr($this -> phrase, $i + 1, $ipos - $i - 1);
 				$ret['Mot'] = $txt;
 				$ret['Longueur'] = strlen($txt) + 2;
-				$ret['php'] = 'new SG_Texte(\'' . addslashes($txt) . '\');//038';
+				$ret['php'] = 'new SG_Texte(\'' . self::addslashes(str_replace('\\"', '"', $txt)) . '\');//038';
 			} else {
-				$ret = new SG_Erreur('0138');
-				$this -> position = $pDebut;
-				throw new Exception($ret -> getMessage());
+				$this -> STOP($i, '0138');
 			}
 			$this -> position += $ret['Longueur'];
 		}
 		return $ret;
 	}
 	
-	/** 1.0.6
-	* Etiquette : recherche soit un chevron seul soit |étiquette>
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string extrait (avec les bornes),  ou null si pas trouvé, ou erreur si pas trouvé la borne fin
-	**/
+	/**
+	 * Etiquette : recherche soit un chevron seul soit |étiquette>
+	 * @since 1.0.6
+	 * @version 2.4 contrôles avant enregistrement
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return string extrait (avec les bornes),  ou null si pas trouvé, ou erreur si pas trouvé la borne fin
+	 **/
 	function Etiquette($pDebut = 0) { 
 		$this -> testerBoucle('Etiquette', $pDebut);
 		$ret = array('Type'=>'Etiquette', 'Mot' => '', 'Longueur' => 0);
@@ -1119,13 +1352,21 @@ class SG_Compilateur extends SG_Objet{
 				$ret['Longueur'] = 1;
 				$ret['Mot'] = '>';
 			} elseif ($this -> phrase[$i] === '|') {
+				// fin de l'étiquette
 				$ipos = strpos($this -> phrase, '>', $i);
 				if ($ipos !== false) {
 					$txt = substr($this -> phrase, $i+1, $ipos - $i-1);
-					$ret['Mot'] = $txt;
 					$ret['Longueur'] = strlen($txt) + 2;
+					$ret['Mot'] = $txt;
+					// rechercher si contrôle avant enregistrement
+					$ictl = strrpos($txt, ':');
+					if ($ictl !== false) {
+						$ret['Mot'] = substr($txt,$ictl+1);
+						$ctl = $this -> Controles($pDebut + 1); // fonction d'exécution des contrôles
+						$this -> fonctions['ctrl_etape_' . ($this -> noetape - 1)] = $ctl['php'];
+					}
 				} else {
-					$ret['Erreur'] = SG_Libelle::getLibelle('0139');
+					$this -> STOP($i, '0139');
 				}
 			}
 			$this -> position += $ret['Longueur'];
@@ -1133,15 +1374,16 @@ class SG_Compilateur extends SG_Objet{
 		return $ret;
 	}
 
-	/** 1.0.6
-	* blocFerme : recherche la phrase entre parenthèses
-	* @param integer $idebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
-	* @param string $pCaracOuvrant : caractère ouvrant le bloc
-	* @param string $pCaracFermant : caractère fermant le bloc
-	* @param string $pTypeContenu : type de contenu (si vide, tout type jusqu'au caractère fermant)
-	* 			'B' branche, 'P' paramètres, 'C' collection
-	* @return null si pas trouvé, le mot si ok,  ou Erreur si pas trouvé de caractère fermant ou intérieur invalide
-	**/
+	/**
+	 * blocFerme : recherche la phrase entre parenthèses
+	 * @since 1.0.6
+	 * @param integer $pDebut début dans la phrase du compilateur (1er caractère au-delà du 1er quote)
+	 * @param string $pCaracOuvrant : caractère ouvrant le bloc
+	 * @param string $pCaracFermant : caractère fermant le bloc
+	 * @param string $pTypeContenu : type de contenu (si vide, tout type jusqu'au caractère fermant)
+	 * 			'B' branche, 'P' paramètres, 'C' collection
+	 * @return null si pas trouvé, le mot si ok,  ou Erreur si pas trouvé de caractère fermant ou intérieur invalide
+	 */
 	function blocFerme($pDebut = 0, $pCaracOuvrant = '(', $pCaracFermant = ')', $pTypeContenu = '') {
 		$this -> testerBoucle('blocFerme', $pDebut);
 		$ret = array('Type' => $this -> formats[$pCaracOuvrant], 'Mot' => '', 'Longueur' => 0);
@@ -1163,20 +1405,20 @@ class SG_Compilateur extends SG_Objet{
 						$ret['php']=$mot['php'];
 					}
 				} else {
-					$ret['Erreur'] = SG_Libelle::getLibelle('0140', true, $pCaracFermant);
+					$ret['Erreur'] = new SG_Erreur('0140', $pCaracFermant);
 				}
 			} elseif ($pTypeContenu === 'B' or $pTypeContenu === 'P' or $pTypeContenu === 'C') {
 				$mot = $this -> tester($i, $pTypeContenu);
 				$ret = $mot;
 			} else {
-				$ret['Erreur'] = SG_Libelle::getLibelle('0141' , true, $pTypeContenu);
+				$ret['Erreur'] = new SG_Erreur('0141', $pTypeContenu);
 			}
 			// est-il correct ?
 			if($mot !== null) {
 				if(getTypeSG($mot) === '@Erreur') {
-					throw new Exception($mot -> getMessage());
+					$this -> STOP($i, $mot);
 				} elseif (isset($mot['Erreur'])) {
-					$ret['Erreur'] = $mot['Erreur'];
+					$this -> STOP($i, $mot['Erreur']);
 				} else {
 					$ret['Mot'] = $mot['Mot'];
 					$ret['Longueur'] = $mot['Longueur'] + 2; // ajouter les caractères de parenthèse
@@ -1186,15 +1428,17 @@ class SG_Compilateur extends SG_Objet{
 				}
 			}
 		} else {
-			$ret['Erreur'] = SG_Libelle::getLibelle('0142', true, $pCaracOuvrant);
+			$ret['Erreur'] = new SG_Erreur('0142', $pCaracOuvrant);
 		}
 		return $ret;
 	}
-	/** 1.0.6
-	* Terme : extrait un nom (suite de caractères alphanumériques)
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string terme extrait ou boolean false si pas trouvé
-	**/
+
+	/**
+	 * Terme : extrait un nom (suite de caractères alphanumériques)
+	 * @since 1.0.6
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return string terme extrait ou boolean false si pas trouvé
+	 */
 	function Terme($pDebut = 0) {
 		$this -> testerBoucle('Terme', $pDebut);
 		$ret = array('Type'=> 'Terme', 'Mot'=> '');
@@ -1210,7 +1454,7 @@ class SG_Compilateur extends SG_Objet{
 			}
 		}
 		if ($mot === '') {
-			$ret['Erreur'] = SG_Libelle::getLibelle('0143') . ':'.substr($this -> phrase,$idebut,$ifin);
+			$this -> STOP($idebut, '0143', substr($this -> phrase,$idebut,$ifin));
 		} else {
 			$ret['Mot'] = $mot;
 			$ret['Longueur'] = strlen($mot);
@@ -1220,11 +1464,12 @@ class SG_Compilateur extends SG_Objet{
 		return $ret;
 	}
 	
-	/** 1.0.6
-	* Nombre : extrait un nombre (suite de chiffres)
-	* @param integer $pDebut début dans la phrase du compilateur
-	* @return string nombre extrait ou boolean false si pas trouvé
-	**/
+	/**
+	 * Nombre : extrait un nombre (suite de chiffres)
+	 * @since 1.0.6
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return array|SG_Erreur nombre extrait ou boolean false si pas trouvé
+	 */
 	function Nombre($pDebut = 0) {
 		$this -> testerBoucle('Nombre', $pDebut);
 		$ret = array('Type'=>'Nombre', 'Mot'=>'', 'Longueur' => 0);
@@ -1249,22 +1494,27 @@ class SG_Compilateur extends SG_Objet{
 			$longueur++;
 		}
 		if ($mot === '') {
-			$ret['Erreur'] = '0144';
+			$ret['Erreur'] = new SG_Erreur('0144');
 		} else {
 			$ret = array('Type'=>'Nombre', 'Mot'=>$signe . $mot, 'Valeur'=>$mot, 'Signe'=>$signe, 'Longueur' => $longueur);
 			$ret['php'] = 'new SG_Nombre(' . $signe . $mot . ');//039';
 		}
 		return $ret;
 	}
-	/** 2.1.1 isMotSimple
-	* Doit commencer par @, puis alaphanumérique
-	* @return le mot ou vide
-	**/
+
+	/**
+	 * Traite un mot du langage de base de SynerGaïa qui doit commencer par @, puis alphanumérique
+	 * @since 1.0.6
+	 * @version 2.1.1 isMotSimple
+	 * @param integer $pDebut début dans la phrase du compilateur
+	 * @return array|SG_Erreur le mot ou vide
+	 */
 	function MotSysteme($pDebut = 0) {
 		$this -> testerBoucle('MotSysteme', $pDebut);
 		$mot = '';
 		$idebut = $pDebut;
 		$ifin = strlen($this -> phrase) - 1;
+		$ret = array('Type'=>'MotSysteme', 'Mot' => $mot, 'Longueur' => 0);
 		if ($this -> phrase[$idebut] === '@') {
 			for ($i = $idebut + 1; $i <= $ifin; $i++) {
 				$c = $this -> phrase[$i];
@@ -1274,22 +1524,26 @@ class SG_Compilateur extends SG_Objet{
 					$mot .= $c;
 				}
 			}
-		}
-		$ret = array('Type'=>'MotSysteme', 'Mot' => $mot, 'Longueur' => 0);
-		if ($mot === '') {
-			$ret['Erreur'] = SG_Libelle::getLibelle('0145');
+			if ($mot === '') {
+				$this -> STOP($idebut,'0145', substr($this -> phrase,$idebut,$ifin));
+			} else {
+				$ret['Longueur'] = strlen($mot) + 1;
+				$ret['Methode'] = '@' . $mot;
+				$ret['Mot'] = $mot;
+			}
 		} else {
-			$ret['Longueur'] = strlen($mot) + 1;
-			$ret['Methode'] = '@' . $mot;
+			$ret['Erreur'] = '@';
 		}
 		$this -> position += $ret['Longueur'];
 		return $ret;
 	}
-	/** 1.0.6
-	* isAlphameric : Le caractère est une lettre, un chiffre, tiret bas, dollar, arrobase
-	* @param string $c le caractè_re à analyser
-	* @return boolean True or False
-	**/
+
+	/**
+	 * isAlphameric : Le caractère est une lettre, un chiffre, tiret bas, dollar, arrobase
+	 * @since 1.0.6
+	 * @param string $c le caractè_re à analyser
+	 * @return boolean True or False
+	 */
 	function isAlphameric($c) {
 		$orig = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿ';
 		$dest = 'aaaaaaaceeeeiiiidnoooooouuuuybsaaaaaaaceeeeiiiidnoooooouuuyyby';
@@ -1300,31 +1554,36 @@ class SG_Compilateur extends SG_Objet{
 			return false;
 		}
 	}
-	/** 1.0.6
-	* Teste si le caractère $c est bien $cas.
-	* @param string $c caractère à tester
-	* @param string $cas caractère de référence
-	* @return array si ok tableau composé de $type, $c, sinon Erreur
-	**/	
+
+	/**
+	 * Teste si le caractère $c est bien $cas.
+	 * @since 1.0.6
+	 * @param string $c caractère à tester
+	 * @param string $cas caractère de référence
+	 * @param string $type 
+	 * @return array si ok tableau composé de $type, $c, sinon Erreur
+	 */	
 	function Caractere($c, $cas, $type) {
 		$mot = array('Type' => $type, 'Mot' => $c, 'Longueur' => 1);
 		if($c !== $cas) {
-			$ret['Erreur'] = SG_Libelle::getLibelle('0146', true, $cas);
+			$ret['Erreur'] = new SG_Erreur('0146', $cas);
 		}
 		return $mot;
 	}
-	/** 1.0.6
-	* dans la phrase du compilateur, sauter les espaces, les tabulations et les retours de ligne
-	* @param integer $idebut début de la phrase à étudier
-	* @param integer $ifin fin de la phrase
-	* @return integer la longueur des espaces trouvés
-	**/	
+
+	/**
+	 * dans la phrase du compilateur, sauter les espaces, les tabulations et les retours de ligne
+	 * @since 1.0.6
+	 * @version 2.6 sauter tab (ord(9))
+	 * @param integer $pDebut début de la phrase à étudier
+	 * @return integer la longueur des espaces trouvés
+	 */	
 	function sauterEspaces($pDebut = 0) {
 		$ret = 0;
 		$ifin = strlen($this -> phrase);
 		for ($i = $pDebut; $i < $ifin; $i++) {
 			$c = $this -> phrase[$i];
-			if ($c === ' ' or $c === '\n' or ord($c) === 13 or $c === '\t' or $c === PHP_EOL or ord($c) === 0 or ord($c) === 12) {
+			if ($c === ' ' or $c === '\n' or ord($c) === 13 or $c === '\t' or $c === PHP_EOL or ord($c) === 0 or ord($c) === 12 or ord($c) === 9) {
 				$ret++;
 			} else {
 				break;
@@ -1332,21 +1591,33 @@ class SG_Compilateur extends SG_Objet{
 		}
 		return $ret;
 	}
-	// pour éviter les boucles en compilation (//TODO faire disparaitre ce besoin...
+
+	/**
+	 * pour éviter les boucles en compilation
+	 * @todo faire disparaitre ce besoin...
+	 * @since 2.1
+	 * @param string $ou lieu où est fait le test
+	 * @param integer $pDebut indice où on en est dans la phrase
+	 * @throws SG_Erreur 0147
+	 * @return boolean
+	 */
 	function testerBoucle($ou = '', $pDebut) {
 		$ret = false;
 		$this -> niveau ++;
 		if ($this -> niveau > $this -> limiteBoucle) {
-			throw new Exception(SG_Libelle::getLibelle('0147', true, $ou . ' à ' . $pDebut . ' sur ' . strlen($this -> phrase) . ' : ' . $this -> phrase));
+			$this -> STOP(0, new SG_Erreur('0147', ': vers ' . $ou)); 
 		}
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 $contexte
-	* Compile une phrase pour les formules de valeurs possibles, valeurs par défaut ou méthodes
-	* @param $pPhrase : la phrase à compiler
-	* @param $pNom : le nom de la fonction qui exécute le php
-	* @param $pStatic (string) : mot 'static ' si la fonction est ainsi (avec un espace au bout !)
-	**/
+
+	/**
+	 * Compile une phrase pour les formules de valeurs possibles, valeurs par défaut ou méthodes
+	 * @since 2.1 ajout
+	 * @version 2.3 $contexte
+	 * @param string $pPhrase la phrase à compiler
+	 * @param string $pNom le nom de la fonction qui exécute le php
+	 * @return array|SG_Erreur
+	 */
 	function compilerPhrase($pPhrase = '', $pNom) {
 		$this -> niveau = 0;
 		$ret = '';
@@ -1364,7 +1635,7 @@ class SG_Compilateur extends SG_Objet{
 		} elseif($mot['Longueur'] === 0) {
 			$ret = new SG_Erreur('0157'); // résultat nul
 		} elseif (isset($mot['Erreur'])) {
-			$ret = new SG_Erreur('0159', $mot['Erreur']);
+			$ret = $mot['Erreur'];
 		} else {
 			if(isset($mot['php'])) {
 				$nom = $pNom;
@@ -1379,18 +1650,20 @@ class SG_Compilateur extends SG_Objet{
 				$ret.= '		$resultat = array();' . PHP_EOL;
 				$ret.= $mot['php'];
 				// si formule, retourner le dernier résultat obtenu
-				$ret.= PHP_EOL.'		if ($resultat === array()) {$resultat = $ret;}//041'.PHP_EOL; 
-				$ret.= '		return $resultat;'.PHP_EOL;
-				$ret.= '	}' . PHP_EOL;
+				$ret.= PHP_EOL.'		return SG_Operation::controlerResultat($resultat,$ret);//041';
+				$ret.= PHP_EOL.'	}';
 			}
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* recherche un titre à l'instruction (commence par un ':'). 
-	* -> position est mis à jour sur le caractère suivant
-	* @return : soit null (pas de titre), soit titre (sans le ':')
-	**/
+
+	/**
+	 * recherche un titre à l'instruction (commence par un ':'). 
+	 * -> position est mis à jour sur le caractère suivant
+	 * @since 2.1 ajout
+	 * @param integer $pDebut indice où démarrer dans la phrase
+	 * @return boolean|string soit null (pas de titre), soit titre (sans le ':')
+	 */
 	function TitreInstruction($pDebut) {
 		$i = $pDebut;
 		$ret = false;
@@ -1413,12 +1686,14 @@ class SG_Compilateur extends SG_Objet{
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* détecte une collection dans une parenthèse (suite d'instructions séparées par des virgules) : ce ne sont pas des paramètres Parametres()
-	* @param $pDebut : la position du curseur
-	* @param $pPremierResultat : premier résultat à entrer dans la collection
-	* @return : la création d'une collection d'objets sinon false
-	**/
+
+	/**
+	 * détecte une collection dans une parenthèse (suite d'instructions séparées par des virgules) : ce ne sont pas des paramètres Parametres()
+	 * @since 2.1 ajout
+	 * @param integer $pDebut : la position du curseur
+	 * @param null|array $pPremierResultat : premier résultat à entrer dans la collection
+	 * @return : la création d'une collection d'objets sinon false
+	 */
 	function Collection($pDebut, $pPremierResultat = null) {
 		$this -> testerBoucle('Collection', $pDebut);
 		$ret = false;
@@ -1440,7 +1715,7 @@ class SG_Compilateur extends SG_Objet{
 			$this -> testerBoucle('Collection', $i);
 			$mot = $this -> Instruction($i);
 			if (getTypeSG($mot) === '@Erreur') {
-				throw new Exception($mot -> getMessage());
+				$this -> STOP($i, $mot);
 			}
 			// calcul de la phrase PHP
 			$php.= $mot['php'] . $p.'	$collec[] = $ret;//043';
@@ -1461,11 +1736,17 @@ class SG_Compilateur extends SG_Objet{
 		$this -> position = $i + $longueur;
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.3 $contexte ; try
-	* Crée un fichier Php complémentaire spécifique à l'objet stocké dans ../vars
-	* @param (string) $pNom : nom de l'objet SynerGaïa à compiler
-	**/
+
+	/**
+	 * Compile un obejt système (au moment des changement de version notamment ou de l'ajout de méthodes spécifiques
+	 * Crée un fichier Php complémentaire spécifique à l'objet stocké dans ../var
+	 * @since 2.1 ajout
+	 * @version 2.3 $contexte ; try
+	 * @param string $pNom : nom de l'objet SynerGaïa à compiler
+	 * @return string|SG_Erreur 
+	 **/
 	function compilerObjetSysteme($pNom = '') {
+		$this -> erreur = '';
 		try {
 			// si nécessaire, lire l'objet
 			if (is_string($pNom)) {
@@ -1475,6 +1756,7 @@ class SG_Compilateur extends SG_Objet{
 				$objet = $pNom;
 				$nom = $objet -> getValeur('@Code','inconnu');
 			}
+			$this -> titre = 'Objet système : ' . $nom;
 			// créer l'entête du fichier
 			$php = '<?php defined("SYNERGAIA_PATH_TO_ROOT") or die(\'403.14 - Directory listing denied.\');//048' . PHP_EOL;
 			$php.= '/** SynerGaia ' . SG_SynerGaia::VERSION . ' (see AUTHORS file)' . PHP_EOL;
@@ -1504,7 +1786,7 @@ class SG_Compilateur extends SG_Objet{
 							$php.= '	**/' . PHP_EOL;
 							$php.= $txt;
 						} else {
-							$ret = new SG_Erreur($this -> erreur . ' sur ' . $nompropriete);
+							$ret = new SG_Erreur(SG_Texte::getTexte($this -> erreur) . ' sur ' . $nompropriete);
 						}
 					}
 					$vp = $propriete -> getValeur('@ValeursPossibles', '');
@@ -1516,7 +1798,7 @@ class SG_Compilateur extends SG_Objet{
 							$php.= '	**/' . PHP_EOL;
 							$php.= $txt;
 						} else {
-							$ret = new SG_Erreur($this -> erreur . ' sur ' . $nompropriete);
+							$ret = new SG_Erreur(SG_Texte::getTexte($this -> erreur) . ' sur ' . $nompropriete);
 						}
 					}
 				}
@@ -1535,7 +1817,7 @@ class SG_Compilateur extends SG_Objet{
 						$php.= '	**/' . PHP_EOL;
 						$php.= $txt;
 					} else {
-						$ret = new SG_Erreur($this -> erreur . ' sur ' . $methode['nom']);
+						$ret = new SG_Erreur(SG_Texte::getTexte($this -> erreur) . ' sur ' . $methode['nom']);
 					}
 				}
 			}
@@ -1552,11 +1834,13 @@ class SG_Compilateur extends SG_Objet{
 		}
 		return $ret;
 	}
-	/** 2.1.1 ajout
-	* isMotSimple : Le caractère est une lettre, un chiffre, tiret bas
-	* @param string $c le caractère à analyser
-	* @return boolean True or False
-	**/
+
+	/**
+	 * isMotSimple : Le caractère est une lettre, un chiffre, tiret bas
+	 * @since 2.1.1 ajout
+	 * @param string $c le caractère à analyser
+	 * @return boolean True or False
+	 */
 	function isMotSimple($c) {
 		$c = strtolower($c);
 		if (($c >= 'a' and $c <= 'z') or ($c >= '0' and $c <= '9') or ($c === '_')) {
@@ -1565,30 +1849,283 @@ class SG_Compilateur extends SG_Objet{
 			return false;
 		}
 	}
-	/** 2.3 ajout
-	* récupère une exception de compliation et la prépare pour l'affichage
-	* @param $e : exception récupérée
-	**/
+
+	/**
+	 * récupère une exception de compliation et la prépare pour l'affichage
+	 * @since 2.3 ajout
+	 * @version 2.6 correction test fin de phrase
+	 * @param $e : exception récupérée
+	 * @return string html à afficher pour documenter l'erreur
+	 * @todo tester erreur de dépassement de fin de phrase
+	 */
 	function catchErreur ($e) {
+		if (get_class($e) === 'Exception') {
+			$erreur = $e -> erreur;
+		} else {
+			$erreur = @unserialize($e -> getMessage());
+		}
+		$ret = '';
 		if ($this -> positionerreur > 0) {
 			$ipos = $this -> positionerreur;
 		} else {
 			$ipos = $this -> position;
 		}
-		$this -> erreur .= '<br>ligne ' . $e -> getLine() . ' : ' . $e -> getMessage();
+		if($ipos > strlen($this->phrase)) {
+			$ipos = strlen($this->phrase) - 1;
+		}
 		$ideb = $ipos - 15;
 		if($ideb < 0) {
 			$ideb = 0;
 		}
 		$ifin = $ipos + 10;
-		if($ifin > strlen($this->phrase)) {
-			$ifin = strlen($this->phrase);
+		if($ifin >= strlen($this->phrase)) {
+			$ifin = strlen($this->phrase) - 1;
 		}
-		$this -> erreur .= ',<br> vers ' . $ipos . ' :  ...' . substr($this -> phrase, $ideb, $ifin - $ideb) . '...';
-		$this -> erreur .= ',<br> dans la phrase :' . $this -> phrase;
-		$this -> erreur .= ',<br>Compilateur : voir ligne ' . $e -> getLine();
-		$ret = new SG_Erreur('\'' . addslashes($this -> erreur) . '\''); 
+		$ret .= 'dans ' . $this -> titre;
+		if (isset($this ->phrase[$ipos])) {
+			$c = $this ->phrase[$ipos];
+		} else {
+			$c = '???';
+		}
+		$ret .= '<br> vers ' . $ipos . ' :  ...' . substr($this -> phrase, $ideb, $ipos - $ideb) . '<span style="font-weight:bold;color:#000;">' . $c . '</span>'. substr($this -> phrase, $ipos + 1, $ifin - $ideb) . '...';
+		$ret .= '<br> dans la phrase :' . $this -> phrase;
+		$ret .= '<br> Erreur lancée par le compilateur à la ligne ' . $e -> getLine();
+		tracer();
+		if(isset($_SESSION['debug'])) {
+			$ret .= '<br><br> === TRACE ===<br>' . implode('<br>',$_SESSION['debug']);
+		}
 		return $ret;
-	} 
+	}
+
+	/**
+	 * ajout des formules de controle de l'étape. Chaque test se fait en deux parties séparées par une virgule :
+	 * la fonction de test, le message envoyé si test est vrai
+	 * @since 2.4 ajout
+	 * @param integer $pDebut indice du début du contrôle dans la phrase
+	 * @return array|SG_Erreur
+	 */
+	function Controles ($pDebut) {
+		$this -> testerBoucle('Controles', $pDebut);
+		$i = $pDebut + $this -> sauterEspaces($pDebut);
+		$ret = false;
+		$ifin = strlen($this -> phrase) - 1;
+		$detail = array();
+		$erreur = '';
+		$longueur = 0;
+		$ret = array('Type' => 'Controles', 'Mot' => '', 'php'=>'', 'Longueur' => 99999);
+		$php = '';
+		$phpAppel = ''; // phrase de l'appel du test
+		$phase = 'test';
+		while ($i <= $ifin) {// on alterne sur test, erreur, test, erreur, etc. jusqu'au ':' ou '>' ou fin
+			// skip spaces
+			$n = $this -> sauterEspaces($i);
+			$longueur+= $n;
+			$i += $n;
+			$c = $this -> phrase[$i];
+			if ($c === ':' or $c === '>') { // Suite Instruction 'avale' le ':' comme titre de colonnes @TODO corriger
+				break; //fin des tests
+			} elseif ($c === ',') {
+				$mot = array('Type' => 'Virgule', 'Mot' => ',', 'Longueur' => 1 );
+			} elseif ($c === ';') {
+				$mot = array('Type' => 'PointVirgule', 'Mot' => ';', 'Longueur' => 1 );
+			} elseif($phase === 'test') {
+				// compilation du test
+				$no = '$p' . $this -> noformule;
+				$mot = $this -> SuiteInstructions($i, ','); // chaque instruction s'arrête sur une virgule
+				if (getTypeSG($mot) === '@Erreur') {
+					$this -> STOP($i, $mot);
+				} elseif (isset($mot['Erreur'])) {
+					$this -> STOP($i, $mot['Erreur']);
+				} elseif (isset($mot['Longueur']) and $mot['Longueur'] === 0) {
+					$this -> STOP($i, '0209');
+				} else {
+					// écriture de la fonction de test
+					$fn = true;
+					$txt = '';
+					$no = '$p' . $this -> noformule;
+					$p = PHP_EOL . '		' . $no;
+					$phpAppel.= PHP_EOL . '		$res = $this -> fn' . $this -> noformule . '($objet);//073';
+					$phpAppel.= PHP_EOL . '		if ($res -> estErreur()) {' . PHP_EOL . '			return $res;';
+					$phpAppel.= PHP_EOL . '		} elseif ($res -> estVrai()) {' . PHP_EOL . '			return new SG_Erreur("", ';// sans code, seule info
+					if(isset($mot['Erreur'])){
+						$ret['Erreur'] = $mot['Erreur'];
+						break;
+					} else {
+						// prépa de la @Formule du paramètre pour la fonction de test
+						$php.= PHP_EOL.$p. ' = new SG_Formule();//072';
+						$php.= $p . ' -> fonction = \'fn' . $this -> noformule . '\';'; // fonction d'exécution
+						$php.= $p . ' -> methode = \'.' . $this -> methode . '\';';
+						$php.= $p . ' -> objet = $objet;' . $p . ' -> setParent($this);';
+						$php.= $p . ' -> operation = $this;';
+						$php.= PHP_EOL . '		if (isset($contexte)) {'. $p . ' -> contexte = $contexte;}';
+						// stocke la fonction elle-même
+						$txt = $mot['php'];
+						$this -> fonctions['fn' . $this -> noformule] = $txt;
+					}
+				}
+				$detail[] = $this -> noformule;
+				$this -> noformule++;
+				$phase = 'msg';			
+			} elseif($phase === 'msg') {
+				// compilation du message d'erreur
+				$no = '$p' . $this -> noformule;
+				$mot = $this -> SuiteInstructions($i, ','); // chaque instruction s'arrête sur une virgule
+				if (getTypeSG($mot) === '@Erreur') {
+					break;
+				} elseif (isset($mot['Erreur'])) {
+					$this -> STOP($i, $mot['Erreur']);
+				} elseif (isset($mot['Longueur']) and $mot['Longueur'] === 0) {
+					$this -> STOP($i, '0210');
+				} else {
+					// écriture de la fonction de message
+					$fn = true;
+					$txt = '';
+					$no = '$p' . $this -> noformule;
+					$p = PHP_EOL . '		' . $no;
+					$phpAppel.= '$this -> fn' . $this -> noformule . '(' . $no . '));//074' . PHP_EOL . '		} else {'; // fin de la formule d'appel
+					$phpAppel.= PHP_EOL . '			$ret = \'\';' . PHP_EOL . '		}';
+					if(isset($mot['Erreur'])){
+						$ret['Erreur'] = $mot['Erreur'];
+						break;
+					} else {
+						// préparation de la @Formule du paramètre pour la fonction de message
+						$php.= PHP_EOL.'	'.$p. ' = new SG_Formule();//075';
+						$php.= $p . ' -> fonction = \'fn' . $this -> noformule . '\';'; // fonction d'exécution
+						$php.= $p . ' -> methode = \'.' . $this -> methode . '\';';
+						$php.= $p . ' -> objet = $objet;' . $p . ' -> setParent($this);';
+						$php.= $p . ' -> operation = $this;';
+						$php.= PHP_EOL . '		if (isset($contexte)) {';
+						$php.= $p . ' -> contexte = $contexte;';
+						$php.= PHP_EOL . '		}';
+						// stocke la fonction elle-même
+						$txt = $mot['php'];
+						$this -> fonctions['fn' . $this -> noformule] = $txt;
+					}
+					$detail[] = $this -> noformule;
+					$this -> noformule++;
+					$phase = 'test';
+				}
+			}
+			$longueur += $mot['Longueur'];
+			$i += $mot['Longueur'];
+		}
+		if ($c !== ':' and $c !== '>') { // mal terminé
+			$this -> STOP($i, '0207');
+		} elseif ($phase === 'msg') {// manque message
+			$this -> STOP($i, '0208');
+		} else {
+			$i++; // sauter la parenthèse fermante
+		}
+		$ret['Detail'] = $detail;
+		$ret['php'] = $php . $phpAppel;//$php;
+		if (isset($mot['Erreur'])) {
+			$ret['Erreur'] = $mot['Erreur'];
+		}
+		if ($ret !== false) {
+			$ret['Longueur'] = $i - $pDebut;
+		}
+		$this -> position = $i;
+		return $ret;
+	}
+
+	/**
+	 * Arrete la compilation à cet endroit
+	 * @since 2.4 ajout
+	 * @param integer $pPosition
+	 * @param string $pCode
+	 * @param string $pInfos
+	 * @throws Exception
+	 */
+	function STOP($pPosition, $pCode, $pInfos = '') {
+		tracer();
+		$this -> positionerreur = $pPosition;
+		if ($pCode instanceof SG_Erreur) {
+			$this -> erreur = $pCode;
+			$code = $pCode -> no;
+		} else {
+			$this -> erreur = new SG_Erreur($pCode, $pInfos);
+			$code = $pCode;
+		}
+		$e = new Exception($code);
+		$e -> erreur = $this -> erreur;
+		throw $e;
+	}
+	
+	/**
+	 * Phrase pour la FonctionInitiale
+	 * @since 2.4 ajout
+	 * @version 2.6 cas de SG_Parametre
+	 * @param string $pref
+	 * @param integer $i
+	 * @param string $classe
+	 * @param string $nom
+	 * @param integer $nbprm
+	 * @param string $prm
+	 * @return string le paragraphe de php
+	 */
+	function getFonctionInitiale ($pref, $i, $classe, $nom, $nbprm, $prm) {
+		$ret = '';
+		if (class_exists($classe)) {
+			if ($prm === '' or SG_Dictionnaire::isObjetDocument($nom) === false) {
+				$ret = $pref.' $ret = new ' . $classe . '(' . $prm . ');//076';
+			} else { // si c'est un document, le ou les paramètres sont des codes
+				if ($nbprm === 1) { // recherche d'un document par code
+					// si SG_Parametre, on crée si pas trouvé
+					if ($nom === SG_Parametre::TYPESG) {
+						$creer = 'true';
+					} else {
+						$creer = 'false';
+					}
+					$ret = $pref.'$ret = $_SESSION[\'@SynerGaia\'] -> sgbd -> getObjetParCode(\'\', \'' . $nom . '\', ' . $prm . ', true, ' . $creer . ');//080';
+				} elseif ($nbprm === 2) { // recherche d'une collection entre 2 codes
+					$ret = $pref.'$ret = $_SESSION[\'@SynerGaia\'] -> sgbd -> getCollectionObjetsParCode(\'' . $nom . '\', ' . $prm . ');//081';
+				} else {
+					$this -> STOP($i, '0240', $nom); // Trop de paramètres
+				}
+				$ret.= $pref.'if (getTypeSG($ret) === \'@Erreur\'){SG_Operation::STOP($ret);}';
+			}
+		} else {
+			$this -> STOP($i, '0174', $nom); // classe inexistante
+		}
+		return $ret;
+	}
+
+	/** 
+	 * Calcule un code d'étape (br99_99)
+	 * 
+	 * @since 2.6
+	 * @param integer $pN indice dans la phrase où commencer la traduction
+	 * @return false
+	 * @todo à terminer
+	 **/
+	function format99($pN) {
+		return substr('00' . strval($pN), -2); 
+	}
+
+	/**
+	 * Ajoute un slash devant ' si pas déjà fait
+	 * 
+	 * @since 2.6
+	 * @param string $pPhrase la phrase à traiter
+	 * @return string la phrase après traitement
+	 */
+	static function addslashes($pPhrase = '') {
+		$ret = str_replace("'", "\'", $pPhrase);
+		return $ret;
+	}
+
+	/**
+	 * Exécuté si on rencontre le mot @Arreter dans une branche
+	 * Permet d'arrêter à cet endroit l'étape en cours (éventuellement la boucle en cours)
+	 * Si un paramêtre est fourni, il constituera la valeur retournée et affichée
+	 * 
+	 * @since 2.6
+	 * @param any|SG_Formule
+	 * @return
+	 */
+	static function Arreter($pDebut) {
+		$ret = 'return SG_Rien::ARRET;//056';
+		return $ret;
+	}
 }
 ?>
