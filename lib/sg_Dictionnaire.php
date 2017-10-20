@@ -1,36 +1,49 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* Classe SynerGaia de gestion d'un dictionnaire SynerGaia
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SynerGaia fichier de gestion du @Dictionnaire
+ * @todo rendre indépendant de la casse via tableau de traduction nomminsucule => méthode ou propriété synergaia
+ */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Dictionnaire_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Dictionnaire_trait.php';
 } else {
+	/** trait vide par défaut pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Dictionnaire_trait{};
 }
+
+/**
+ * Classe SynerGaia de gestion du dictionnaire SynerGaia
+ * @version 2.6
+ */
 class SG_Dictionnaire extends SG_Base {
-	// Préfixe des objets système
-	const PREFIXE_SYSTEME = '@';
 
-	// Type SynerGaia
+	/** string Type SynerGaia '@Dictionnaire' */
 	const TYPESG = '@Dictionnaire';
-	public $typeSG = self::TYPESG;
 
-	// Code de la base
+	/** string Code de la base de stockage */
 	const CODEBASE = 'synergaia_dictionnaire';
 
-	// Construction de l'objet
+	/** string Préfixe des objets système */
+	const PREFIXE_SYSTEME = '@';
+
+	/** string Type SynerGaia */
+	public $typeSG = self::TYPESG;
+
+	/**
+	 * Construction de l'objet
+	 */
 	function __construct() {
 	}
 
-	/** 2.1 test pour opérations, @Repertoire, base=objet si vide, $pRefresh ; 2.2 @Photo
-	*  1.1 : SG_DictionnaireBase, SG_DictionnaireVue ; 1.3.0 SG_SiteInternet
-	* Détermine le code de la base à partir du code d'un objet
-	*
-	* @param string $pCodeObjet code de l'objet cherché
-	* @return string code de la base stockant l'objet cherché
-	* TODO vérifier que cela fonctionne pour les classes d'opération après 2.1
-	*/
+	/**
+	 * Détermine le code de la base à partir du code d'un objet
+	 * @version 2.2 @Photo
+	 * @version 2.6 @Paquet
+	 * @param string $pCodeObjet code de l'objet cherché
+	 * @param boolean $pRefresh faut-il forcer le recalcul ? false par défaut
+	 * @return string code de la base stockant l'objet cherché
+	 * @todo vérifier que cela fonctionne pour les classes d'opération après 2.1
+	 */
 	static function getCodeBase($pCodeObjet = '', $pRefresh = false) {
 		$codeObjet = SG_Texte::getTexte($pCodeObjet);
 		$codeBase = '';
@@ -62,6 +75,9 @@ class SG_Dictionnaire extends SG_Base {
 			case '@Formulaire' :
 				$codeBase = SG_Formulaire::CODEBASE;
 				break;
+			case '@Paquet':
+				$codeBase = SG_Paquet::CODEBASE;
+				break;
 			case '@Photo' :
 				$codeBase = SG_Photo::CODEBASE;
 				break;
@@ -80,9 +96,8 @@ class SG_Dictionnaire extends SG_Base {
 					} else {
 						// Pas en cache : calcule la valeur
 						// TODO : chercher le codeBase dans les parents si besoin
-						$collecObjets = SG_Rien::Chercher('@DictionnaireObjet', $codeObjet);
-						if ($collecObjets -> Compter() -> toInteger() !== 0) {
-							$docObjet = $collecObjets -> Premier();
+						$docObjet = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE, '@DictionnaireObjet', $codeObjet);
+						if (getTypeSG($docObjet) !== '@Erreur') {
 							$codeBase = $docObjet -> getValeur('@Base', strtolower($codeObjet));
 						}
 						// Enregistre en cache
@@ -94,15 +109,15 @@ class SG_Dictionnaire extends SG_Base {
 		return $codeBase;
 	}
 
-	/** 2.1 @Repertoire ; 2.3 @Cadre, @Dossier
-	* 1.1 ajouts d'objets SG_DictionnaireBase, SG_DictionnaireVue, objets Domino ; 1.3.4 @Fichiers @Dates
-	* Détermine si l'objet demandé est un objet systeme (codé) 
-	* PENSER A VIDER LE CACHE EN CAS DE MODIFICATION !!
-	*
-	* @param string $pTypeObjet objet demandé
-	*
-	* @return boolean objet systeme
-	*/
+	/**
+	 * Détermine si l'objet demandé est un objet systeme (codé) 
+	 * PENSER A VIDER LE CACHE EN CAS DE MODIFICATION !!
+	 * @version 2.6 @Periode
+	 * @version 2.7 @Couleur
+	 * @param string $pTypeObjet objet demandé
+	 * @return boolean objet systeme
+	 * @todo voir cas des noms de variables identiques à des noms d'objets système ??
+	 */
 	static function isObjetSysteme($pTypeObjet = '') {
 		$ret = false;
 		$codeObjet = $pTypeObjet;
@@ -155,6 +170,7 @@ class SG_Dictionnaire extends SG_Base {
 				case '@Config' :
 				case '@Connexion' :
 				case '@CouchDB' :
+				case '@Couleur' :
 				case '@Dates' :
 				case '@DominoDB' :
 				case '@Dossier' :
@@ -166,6 +182,7 @@ class SG_Dictionnaire extends SG_Base {
 				case '@Graphique' :
 				case '@HTML' :
 				case '@Icone' :
+				case '@IDDoc' :
 				case '@Image' :
 				case '@Import' :
 				case '@Installation' :
@@ -182,11 +199,13 @@ class SG_Dictionnaire extends SG_Base {
 				case '@PageInternet' :
 				case '@Paquet' :
 				case '@Parametre' :
+				case '@Periode':
 				case '@Personne' :
 				case '@Photo';
 				case '@Profil' :
 				case '@Repertoire' :
 				case '@Rien' :
+				case '@Rythme' :
 				case '@SiteInternet' :
 				case '@SynerGaia' :
 				case '@Table' :
@@ -202,7 +221,6 @@ class SG_Dictionnaire extends SG_Base {
 					$ret = true;
 					break;
 				default :
-				// TODO voir cas des noms de variables identiques à des noms d'objets système ??
 					if(SG_Operation::isOperation($codeObjet)) {
 						$ret = true;
 					}
@@ -212,24 +230,22 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $ret;
 	}
-	/** 1.0.5
-	 * Retourne un objet @DictionnaireObjet (= @Chercher("@DictionnaireObjet", code)).@Premier
+
+	/**
+	 * Renvoie un objet SG_DictionnaireObjet
 	 * 
+	 * @since 1.0.5
 	 * @param string $pCode code de l'objet recherché 
-	 * @return SG_DictionnaireObjet trouvé
-	 * @formula @DictionnaireObjet($pCode)
+	 * @return SG_DictionnaireObjet l'objet trouvé
+	 * @formula @DictionnaireObjet("code")
 	 */
 	static function getDictionnaireObjet($pCode) {
-		$ret = null;
-		$collec = SG_Rien::Chercher('@DictionnaireObjet', $pCode);
-		if ($collec -> Compter() -> toInteger() !== 0) {
-			$ret = $collec -> Premier();
-		}
-		return $ret;
+		return $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE, '@DictionnaireObjet', $pCode);
 	}
-	/** 1.0.6
+
+	/** 
 	 * Détermine si l'objet demandé existe
-	 *
+	 * @since 1.0.6
 	 * @param string $pTypeObjet objet demandé
 	 * @param boolean $pForce force la mise à jour du cache
 	 * @return boolean objet existe
@@ -242,19 +258,22 @@ class SG_Dictionnaire extends SG_Base {
 			$ret = SG_Cache::valeurEnCache($codeCache, false);
 		} else {
 			$collecObjets = SG_Dictionnaire::getDictionnaireObjet($codeObjet);
-			if ($collecObjets !== null) {
+			if (getTypeSG($collecObjets) !== '@Erreur') {
 				$ret = true;
 			}
 			SG_Cache::mettreEnCache($codeCache, $ret, false);
 		}
 		return $ret;
 	}
-	/** 1.0.6 ; 2.1 param1 objet , IME
+
+	/** 
 	 * Détermine si la méthode demandée existe
-	 *
-	 * @param (string ou objet) $pTypeObjet objet sur lequel la méthode est demandée
-	 * @param (string) $pMethode code de la méthode demandée
-	 * @return (boolean) méthode existe
+	 * @since 1.0.6
+	 * @version 2.1 param1 objet , IME
+	 * @param string|SG_Objet $pTypeObjet objet sur lequel la méthode est demandée
+	 * @param string $pMethode code de la méthode demandée
+	 * @param boolean $pForce
+	 * @return boolean méthode existe
 	 */
 	static function isMethodeExiste($pTypeObjet = '', $pMethode = '', $pForce = false) {
 		$ret = false;
@@ -271,8 +290,8 @@ class SG_Dictionnaire extends SG_Base {
 			if (SG_Cache::estEnCache($codeCache, false) === true and $pForce === false) {
 				$ret = SG_Cache::valeurEnCache($codeCache, false);
 			} else {
-				$collecMethodes = SG_Rien::Chercher('@DictionnaireMethode', $codeMethode);
-				if ($collecMethodes -> Compter() -> toInteger() === 1) {
+				$docObjet = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnaireMethode', $codeMethode);
+				if (getTypeSG($docObjet) !== '@Erreur') {
 					$ret = true;
 				}
 				SG_Cache::mettreEnCache($codeCache, $ret, false);
@@ -280,28 +299,27 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout valeur défaut
-	 * Recherche une propriété
-	 *
-	 * @param string $pTypeObjet objet sur lequel la propriété est demandée
-	 * @param string $pPropriete code de la propriété demandée
-	 * @formule @Chercher("@DictionnairePropriete").@Premier
-	 *
-	 * @return document @DictionnairePropriete
-	 */
+
+	/**
+	* Recherche une propriété
+	* @version 1.1 ajout valeur défaut
+	* @param string $pTypeObjet objet sur lequel la propriété est demandée
+	* @param string $pPropriete code de la propriété demandée
+	* @param any $pValeurDefaut
+	* @return document @DictionnairePropriete
+	* @formule @Chercher("@DictionnairePropriete").@Premier
+	*/
 	static function getPropriete($pTypeObjet = '', $pPropriete = '', $pValeurDefaut = '') {
 		$ret = $pValeurDefaut;
 		$codePropriete = $pTypeObjet . '.' . $pPropriete;
-		$collecProprietes = SG_Rien::Chercher('@DictionnairePropriete', $codePropriete);
-		if ($collecProprietes -> Compter() -> toInteger() > 0) {
-			$ret = $collecProprietes -> Premier();
-		}
+		$ret = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnairePropriete', $codePropriete);
 		return $ret;
 	}
 
-	/** 1.0.7 ; 2.0 sizeof ; 2.1 IPE
+	/**
 	 * Détermine si la propriété demandée existe
-	 *
+	 * @since 1.0.7
+	 * @version 2.1 code IPE
 	 * @param string $pTypeObjet objet sur lequel la propriété est demandée
 	 * @param string $pPropriete code de la propriété demandée
 	 * @param boolean $pForce force la mise à jour du cache (default false)
@@ -314,24 +332,26 @@ class SG_Dictionnaire extends SG_Base {
 
 		$codeCache = 'IPE(' . $codePropriete . ')';
 		if (SG_Cache::estEnCache($codeCache, false) !== true or $pForce === true) {
-			$collecProprietes = SG_Rien::Chercher('@DictionnairePropriete', $codePropriete);
-			if(sizeof($collecProprietes -> elements) === 1) {
+			$doc = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnairePropriete', $codePropriete);
+			if (getTypeSG($doc) !== '@Erreur') {
 				SG_Cache::mettreEnCache($codeCache, 'o', false);
 			} else {
 				SG_Cache::mettreEnCache($codeCache, 'n', false);
 			}
-			
 		}
-		$ret = (SG_Cache::valeurEnCache($codeCache, false) === 'o');
+		if ($ret === false) { // sinon $ret est une @erreur
+			$ret = (SG_Cache::valeurEnCache($codeCache, false) === 'o');
+		}
 		return $ret;
 	}
 
-	/** 1.0.7
+	/**
 	 * Cherche l'action de la méthode demandée
-	 *
+	 * @since 1.0.7
+	 * @version 2.4 fournit le texte (au lieu de l'action)
 	 * @param string $pTypeObjet objet sur lequel la méthode est demandée
 	 * @param string $pMethode code de la méthode demandée
-	 *
+	 * @param boolean $pForce
 	 * @return string action de la méthode
 	 */
 	static function getActionMethode($pTypeObjet = '', $pMethode = '', $pForce = false) {
@@ -341,16 +361,16 @@ class SG_Dictionnaire extends SG_Base {
 		if (SG_Cache::estEnCache($codeCache, false) === true and $pForce = false) {
 			$ret = SG_Cache::valeurEnCache($codeCache, false);
 		} else {
-			$collecMethodes = SG_Rien::Chercher('@DictionnaireMethode', $codeMethode);
-			if ($collecMethodes -> Compter() -> toInteger() === 1) {
-				$ret = $collecMethodes -> elements[0] -> getValeur('@Action', '');
+			$action = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnaireMethode', $codeMethode);
+			if (getTypeSG($action) === '@DictionnaireMethode') {
+				$ret = $action -> getValeur('@Action','');
 			}
 			SG_Cache::mettreEnCache($codeCache, $ret, false);
 		}
 		return $ret;
 	}
 
-	/** 1.1 param $pDefaut
+	/** 1.1 param $pDefaut ; 2.4 récup correct du code modèle dans la boucle
 	 * Détermine la liste des champs d'un type d'objet (éventuellement seuls champs du type donné)
 	 * On remonte l'ascendance des objets de type @Document.
 	 * Si on ne donne pas de $pCodeObjet, tous les champs du modèle demandé à travers tout le dictionnaire des propriétés
@@ -377,10 +397,14 @@ class SG_Dictionnaire extends SG_Base {
 		$docObjet = SG_Dictionnaire::getDictionnaireObjet($codeObjet);
 		if ($docObjet !== null) {
 			$codeModele = $docObjet -> getValeur('@Modele', '');
+			$ipos = strrpos($codeModele, '/'); // todo voir le cas de nouveau document dont le modèle n'est pas base/modele mais base/id
+			if (! is_bool($ipos)) {
+				$codeModele = substr($codeModele, $ipos + 1);
+			}
 		}
 		// Si on a un modèle, cherche aussi les champs du modèle (si doublon, on garde le précédent qui est dérivé)
 		if ($codeModele !== '') {
-			if (SG_Dictionnaire::modeleDeriveDeDocument($codeModele)) {	
+			if (SG_Dictionnaire::modeleDeriveDeDocument($codeModele) === true) {
 				$listeChampsParent = SG_Dictionnaire::getListeChamps($codeModele, $pModele);
 				// Ajoute les champs trouvés chez le parent, sans les doublons éventuels
 				foreach ($listeChampsParent as $key => $champParent) {
@@ -393,10 +417,12 @@ class SG_Dictionnaire extends SG_Base {
 		return $listeChamps;
 	}
 
-	/** 1.0.7 ; 2.1 rechercher aussi sur la classe de l'objet Synergaia
+	/**
 	 * Détermine le modèle de l'objet, de la méthode ou de la propriété (dans cet ordre)
-	 *
+	 * @since 1.0.7
+	 * @version 2.1 rechercher aussi sur la classe de l'objet Synergaia
 	 * @param string $pCode code de l'objet/méthode/propriété cherché (objet.code)
+	 * @param boolean $pForce
 	 *
 	 * @return string code du modèle de l'objet
 	 */
@@ -416,16 +442,14 @@ class SG_Dictionnaire extends SG_Base {
 				}
 			} else {
 				// On a un '.' donc on cherche d'abord une méthode (exemple @Document.@Afficher)
-				$collecMethodes = SG_Rien::Chercher('@DictionnaireMethode', $codeElement);
-				if ($collecMethodes -> Compter() -> toInteger() !== 0) {
-					$docElement = $collecMethodes -> Premier();
-					$codeModele = $docElement -> getValeur('@Modele', '');
+				$docObjet = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnaireMethode', $codeElement);
+				if (getTypeSG($docObjet) !== '@Erreur') {
+					$codeModele = $docObjet -> getValeur('@Modele', '');
 				} else {
 					// On n'a pas trouvé de méthode, on cherche une propriété
-					$collecProprietes = SG_Rien::Chercher('@DictionnairePropriete', $codeElement);
-					if ($collecProprietes -> Compter() -> toInteger() !== 0) {
-						$docElement = $collecProprietes -> Premier();
-						$codeModele = $docElement -> getValeur('@Modele', '');
+					$docObjet = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnairePropriete', $codeElement);
+					if (getTypeSG($docObjet) !== '@Erreur') {
+						$codeModele = $docObjet -> getValeur('@Modele', '');
 					} else {
 						// Si on n'a rien trouvé, on cherche dans le modèle du parent (si possible)
 						$elements = explode('.', $codeElement);
@@ -472,16 +496,14 @@ class SG_Dictionnaire extends SG_Base {
 				}
 			} else {
 				// On a un '.' donc on cherche une méthode
-				$collecMethodes = SG_Rien::Chercher('@DictionnaireMethode', $codeElement);
-				if ($collecMethodes -> Compter() -> toInteger() !== 0) {
-					$docElement = $collecMethodes -> Premier();
-					$libelle = $docElement -> getValeur('@Titre', '');
+				$docObjet = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnaireMethode', $codeElement);
+				if (getTypeSG($docObjet) !== '@Erreur') {
+					$libelle = $docObjet -> getValeur('@Titre', '');
 				} else {
 					// On n'a pas trouvé de méthode, on cherche une propriété
-					$collecProprietes = SG_Rien::Chercher('@DictionnairePropriete', $codeElement);
-					if ($collecProprietes -> Compter() -> toInteger() !== 0) {
-						$docElement = $collecProprietes -> Premier();
-						$libelle = $docElement -> getValeur('@Titre', '');
+					$docObjet = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE, '@DictionnairePropriete', $codeElement);
+					if (getTypeSG($docObjet) !== '@Erreur') {
+						$libelle = $docObjet -> getValeur('@Titre', '');
 					} else {
 						// Si on n'a rien trouvé, on cherche le modèle du parent (si possible)
 						$elements = explode('.', $codeElement);
@@ -523,10 +545,9 @@ class SG_Dictionnaire extends SG_Base {
 		if (SG_Cache::estEnCache($codeCache, false) === true) {
 			$formule = SG_Cache::valeurEnCache($codeCache, false);
 		} else {
-			$collecProprietes = SG_Rien::Chercher('@DictionnairePropriete', $codeElement);
-			if ($collecProprietes -> Compter() -> toInteger() !== 0) {
-				$docElement = $collecProprietes -> Premier();
-				$formule = $docElement -> getValeur('@ValeursPossibles', '');
+			$doc = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE, '@DictionnairePropriete', $codeElement);
+			if (getTypeSG($doc) !== '@Erreur') {
+				$formule = $doc -> getValeur('@ValeursPossibles', '');
 			} else {
 				// Si on n'a rien trouvé, on cherche le modèle du parent (si possible)
 				$elements = explode('.', $codeElement);
@@ -559,10 +580,9 @@ class SG_Dictionnaire extends SG_Base {
 		if (SG_Cache::estEnCache($codeCache, false) === true) {
 			$multiple = SG_Cache::valeurEnCache($codeCache, false) === 'o';
 		} else {
-			$collecProprietes = SG_Rien::Chercher('@DictionnairePropriete', $codeElement);
-			if ($collecProprietes -> Compter() -> toInteger() !== 0) {
-				$docElement = $collecProprietes -> Premier();
-				$tmpMultiple = new SG_VraiFaux($docElement -> getValeur('@Multiple', ''));
+			$doc = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE, '@DictionnairePropriete', $codeElement);
+			if (getTypeSG($doc) !== '@Erreur') {
+				$tmpMultiple = new SG_VraiFaux($doc -> getValeur('@Multiple', ''));
 				$multiple = $tmpMultiple -> estVrai() ;
 			} else {
 				// Si on n'a rien trouvé, on cherche le modèle du parent (si possible)
@@ -601,7 +621,7 @@ class SG_Dictionnaire extends SG_Base {
 	* @formula @Dictionnaire.@ExporterJSON via ajax
 	*/
 	function Afficher() {
-		$idBloc = SG_Champ::idRandom();
+		$idBloc = SG_SynerGaia::idRandom();
 		$urlJSON = SG_Navigation::URL_PRINCIPALE . '?' . SG_Navigation::URL_VARIABLE_CODE . '=xdi';
 		$html = '<div id="dictionnaire' . $idBloc . '" class="consultationDictionnaire"></div>' . PHP_EOL;
 		$script = '<script>consulter_dictionnaire("' . $idBloc . '","' . $urlJSON . '");</script>' . PHP_EOL;
@@ -618,13 +638,11 @@ class SG_Dictionnaire extends SG_Base {
 	}
 
 	/**
-	 * Export du dictionnaire en JSON
-	 *
-	 * @return string JSON du contenu du dictionnaire
-	 */
+	* Export du dictionnaire en JSON
+	* @FIXME : problème si un objet est mal défini (vide) => JSON non valide
+	* @return string JSON du contenu du dictionnaire
+	*/
 	static function ExporterJSON() {
-		// FIXME : problème si un objet est mal défini (vide) => JSON non valide
-
 		/**
 		 * Genere le code JSON du dictionnaire à partir du modèle fourni
 		 * L'export est fait de manière récursive pour respecter l'ordre de dérivation des objets (pour un import ultérieur)
@@ -694,11 +712,12 @@ class SG_Dictionnaire extends SG_Base {
 	}
 	/** 1.0.6
 	 * Retourne le tableau des objets du type @Document ou en dérivant
+	 * Attention il y a un return dans la boucle
 	 * 
-	 * @param boolean $nomsSeuls : ne retourner qu'un tabeau de nom s (au lieu des objets)
+	 * @param boolean $pNomsSeuls : ne retourner qu'un tabeau de nom s (au lieu des objets)
 	 * @param boolean $pRefresh : forcer la mise à jour du cache
 	 * 
-	 * @return @Collection tableau des noms ou des objets @DictionnaireObjet trouvés
+	 * @return SG_Collection|SG_Erreur tableau des noms ou des objets @DictionnaireObjet trouvés ; ou erreur
 	 */	
 	static function ObjetsDocument ($pNomsSeuls = false, $pRefresh = false) {
 		$ret = new SG_Collection();
@@ -716,11 +735,15 @@ class SG_Dictionnaire extends SG_Base {
 				$noms = array();
 				foreach ($modeles as $modele) {
 					$objets = SG_Dictionnaire::ObjetsDuModele($modele);
-					foreach ($objets -> elements as $objet) {
-						$trouveUn = true;
-						$nom = $objet -> toString();
-						$noms[] = $nom;
-						$listeObjets[$nom] = '';
+					if ($objets instanceof SG_Erreur) {
+						return $objets;
+					} else {
+						foreach ($objets -> elements as $objet) {
+							$trouveUn = true;
+							$nom = $objet -> toString();
+							$noms[] = $nom;
+							$listeObjets[$nom] = '';
+						}
 					}
 				}
 				$modeles  = $noms;
@@ -737,28 +760,42 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $ret;
 	}
-	/** 1.0.6 ; 1.3.3 foreach
-	*/
+
+	/**
+	 * Retourne la liste des modèles d'objets dérivés d'un modèle donné
+	 * @since 1.0.6
+	 * @version 1.3.3 foreach
+	 * @version 2.7 test SG_Erreur
+	 * @param string|SG_Texte|SG_Formule $pCodeModele
+	 * @param [SG_Collection] $listeComplete liste de modèles
+	 * @return SG_Collection|SG_Erreur
+	 */
 	static function ObjetsDuModele($pCodeModele = '', $listeComplete = null) {
 		$codeModele = SG_Texte::getTexte($pCodeModele);
 		if ($listeComplete === null) {
 			$listeComplete = SG_Dictionnaire::Objets();
 		}
-		$listeObjets = new SG_Collection();
-		foreach($listeComplete -> elements as $objet) {
-			$modele = SG_Champ::extractCodeDocument($objet -> getValeur('@Modele'));
-			if ($codeModele === '' or $modele === $codeModele) {
-				$listeObjets -> Ajouter($objet);
+		if ($listeComplete instanceof SG_Erreur) {
+			$ret = $listeComplete;
+		} else {
+			$ret = new SG_Collection();
+			foreach($listeComplete -> elements as $objet) {
+				$modele = SG_Champ::extractCodeDocument($objet -> getValeur('@Modele'));
+				if ($codeModele === '' or $modele === $codeModele) {
+					$ret -> Ajouter($objet);
+				}
 			}
 		}
-		return $listeObjets;
+		return $ret;
 	}
-	/** 1.0.6
+
+	/**
 	 * liste des champs de type document d'un modèle
+	 * @since 1.0.6
 	 * @param indefini : nom du modèle à analyser
 	 * @param indéfini donnant un booleen : forcer un refresh du cache
 	 * 
-	 * @return @Collection contenant un tableau : nom du champ | nom du modèle | base de stockage de l'objet atteint
+	 * @return SGCollection contenant un tableau : nom du champ | nom du modèle | base de stockage de l'objet atteint
 	 */
 	static function ChampsDocument($pCodeModele = '', $pRefresh = false) {
 		$ret = new SG_Collection();
@@ -805,14 +842,20 @@ class SG_Dictionnaire extends SG_Base {
 		return $ret;
 	}
 
-	//1.3 true pour accélérer (dérive de SG_Objet, donc non static)
+	/**
+	 * Un modele d'obbjet dérive-t-il de SG_Document ?
+	 * @version 1.3 true pour accélérer (dérive de SG_Objet, donc non static)
+	 * @param string $pCode
+	 * @return boolean
+	 */
 	static function modeleDeriveDeDocument($pCode = '') {
 		return array_key_exists($pCode, SG_Dictionnaire::ObjetsDocument(true) -> elements);
 	}
 		
-	/** 1.0.6 ; 1.3.1 ok si objet existe déjà
+	/**
 	 * Crée directement un @DictionnaireObjet et ses @DictionnairePropriété
-	 * 
+	 * @since 1.0.6
+	 * @version1.3.1 ok si objet existe déjà
 	 * @param string Objet à créer : "@Code|@Modele|@Titre" par défaut modèle = @Document, titre = @Code
 	 * @param string autant que de propriétés à créer : "@Code|@Modele|@Titre" par défaut modèle = @Texte, titre = @Code
 	 *
@@ -922,9 +965,13 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $ret;
 	}
-	/** 1.2 améliorations ; 2.3 test $retour non objet
+
+	/**
 	* Crée le thème et les modèles d'opération de base pour un objet
-	* @param $pNomObjet : nom de l'objet à gérer
+	* @version 2.3 test $retour non objet
+	* @param string|SG_Texte|SG_Formule $pObjet : nom de l'objet à gérer
+	* @param string|SG_Texte|SG_Formule $pIcone
+	* @return string HTML résultant
 	*/
 	static function DefinirMenu ($pObjet = '', $pIcone = '') {
 		$ret = '<ul>';
@@ -1048,7 +1095,7 @@ class SG_Dictionnaire extends SG_Base {
 			}
 			
 			// mise à jour du profil administrateur
-			$profil = SG_Rien::Chercher('@Profil','ProfilAdministrateur') -> Premier();
+			$profil = $_SESSION['@SynerGaia'] -> sgbd -> getCollectionObjetsParCode('@Profil','ProfilAdministrateur') -> Premier();
 			$op = $profil -> getValeur('@ModelesOperations');
 			$prefixe = self::CODEBASE . '/' . $objet;
 			$op[] = $prefixe . 'Nouveau';
@@ -1068,9 +1115,13 @@ class SG_Dictionnaire extends SG_Base {
 		$ret .='</ul>';
 		return $ret;
 	}
-	/** 1.2 ajout
-	* présente le json des mots du dictionnaire dépendants d'un mot passé en paramètres
-	*/
+
+	/**
+	 * présente le json des mots du dictionnaire dépendants d'un mot passé en paramètres
+	 * @since 1.2 ajout
+	 * @param string $pReference
+	 * @return string JSON du dictionnaire
+	 */
 	static function ajaxMots($pReference = '') {
 		$s = $_SESSION['@SynerGaia'];
 		$mots = array();
@@ -1105,18 +1156,19 @@ class SG_Dictionnaire extends SG_Base {
 		sort($mots);// natcasesort crée un objet au lieu d'un tableau...
 		return json_encode($mots);
 	}
-	/** 1.2
+
+	/**
 	 * retourne le tableau des propriétés d'un objet sous la forme méthode => modèle
-	 * 
+	 * @since 1.2
 	 * @param string $pCodeObjet code de l'objet à analyser
 	 * @param string $pModele est un filtre supplémentaire éventuel
 	 * @param boolean $pRefresh permet de forcer le rafraichissement du cache
 	 * 
-	 * @Return @Collection dont le tableau est composé d'array ('nom' : propriété, 'idmodele' : modele de la propriété)
+	 * @return SG_Collection dont le tableau est composé d'array ('nom' : propriété, 'idmodele' : modele de la propriété)
 	 */
 	static function getMethodesObjet ($pCodeObjet = '', $pModele = '', $pRefresh = false) {
 		$valeurs = array();
-		$codeCache = '@Dictionnaire.getMethodesObjet(' . $pCodeObjet . ',' . $pModele . ')';
+		$codeCache = 'DMO(' . $pCodeObjet . ',' . $pModele . ')';
 		if (SG_Cache::estEnCache($codeCache, false) === false or $pRefresh) {
 			$collec = $_SESSION['@SynerGaia'] -> sgbd -> getMethodesObjet($pCodeObjet, $pModele);
 			foreach($collec -> elements as $element) {
@@ -1202,12 +1254,14 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $valeurs;
 	}
-	/** 1.3 ajout
-	* Liste le vocabulaire du dictionnaire (objets, propriétés, méthodes, modèles d'opération)
-	* @param $prefixe (@Texte) préfixe de filtre du vocabulaire (sensible à la casse)
-	* @return @Collection de mots
-	* @formula @Chercher("@DictionnaireObjet").@Concatener(@Chercher("DictionnairePropriete")).@Concatener(@Chercher("DictionnaireMethode")).@Lister(.@Code)
-	*/
+
+	/**
+	 * Liste le vocabulaire du dictionnaire (objets, propriétés, méthodes, modèles d'opération)
+	 * @since 1.3 ajout
+	 * @param strnig|SG_Texte|SG_Formule $pPrefixe préfixe de filtre du vocabulaire (sensible à la casse)
+	 * @return SG_Collection de mots
+	 * @formula @Chercher("@DictionnaireObjet").@Concatener(@Chercher("DictionnairePropriete")).@Concatener(@Chercher("DictionnaireMethode")).@Lister(.@Code)
+	 */
 	static function Vocabulaire($pPrefixe = '') {
 		$prefixe = SG_Texte::getTexte($pPrefixe);
 		$len = strlen($prefixe);
@@ -1234,18 +1288,20 @@ class SG_Dictionnaire extends SG_Base {
 		sort($ret -> elements);
 		return $ret;
 	}
-	/** 1.0.5 dans SG_SynerGaia ;
-	* 1.3.1 déplace de SG_SynerGaia et changement de code cache  ; erreur si nom inconnu
-	* retourne le tableau des propriétés d'un objet sous la forme propriété => modèle
-	* 
-	* @param string $pCodeObjet code de l'objet à analyser
-	* @param string $pModele est un filtre supplémentaire éventuel
-	* @param boolean $pRefresh permet de forcer le rafraichissement du cache
-	* @return @Collection dont le tableau est composé d'array ('nom' : propriété, 'idmodele' : modele de la propriété)
-	*/
+	/** 
+	 * Retourne le tableau des propriétés d'un objet sous la forme nom propriété => modèle
+	 * 
+	 * @since 1.0.5 dans SG_SynerGaia ;
+	 * @version 1.3.1 déplace de SG_SynerGaia et changement de code cache  ; erreur si nom inconnu
+	 * @version 2.6 code err 0293 ; @Dictionnaire.getProprietesObjet => DPO
+	 * @param string $pCodeObjet code de l'objet à analyser
+	 * @param string $pModele est un filtre supplémentaire éventuel
+	 * @param boolean $pRefresh permet de forcer le rafraichissement du cache
+	 * @return @Collection dont le tableau est composé d'array ('nom' : propriété, 'idmodele' : modele de la propriété)
+	 */
 	static function getProprietesObjet ($pCodeObjet = '', $pModele = '', $pRefresh = false) {
 		$valeurs = array();
-		$codeCache = '@Dictionnaire.getProprietesObjet(' . $pCodeObjet . ',' . $pModele . ')';
+		$codeCache = 'DPO(' . $pCodeObjet . ',' . $pModele . ')';
 		if ($pRefresh === true or SG_Cache::estEnCache($codeCache, false) === false) {
 			$collec = $_SESSION['@SynerGaia'] -> sgbd -> getProprietesObjet($pCodeObjet, $pModele, $pRefresh);
 			foreach($collec -> elements as $element) {
@@ -1253,7 +1309,7 @@ class SG_Dictionnaire extends SG_Base {
 					$valeurs[$element['nom']] = $element['idmodele'];
 				} else {
 					// élément sans code dans le dictionnaire
-					$valeurs[''] = new SG_Erreur('élément sans code dans le dictionnaire');
+					$valeurs[''] = new SG_Erreur('0293');
 				}
 			}
 			SG_Cache::mettreEnCache($codeCache, json_encode($valeurs, true), false);
@@ -1262,16 +1318,20 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $valeurs;
 	}
-	/** 1.3.1 ajout ; 2.0 parm1 peut être objet.fonction
-	* Retourne l'objet, le code et le type propriété ou méthode associé à objet.fonction
-	* Pour chaque niveau hiérarchique, on cherche dans l'ordre : 
-	* 	une action, une méthode, une propriété, 
-	* 	puis on remonte d'un étage dans la hiérarchie des objets jusqu'à @Rien
-	* Si on a rien trouvé pour une fonction applicative (sans @), on recommence avec @fonction
-	* @param (string) $pTypeObjet
-	* @param (string) $pFonction
-	* @return (array) objet, type('action','methode','champ','erreur'), fonction (@fonction ou fonction)
-	**/
+
+	/**
+	 * Retourne l'objet, le code et le type propriété ou méthode associé à objet.fonction
+	 * Pour chaque niveau hiérarchique, on cherche dans l'ordre : 
+	 * 	une action, une méthode, une propriété, 
+	 * 	puis on remonte d'un étage dans la hiérarchie des objets jusqu'à @Rien
+	 * Si on a rien trouvé pour une fonction applicative (sans @), on recommence avec @fonction
+	 * @since 1.3.1 ajout
+	 * @version 2.0 parm1 peut être objet.fonction
+	 * @param string $pTypeObjet
+	 * @param string $pFonction
+	 * @param boolean $pRefresh
+	 * @return array objet, type('action','methode','champ','erreur'), fonction (@fonction ou fonction)
+	 */
 	static function getObjetFonction($pTypeObjet = '', $pFonction = '', $pRefresh = false) {
 		$typeObjet = $pTypeObjet;
 		$fonction = $pFonction;
@@ -1377,6 +1437,133 @@ class SG_Dictionnaire extends SG_Base {
 		}			
 		return $ret;
 	}
+	/** 2.4 ajout
+	* retourne le code base complet d'un objet ou @erreur
+	* @param string : code objet
+	* @return string : code base complet
+	**/
+	static function getCodeBaseComplet($pObjet = '') {
+		$base = SG_Dictionnaire::getCodeBase($pObjet);
+		$ret = SG_Config::getCodeBaseComplet($base);
+		return $ret;
+	}
+
+	/**
+	* retourne le modèle d'une propriété d'objet au dictionnaire (pour le moemnt il n'y a pas de cache utilisé)
+	* @since 2.4 ajout
+	* @param string $pObjet : code de l'objet dont on parle
+	* @param string $pPropriete : code de la propruété que l'on cherche
+	* @param boolean $pForce : forcer le recalcul des valeurs en cache
+	* @return string code du modèle
+	**/
+	static function getModelePropriete($pObjet, $pPropriete, $pForce = false) {
+		$proprietes = $_SESSION['@SynerGaia'] -> sgbd -> getProprietesObjet($pObjet, '', $pForce);
+		$ret = '';
+		foreach ($proprietes -> elements as $p) {
+			if ($p['nom'] === $pPropriete) {
+				$ret = $p['idmodele'];
+				break;
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	* Recherche une méthode
+	* 
+	* @since 2.4 ajout
+	* @version 2.6 supp param 3 valeur par défaut inutile
+	* @param string $pTypeObjet objet sur lequel la méthode est demandée
+	* @param string $pMethode code de la méthode demandée
+	* @formule @Chercher("@DictionnaireMethode").@Premier	*
+	* @return document @DictionnaireMethode
+	*/
+	static function getMethode($pTypeObjet = '', $pMethode = '') {
+		$code = $pTypeObjet . '.' . $pMethode;
+		$ret = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE, '@DictionnaireMethode', $code);
+		return $ret;
+	}
+
+	/**
+	 * Exporte des éléments de l'application pour en faire un paquet.
+	 * Les éléments sont stockés dans un fichier séparé sur le serveur dans le répertoire /tmp de l'application
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pNom nom du paquet (et nom du fichier .sgp)
+	 * @param string|SG_Texte|SG_Formule $pTitre titre du paquet (par défaut = nom)
+	 * @param SG_Collection|SG_Formule $pElements collection des éléments à exporter. Cela peut être des objets, des thèmes, des modèles d'opération.
+	 * @return SG_Texte|SG_Erreur le nom du fichier résultant ou une erreur
+	 **/
+	static function CreerPaquet ($pNom = '', $pTitre = '', $pElements = '') {
+		$ret = false;
+		$nom = SG_Texte::getTexte($pNom);
+		if ($nom === '') {
+			$nom = 'Paquet_' . now;
+		}
+		$titre = SG_Texte::getTexte($pTitre);
+		if ($titre === '') {
+			$titre = $nom;
+		}
+		if ($pElements instanceof SG_Formule) {
+			$collec = $pElements -> calculer();
+		} else {
+			$collec = $pElements;
+		}
+		if (!$collec instanceof SG_Collection) {
+			$ret = new SG_Erreur('pas collec');
+		} else {
+			$texte = '{
+				"_id": "' . $nom . '",
+				"@Type": "@Paquet",
+				"@Code": "' . $nom . '",
+				"@Titre": "' . $titre . '",
+				"@Version": "' . SG_SynerGaia::VERSION . '",
+				"@Description": "<h1></h1>",
+				"@Formule": "';
+			foreach ($collec -> elements as $elt) {
+				// o=@DictionnaireObjet.\n\t@setUID(\"Document\").\n\t@Code(\"Document\").\n\t@Modele(@DictionnaireObjet(\"@Document\")).\n\t@Titre(\"Document\");
+				// o.@Enregistrer;
+				// \no.@AjouterPropriete(\"Contenu\",\"Contenu\",\"@TexteRiche\");
+				// \no.@AjouterMethode(\"Date\",\"Date\",\"@Date\");
+				// \nt=@Theme.\n\t@setUID(\"documents_theme\").\n\t@Code(\"Documents\").\n\t@Titre(\"Documents\").\n\t@IconeTheme(\"group.png\").\n\t@Position(400);
+				// \nt.@Enregistrer;
+				// \n@ModeleOperation.@setUID(\"DocumentGerer\").\n\t@Code(\"DocumentGerer\").\n\t@Titre(\"Gérer les documents\").\n\t@Position(30)
+				// \n\t.@Phrase(\"@Chercher(\\\"Document\\\")...\")
+				// \n\t.@IconeOperation(\"pencil.png\").\n\t@Theme(t).\n\t@Enregistrer;
+				if ($elt instanceof SG_DictionnaireObjet) {
+					// @DictionnaireObjet
+					$code = $elt -> getValeur('@Code');
+					$texte.= 'o=@DictionnaireObjet.\n\t@setUID(\"' . $code . '\")\n\t.@Code(\"' . $code . '\")\n\t.@Modele(@DictionnaireObjet(\"@Document\"))';
+					$titre = $elt -> getValeur('@Titre',$code);
+					$texte.= '\n\t.@Titre(\"' . $titre . '\");\no.@Enregistrer;';
+					// @DictionnairePropriete
+					$proprietes = $elt -> Proprietes() -> elements;
+					foreach ($proprietes as $obj) {
+						$codepr = $obj -> getValeur('@Code');
+						$titrepr = $obj -> getValeur('@Titre', $code);
+						$modele = $obj -> getValeurPropriete('@Modele') -> getValeur('@Code','');
+						$texte.= '\no.@AjouterPropriete(\"' . $codepr . '\",\"' . $titrepr . '\",\"' . $modele . '\");';
+					}
+					// @DictionnaireMethode
+					$methodes = $elt -> Methodes() -> elements;
+					foreach ($methodes as $obj) {
+						$codepr = $obj -> getValeur('@Code');
+						$titrepr = $obj -> getValeur('@Titre', $code);
+						$modele = $obj -> getValeurPropriete('@Modele') -> getValeur('@Code','');
+						$formule = $obj -> getValeur('@Action');
+						$formule = str_replace('\\','\\\\', $formule);
+						$texte.= '\no.@AjouterMethode(\"' . $codepr . '\",\"' . $titrepr . '\",\"' . $modele . '\",\"' . $formule .'\");';
+					}
+					$texte.= '';
+				}
+				$texte.= '"
+				}';
+			}
+		}
+		$ret = $texte;
+		return $ret;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Dictionnaire_trait;
 }
