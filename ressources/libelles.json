@@ -1,5 +1,5 @@
 {
-	"Libellés par défaut SynerGaïa": [
+	"Libellés par défaut SynerGaïa 2.4": [
 		{
 			"_id": "0000",
 			"@Type": "@Libelle",
@@ -11,7 +11,7 @@
 			"@Type": "@Libelle",
 			"@Code": "0001",
 			"@Modele": "synergaia_dictionnaire/@Document",
-			"@Titre": "Une erreur a été propagée (%s)."
+			"@Titre": "L'opération compilée semble introuvable"
 		}, {
 			"_id": "0002",
 			"@Type": "@Libelle",
@@ -23,13 +23,13 @@
 			"@Type": "@Libelle",
 			"@Code": "0003",
 			"@Modele": "synergaia_dictionnaire/@Document",
-			"@Titre": "La formule demandée n'accepte pas autant de paramètres (%s)."
+			"@Titre": "@Import Le fichier n'a pas été trouvé (%s)."
 		}, {
 			"_id": "0004",
 			"@Type": "@Libelle",
 			"@Code": "0004",
 			"@Modele": "synergaia_dictionnaire/@Document",
-			"@Titre": "Le fichier n'existe pas (%s)."
+			"@Titre": "@Import Le fichier n'existe pas (%s)."
 		}, {
 			"_id": "0005",
 			"@Type": "@Libelle",
@@ -1145,7 +1145,7 @@
 			"@Type": "@Libelle",
 			"@Code": "0190",
 			"@Modele": "synergaia_dictionnaire/@Document",
-			"@Titre": "Le type de l'opération d'origine a été perdue."
+			"@Titre": "@Operation.traiterSpecifique : Le type de l'opération d'origine a été perdue."
 		}, {
 			"_id": "0191",
 			"@Type": "@Libelle",
@@ -1194,6 +1194,690 @@
 			"@Code": "0198",
 			"@Modele": "synergaia_dictionnaire/@Document",
 			"@Titre": "La fonction n'existe pas dans cette opération : %s"
+		}, {
+			"_id": "0199",
+			"@Type": "@Libelle",
+			"@Code": "0199",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La condition du @Si ne donne pas une valeur @VraiFaux : %s"
+		}, {
+			"_id": "0200",
+			"@Type": "@Libelle",
+			"@Code": "0200",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Cet élément n'est pas un objet SynerGaïa"
+		}, {
+			"_id": "0201",
+			"@Type": "@Libelle",
+			"@Code": "0201",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Cet élément n'est pas un objet SynerGaïa : %s"
+		}, {
+			"_id": "0202",
+			"@Type": "@Libelle",
+			"@Code": "0202",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@PourChaque : erreur de calcul de filtre (pas un @VraiFaux) pour le document : %s"
+		}, {
+			"_id": "0203",
+			"@Type": "@Libelle",
+			"@Code": "0203",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Importer : la liste de champs n'est pas interprétable : %s"
+		}, {
+			"_id": "0204",
+			"@Type": "@Libelle",
+			"@Code": "0204",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Executer : erreur dans l'exécution ou l'interprétation du résultat : %s"
+		}, {
+			"_id": "0205",
+			"@Type": "@Libelle",
+			"@Code": "0205",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@ExecuterJSON : erreur dans l'exécution ou l'interprétation du résultat : %s"
+		}, {
+			"_id": "0206",
+			"@Type": "@Libelle",
+			"@Code": "0206",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La mise à jour des villes n'est pas faite ici mais dans l'application %s"
+		}, {
+			"_id": "0207",
+			"@Type": "@Libelle",
+			"@Code": "0207",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Les contrôles dans l'étiquette doivent se terminer par un symbole deux-points."
+		}, {
+			"_id": "0208",
+			"@Type": "@Libelle",
+			"@Code": "0208",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Dans les contrôles, il manque le message d'erreur derrière le dernier test"
+		}, {
+			"_id": "0209",
+			"@Type": "@Libelle",
+			"@Code": "0209",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Dans les contrôles, la phrase de test est vide (deux virgules consécutives par exemple)"
+		}, {
+			"_id": "0210",
+			"@Type": "@Libelle",
+			"@Code": "0210",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Dans les contrôles, la phrase de message d'erreur est vide (deux virgules consécutives par exemple)"
+		}, {
+			"_id": "0211",
+			"@Type": "@Libelle",
+			"@Code": "0211",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Application.@ExecuterFormule : erreur dans l'exécution ou l'interprétation du résultat : %s"
+		}, {
+			"_id": "0212",
+			"@Type": "@Libelle",
+			"@Code": "0212",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Date.@Entre : erreur dans le format des parametres"
+		}, {
+			"_id": "0213",
+			"@Type": "@Libelle",
+			"@Code": "0213",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Date.@Entre : erreur grave dans le calcul..."
+		}, {
+			"_id": "0214",
+			"@Type": "@Libelle",
+			"@Code": "0214",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Date.@Entre : le minimum est plus grand que le maximum !"
+		}, {
+			"_id": "0215",
+			"@Type": "@Libelle",
+			"@Code": "0215",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@DateHeure.@Entre : erreur dans le format des parametres"
+		}, {
+			"_id": "0216",
+			"@Type": "@Libelle",
+			"@Code": "0216",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@DateHeure.@Entre : erreur grave dans le calcul..."
+		}, {
+			"_id": "0217",
+			"@Type": "@Libelle",
+			"@Code": "0217",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@DateHeure.@Entre : le minimum est plus grand que le maximum !"
+		}, {
+			"_id": "0218",
+			"@Type": "@Libelle",
+			"@Code": "0218",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Changement d'identifiant non fait."
+		}, {
+			"_id": "0219",
+			"@Type": "@Libelle",
+			"@Code": "0219",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'enregistrement physique du document ne s'est pas fait !"
+		}, {
+			"_id": "0220",
+			"@Type": "@Libelle",
+			"@Code": "0220",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Ce répertoire n'a pas de sous-répertoires : %s"
+		}, {
+			"_id": "0221",
+			"@Type": "@Libelle",
+			"@Code": "0221",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Sous-répertoire inexistant : %s"
+		}, {
+			"_id": "0222",
+			"@Type": "@Libelle",
+			"@Code": "0222",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Ce répertoire n'a pas de sous-répertoires : %s"
+		}, {
+			"_id": "0223",
+			"@Type": "@Libelle",
+			"@Code": "0223",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Sous-répertoire inexistant : %s"
+		}, {
+			"_id": "0224",
+			"@Type": "@Libelle",
+			"@Code": "0224",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'élément pointé de la collection n'existe pas ou plus : %s"
+		}, {
+			"_id": "0225",
+			"@Type": "@Libelle",
+			"@Code": "0225",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'élément pointé de la collection n'existe pas ou plus : %s"
+		}, {
+			"_id": "0226",
+			"@Type": "@Libelle",
+			"@Code": "0226",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Début de collection il n'y a pas de pérécédent."
+		}, {
+			"_id": "0227",
+			"@Type": "@Libelle",
+			"@Code": "0227",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'élément pointé de la collection n'existe pas ou plus : %s"
+		}, {
+			"_id": "0228",
+			"@Type": "@Libelle",
+			"@Code": "0228",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Fin de collection, il n'y a pas de suivant."
+		}, {
+			"_id": "0229",
+			"@Type": "@Libelle",
+			"@Code": "0229",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Début de collection il n'y a pas de pérécédent."
+		}, {
+			"_id": "0230",
+			"@Type": "@Libelle",
+			"@Code": "0230",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On attendait un texte ou une collection. On a : %s."
+		}, {
+			"_id": "0231",
+			"@Type": "@Libelle",
+			"@Code": "0231",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le répertoire est inaccessible ou inexistant : %s."
+		}, {
+			"_id": "0232",
+			"@Type": "@Libelle",
+			"@Code": "0232",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'objet trouvé dans la base n'est pas un document."
+		}, {
+			"_id": "0233",
+			"@Type": "@Libelle",
+			"@Code": "0233",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'objet trouvé dans la base n'est pas un document : %s"
+		}, {
+			"_id": "0234",
+			"@Type": "@Libelle",
+			"@Code": "0234",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Aucun objet trouvé avec ce code : %s"
+		}, {
+			"_id": "0235",
+			"@Type": "@Libelle",
+			"@Code": "0235",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Echec de la création de la vue CouchDB pour trouver les objets par code."
+		}, {
+			"_id": "0236",
+			"@Type": "@Libelle",
+			"@Code": "0236",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Plusieurs documents ont le même code : %sg"
+		}, {
+			"_id": "0237",
+			"@Type": "@Libelle",
+			"@Code": "0237",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Ce n'est pas le nom d'un sous-répertoire : %sg"
+		}, {
+			"_id": "0238",
+			"@Type": "@Libelle",
+			"@Code": "0238",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Code de phrase javascript inconnu : %sg"
+		}, {
+			"_id": "0239",
+			"@Type": "@Libelle",
+			"@Code": "0239",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Erreur dans la requête CouchDB : %sg"
+		}, {
+			"_id": "0240",
+			"@Type": "@Libelle",
+			"@Code": "0240",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Trop de paramètres ont été fournis : arrêt par sécurité !"
+		}, {
+			"_id": "0241",
+			"@Type": "@Libelle",
+			"@Code": "0241",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le type d'élement à supprimer doit être e ou r au lieu de %$"
+		}, {
+			"_id": "0242",
+			"@Type": "@Libelle",
+			"@Code": "0242",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'objet trouvé dans la base n'est pas un document."
+		}, {
+			"_id": "0243",
+			"@Type": "@Libelle",
+			"@Code": "0243",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'objet trouvé dans la base n'est pas un document : %s"
+		}, {
+			"_id": "0244",
+			"@Type": "@Libelle",
+			"@Code": "0244",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Aucun objet trouvé avec ce code : %s"
+		}, {
+			"_id": "0245",
+			"@Type": "@Libelle",
+			"@Code": "0245",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Echec de la création de la vue CouchDB pour trouver les objets par code."
+		}, {
+			"_id": "0246",
+			"@Type": "@Libelle",
+			"@Code": "0246",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'objet trouvé dans la base n'est pas un document."
+		}, {
+			"_id": "0247",
+			"@Type": "@Libelle",
+			"@Code": "0247",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'objet trouvé dans la base n'est pas un document : %s"
+		}, {
+			"_id": "0248",
+			"@Type": "@Libelle",
+			"@Code": "0248",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Aucun objet trouvé avec ce code : %s"
+		}, {
+			"_id": "0249",
+			"@Type": "@Libelle",
+			"@Code": "0249",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Echec de la création de la vue CouchDB %s pour trouver les objets par code."
+		}, {
+			"_id": "0250",
+			"@Type": "@Libelle",
+			"@Code": "0250",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Erreur de type inconnu : %s"
+		}, {
+			"_id": "0251",
+			"@Type": "@Libelle",
+			"@Code": "0251",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Variable non initialisée : %s"
+		}, {
+			"_id": "0252",
+			"@Type": "@Libelle",
+			"@Code": "0252",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Suite à une erreur, l'identité de votre session a été perdue. Merci de vous identifier à nouveau."
+		}, {
+			"_id": "0253",
+			"@Type": "@Libelle",
+			"@Code": "0253",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Cette photo est déjà enregistrée sous le code : %s"
+		}, {
+			"_id": "0254",
+			"@Type": "@Libelle",
+			"@Code": "0254",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le type ne peut être que 'e' ou 'r'. Trouvé '%s'"
+		}, {
+			"_id": "0255",
+			"@Type": "@Libelle",
+			"@Code": "0255",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Erreur d'évaluation d'une formule php : '%s'"
+		}, {
+			"_id": "0256",
+			"@Type": "@Libelle",
+			"@Code": "0256",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Format d'ID incomplet manque base ou id du document : '%s'"
+		}, {
+			"_id": "0257",
+			"@Type": "@Libelle",
+			"@Code": "0257",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "getTitre() Format d'ID incomplet manque base ou id du document : '%s'"
+		}, {
+			"_id": "0258",
+			"@Type": "@Libelle",
+			"@Code": "0258",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "getCode() Format d'ID incomplet manque base ou id du document : '%s'"
+		}, {
+			"_id": "0259",
+			"@Type": "@Libelle",
+			"@Code": "0259",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La variable $_SESSION n'est pas initialisée. Problème de compilation sur un objet ?"
+		}, {
+			"_id": "0260",
+			"@Type": "@Libelle",
+			"@Code": "0260",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La méthode @Lib vous est interdite !"
+		}, {
+			"_id": "0261",
+			"@Type": "@Libelle",
+			"@Code": "0261",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La bibliothèque %s est introuvable."
+		}, {
+			"_id": "0262",
+			"@Type": "@Libelle",
+			"@Code": "0262",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Base ou modèle obligatoire (premier paramètre)"
+		}, {
+			"_id": "0263",
+			"@Type": "@Libelle",
+			"@Code": "0263",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Chercher : il manque l'objet à rechercher."
+		}, {
+			"_id": "0264",
+			"@Type": "@Libelle",
+			"@Code": "0264",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Chercher : on n'a pas trouvé dans quelle base chercher l'objet %s"
+		}, {
+			"_id": "0265",
+			"@Type": "@Libelle",
+			"@Code": "0265",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Chercher : problème de création de la vue pour l'objet %s"
+		}, {
+			"_id": "0266",
+			"@Type": "@Libelle",
+			"@Code": "0266",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@Chercher : aucun objet trouvé pour ce MD5 : %s"
+		}, {
+			"_id": "0267",
+			"@Type": "@Libelle",
+			"@Code": "0267",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On ne trouve pas de bouton ou de fichier à exécuter..."
+		}, {
+			"_id": "0268",
+			"@Type": "@Libelle",
+			"@Code": "0268",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Cliquez dans la zone pour copier dans le presse-papier."
+		}, {
+			"_id": "0269",
+			"@Type": "@Libelle",
+			"@Code": "0269",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le driver ODBC ne semble pas opérationnel !"
+		}, {
+			"_id": "0270",
+			"@Type": "@Libelle",
+			"@Code": "0270",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La classe d'objet %s n'a pas été définie ou la compilation de l'objet n'a pas fonctionné !"
+		}, {
+			"_id": "0271",
+			"@Type": "@Libelle",
+			"@Code": "0271",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Impossible d'ouvrir le fichier %s ! (n'existe pas ou n'est pas autorisé ?)"
+		}, {
+			"_id": "0272",
+			"@Type": "@Libelle",
+			"@Code": "0272",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'application PHPExcel n'est pas installée : l'objet @Tableur est inutilisable !"
+		}, {
+			"_id": "0273",
+			"@Type": "@Libelle",
+			"@Code": "0273",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Il manque un champ dans l'appel du paramètre de @Script"
+		}, {
+			"_id": "0274",
+			"@Type": "@Libelle",
+			"@Code": "0274",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On tente d'insérer du javascript dans le texte riche d'un document erroné"
+		}, {
+			"_id": "0275",
+			"@Type": "@Libelle",
+			"@Code": "0275",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'enregistrement physique du document _replicator ne s'est pas fait !"
+		}, {
+			"_id": "0276",
+			"@Type": "@Libelle",
+			"@Code": "0276",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On essaie de créer un champ %s non rattaché à un document !"
+		}, {
+			"_id": "0277",
+			"@Type": "@Libelle",
+			"@Code": "0277",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le paramètre chemin est vide : il est obligatoire"
+		}, {
+			"_id": "0278",
+			"@Type": "@Libelle",
+			"@Code": "0278",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le chemin  '%s' n'existe pas : il faut d'abord le créer"
+		}, {
+			"_id": "0279",
+			"@Type": "@Libelle",
+			"@Code": "0279",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Cette action demande votre confirmation : cliquez sur OK ou Annuler."
+		}, {
+			"_id": "0280",
+			"@Type": "@Libelle",
+			"@Code": "0280",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": ".@Prochain ne s'applique pas sur le paramètre %s car il n'est pas un @Nombre."
+		}, {
+			"_id": "0281",
+			"@Type": "@Libelle",
+			"@Code": "0281",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le résultat de l'instruction n'est pas un objet SynerGaïa. C'est un %s"
+		}, {
+			"_id": "0282",
+			"@Type": "@Libelle",
+			"@Code": "0282",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'utilisateur %s n'existe pas !"
+		}, {
+			"_id": "0283",
+			"@Type": "@Libelle",
+			"@Code": "0283",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La méthode InferieurA n'existe pas pour l'objet de type %s"
+		}, {
+			"_id": "0284",
+			"@Type": "@Libelle",
+			"@Code": "0284",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On attend un temps pour appliquer le rythme. Or on a %s"
+		}, {
+			"_id": "0285",
+			"@Type": "@Libelle",
+			"@Code": "0285",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On attend un temps ou un nombre pour limite de l'application du rythme. Or on a %s"
+		}, {
+			"_id": "0286",
+			"@Type": "@Libelle",
+			"@Code": "0286",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Il manque le nom du répertoire de stockage"
+		}, {
+			"_id": "0287",
+			"@Type": "@Libelle",
+			"@Code": "0287",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le répertoire de stockage n'existe pas"
+		}, {
+			"_id": "0288",
+			"@Type": "@Libelle",
+			"@Code": "0288",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Cet objet n'est pas conforme et n'a pas d'id : %s"
+		}, {
+			"_id": "0289",
+			"@Type": "@Libelle",
+			"@Code": "0289",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@PourChaque attend une formule en paramètre"
+		}, {
+			"_id": "0290",
+			"@Type": "@Libelle",
+			"@Code": "0290",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "@setUID ne peut forcer cet id (un id existe sans doute déjà ou il n'a pas été fourni)"
+		}, {
+			"_id": "0291",
+			"@Type": "@Libelle",
+			"@Code": "0291",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "On tente de déclarer active une opération qui n'en est pas une : %s"
+		}, {
+			"_id": "0292",
+			"@Type": "@Libelle",
+			"@Code": "0292",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "L'opération en cours n'a pas pu être récupérée"
+		}, {
+			"_id": "0293",
+			"@Type": "@Libelle",
+			"@Code": "0293",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Élément sans code dans le dictionnaire"
+		}, {
+			"_id": "0294",
+			"@Type": "@Libelle",
+			"@Code": "0294",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "erreur dans la compilation de l'objet : %s"
+		}, {
+			"_id": "0295",
+			"@Type": "@Libelle",
+			"@Code": "0295",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Code d'étape inexistant ou non défini : %s"
+		}, {
+			"_id": "0296",
+			"@Type": "@Libelle",
+			"@Code": "0296",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La fonction d'étape n'existe pas : %s"
+		}, {
+			"_id": "0297",
+			"@Type": "@Libelle",
+			"@Code": "0297",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Mise à jour effectuée. N'oubliez pas de compléter les profils d'utilisateurs."
+		}, {
+			"_id": "0298",
+			"@Type": "@Libelle",
+			"@Code": "0298",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Il y a eu une erreur à la compilation du paquet et la classe %s n'existe pas !"
+		}, {
+			"_id": "0299",
+			"@Type": "@Libelle",
+			"@Code": "0299",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Document introuvable car son type est inconnu : %s"
+		}, {
+			"_id": "0300",
+			"@Type": "@Libelle",
+			"@Code": "0300",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Document introuvable - code inconnu : %s"
+		}, {
+			"_id": "0301",
+			"@Type": "@Libelle",
+			"@Code": "0301",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "La valeur suivante n'a pas trouvé de correspondance : %s"
+		}, {
+			"_id": "0302",
+			"@Type": "@Libelle",
+			"@Code": "0302",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le paramètre de la somme n'est pas une formule : %s"
+		}, {
+			"_id": "0303",
+			"@Type": "@Libelle",
+			"@Code": "0303",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Le résultat de l'opération n'est pas numérique."
+		}, {
+			"_id": "0304",
+			"@Type": "@Libelle",
+			"@Code": "0304",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Division par zéro."
+		}, {
+			"_id": "0305",
+			"@Type": "@Libelle",
+			"@Code": "0305",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Il y a deux utilisateurs avec le même identifiant : voyez votre administrateur."
+		}, {
+			"_id": "0306",
+			"@Type": "@Libelle",
+			"@Code": "0306",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Code utilisateur ambigu ou introuvable. Voyez votre administrateur."
+		}, {
+			"_id": "0307",
+			"@Type": "@Libelle",
+			"@Code": "0307",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Code utilisateur introuvable. Voyez votre administrateur."
+		}, {
+			"_id": "0308",
+			"@Type": "@Libelle",
+			"@Code": "0308",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "URL non trouvée (HTTP 404)"
+		}, {
+			"_id": "0309",
+			"@Type": "@Libelle",
+			"@Code": "0309",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Réponse inattendue de CouchDB : %s"
+		}, {
+			"_id": "0310",
+			"@Type": "@Libelle",
+			"@Code": "0310",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": ".@AJouterFichiers Un paramètre de type fichier est obligatoire"
+		}, {
+			"_id": "0311",
+			"@Type": "@Libelle",
+			"@Code": "0311",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": ".@AjouterFichiers Le paramètre ne contient pas de fichier"
+		}, {
+			"_id": "0312",
+			"@Type": "@Libelle",
+			"@Code": "0312",
+			"@Modele": "synergaia_dictionnaire/@Document",
+			"@Titre": "Copier le lien interne du document"
 		}, {
 			"_id": "9999",
 			"@Type": "@Libelle",
