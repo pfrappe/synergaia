@@ -1,44 +1,46 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.1 (see AUTHORS file)
-* SG_Nombre : Classe de gestion d'une enquête ou d'une notation
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour traiter l'objet @Notation */
+ defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Notation_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Notation_trait.php';
 } else {
+	/** trait vide par défaut pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 */
 	trait SG_Notation_trait{};
 }
+
+/**
+* SG_Nombre : Classe de gestion d'une enquête ou d'une notation
+* @since 1.1
+*/
 class SG_Notation extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Notation' */
 	const TYPESG = '@Notation';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	// titre du modèle
+	/** string titre du modèle */
 	public $titre = '';
 	
-	// nom des notes
+	/** string nom des notes */
 	public $libelleNotes = array();
 	
-	// nom des éléments
+	/** string nom des éléments */
 	public $libelleElements = array();
 	
-	// nom du commentaire
+	/** string nom du commentaire */
 	public $libelleCommentaire = '';
 	
-	//icones
+	/** string icones*/
 	public $iconevide = ''; //' . SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/ui-radio-button-uncheck.png';
+	/** string icones*/
 	public $iconeplein = SG_Navigation::URL_THEMES . 'defaut/img/icons/16x16/silkicons/accept1.png'; //ui-radio-button.png';
 
-	/** 1.0.7
-	 * Construction de l'objet
-	 *
-	 * @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_Nombre est créé
-	 * @param indéfini $pUnite code unité ou ou objet @Unite de la quantité
+	/**
+	 * initialisation de l'objet
+	 * @since 1.1
 	 */
-	function __construct($pQuelqueChose = null) {
-	}
-	/** 1.1
-	*/
 	function initObjet() {
 		$modele = getTypeSG($this);
 		$typeobjet = SG_Dictionnaire::getDictionnaireObjet($modele);
@@ -61,18 +63,24 @@ class SG_Notation extends SG_Objet {
 		//LibelleCommentaire
 		$this -> libelleCommentaire = SG_Texte::getTexte(SG_Formule::executer('.@LibelleCommentaire', $this));
 	}
+
 	/** 1.1 ajout
 	*/ 
 	function getTypeSG() {
 		return $this -> getValeur('@Type', '@Notation');
 	}
+
 	/** 1.1 ajout
 	*/
 	function Titre() {
 		return $this -> titre;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Note de la notation
+	 * @since 1.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pElement
+	 */
 	function Note($pElement = '') {
 		$notes = $this -> getValeur('@Notes', array());
 		$element = SG_Texte::Normaliser($pElement);
@@ -83,8 +91,12 @@ class SG_Notation extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Commentaires de la notation
+	 * @since 1.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pElement
+	 */
 	function Commentaire($pElement = '') {
 		$commentaires = $this -> getValeur('@Commentaires', array());
 		$element = SG_Texte::Normaliser($pElement);
@@ -95,10 +107,15 @@ class SG_Notation extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * calcule l'affichage de l'entête
+	 * 
+	 * @since 1.1 ajout
+	 * @return string
+	 */
 	function entete() {
-		$ret = '<div id="champ_Notation" class="notation"><table class="corpstable">';
+		$ret = '<div id="champ_Notation" class="notation"><table class="sg-collection">';
 		$ret .= '<thead><tr><th>' . $this -> titre . '</th>';
 		foreach ($this -> libelleNotes as $libelleNote) {
 			$ret .= '<th>' . SG_Texte::getTexte($libelleNote) . '</th>';
@@ -110,8 +127,14 @@ class SG_Notation extends SG_Objet {
 		return $ret;
 	}
 	
-	// 1.1 ajout
-	function afficherChamp() {
+	/**
+	 * Calcule le code html d'un champ Notation
+	 * 
+	 * @since 1.1 ajout
+	 * @version 2.6
+	 * @return SG_HTML
+	 */	 	
+	 function afficherChamp() {
 		$ret = $this -> entete();
 		
 		foreach($this -> libelleElements as $element) {
@@ -136,13 +159,22 @@ class SG_Notation extends SG_Objet {
 			$ret .= '</tr>';
 		}
 		$ret .= '</tbody></table></div>';
-		return $ret;
+		return new SG_HTML($ret);
 	}
-	// 1.1 ajout
+
+	/**
+	 * Affichage d'un champ @Notation
+	 * @since 1.1 ajout
+	 */
 	function Afficher() {
 		return $this -> afficherChamp();
 	}
-	// 1.1 ajout
+
+	/**
+	 * calcule le code html d'un champ @Notation en modification
+	 * @since 1.1 ajout
+	 * @return
+	 */
 	function modifierChamp() {
 		$ret = $this -> entete();
 		$uidNotation = $this -> index;
@@ -173,6 +205,7 @@ class SG_Notation extends SG_Objet {
 		$ret .= '</tbody></table></div>';
 		return $ret;
 	}
+
 	/** 1.1 ajout
 	*/
 	function EstVide() {
@@ -184,11 +217,13 @@ class SG_Notation extends SG_Objet {
 		}
 		return $ret;
 	}
+
 	/** 2.1 ajout
 	*/
-	function LibelleCommentaire {
-		return new SG_Texte("Commentaires")
+	function LibelleCommentaire() {
+		return new SG_Texte("Commentaires");
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Notation_trait;
 }
