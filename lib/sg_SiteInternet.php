@@ -1,49 +1,61 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.3.1 (see AUTHORS file)
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @SiteInternet */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * Classe SynerGaia de gestion d'un site internet
+ * @since 1.3
+ * @version 1.3.1
  */
 class SG_SiteInternet extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@SiteInternet';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
-	// Dernière erreur rencontrée
+	/** string Dernière erreur rencontrée */
 	public $Erreur = '';
 	
-	// URL d'accès au site
+	/** string URL d'accès au site */
 	public $url;
 	
-	// lien location
+	/** string lien location */
 	public $location = '';
 	
-	// champ de login
+	/** string champ de login */
 	public $champLogin;
 	
-	// champ mot de passe
+	/** string champ mot de passe */
 	public $champMotDePasse;
 	
-	// valeur du login
+	/** string valeur du login */
 	public $login;
-	// valeur du mot de passe
+	/** string valeur du mot de passe */
 	private $motDePasse;
 	
-	// a besoin d'un login ?
+	/** boolean a besoin d'un login ? */
 	public $isOpen = false;
 		
-	// gérée par PHPSSID ?
+	/** boolean gérée par PHPSSID ? */
 	public $phpsessid = false;
 	
-	// cookies de la page
+	/** array cookies de la page */
 	public $cookies = array();
-	// dernier status de la requête
+
+	/** string dernier status de la requête */
 	public $status = '';
+
+	/** string Réponse du header */
 	public $headerResponse;
 	
-	/** 1.3
-	* Construction de l'objet
-	*
-	* @param string $pCode code du site demandé
-	* @param array tableau des propriétés
-	*/
+	/**
+	 * Construction de l'objet
+	 * 
+	 * 
+	 * @since1.3
+	 * @param string $pCode code du site demandé
+	 * @param array $pTableau tableau des propriétés
+	 */
 	public function __construct($pCode = null, $pTableau = null) {
 		$base = SG_Dictionnaire::getCodeBase($this -> typeSG);
 		$tmpCode = new SG_Texte($pCode);
@@ -74,11 +86,14 @@ class SG_SiteInternet extends SG_Document {
 		$this -> login = $this -> getValeur('@Login', '');
 		$this -> isOpen = ($this->login === '');
 	}
-	/** 1.3.0 ajout
-	* Ouvrir un site internet pour obtenir une session
-	* @param $pUrl (@Texte) adresse de la page à ouvrir (au-delà de la page du site)
-	* @return $this
-	*/
+
+	/**
+	 * Ouvrir un site internet pour obtenir une session
+	 * 
+	 * @since 1.3.0 ajout
+	 * @param string|SG_Texte|SG_Formule $pURL adresse de la page à ouvrir (au-delà de la page du site)
+	 * @return $this
+	 */
 	public function Ouvrir($pURL = '') {
 		if (!$this -> isOpen) {
 			if($pURL !== '') {
@@ -125,11 +140,17 @@ class SG_SiteInternet extends SG_Document {
 		}
 		return $this;
 	}
-	/** 1.3.0 ajout ; 2.0 parm 2 et 3 pour compatibilité avec @Document.@Chercher
-	* Chercher une page internet
-	* @param $pUrl (@Texte) adresse de la page à ouvrir (au-delà de la page du site)
-	* @return $this
-	*/
+
+	/**
+	 * Chercher une page internet, voire un champ précis
+	 * 
+	 * @since 1.3.0 ajout
+	 * @version 2.0 parm 2 et 3 pour compatibilité avec "@Document.@Chercher"
+	 * @param string|SG_Texte|SG_Formule $pURL adresse de la page à ouvrir (au-delà de la page du site)
+	 * @param string|SG_Texte|SG_Formule $pChamp nom du champ à récupérer
+	 * @param string|SG_Texte|SG_Formule
+	 * @return SG_PageInternet|SG_Erreur
+	 */
 	public function Chercher($pURL = '', $pChamp = '', $pSens = 'e') {
 		$this -> Erreur = '';
 		$url = $this -> urlComplete(SG_Texte::getTexte($pURL));
@@ -150,9 +171,13 @@ class SG_SiteInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.0 ajout ; 1.3.1 try catch
+
+	/**
 	* Execute une requete sur le serveur et retourne le code html reçu.
 	* ATTENTION il n'y a aucune exécution de javascript ni inclusion des CSS !!
+	* 
+	* @since 1.3.0 ajout
+	* @version 1.3.1 try catch
 	* @param string $pURL url de la requete
 	* @param string $pMethode méthode HTTP (GET, POST, PUT, DELETE)
 	* @param string $pContenu contenu complémentaire de la requete
@@ -250,28 +275,38 @@ class SG_SiteInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Simule le remplissage et l'envoi via un bouton
-	* @param (string) nom du bouton à cliquer
-	* @param (string) nom du champ
-	* @param (string) valeur du champ
-	* @param + @param nfois pour les champs suivants
-	* @return (SG_HTML) résultat de la requête
-	**/
+
+	/**
+	 * Simule le remplissage et l'envoi via un bouton
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string|SG_Texte|SG_Formule nom du bouton à cliquer
+	 * @param string|SG_Texte|SG_Formule nom du champ
+	 * @param string|SG_Texte|SG_Formule valeur du champ
+	 * @param + @param nfois pour les champs suivants
+	 * @return (SG_HTML) résultat de la requête
+	 * @todo à terminer
+	 */
 	function Envoyer ($pNomBouton = '') {
 	} 
-	/** 1.3.1 ajout
-	* Simule le clic sur un bouton
-	* @param (string) nom du bouton à cliquer
-	* @return (SG_HTML) résultat de la requête
-	**/
+
+	/**
+	 * Simule le clic sur un bouton
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string|SG_Texte|SG_Formule nom du bouton à cliquer
+	 * @return SG_HTML résultat de la requête
+	 * @todo à terminer
+	 */
 	function Clic ($pNomBouton = '') {
 	}
-	/** 1.3.1 ajout
-	* concatene l'adresse du site et l'action
-	* @param (string) $pURL
-	* @return (string) l'URL complète
-	**/
+
+	/**
+	 * concatene l'adresse du site et l'action
+	 * @since 1.3.1 ajout
+	 * @param string $pURL
+	 * @return string l'URL complète
+	 */
 	function urlComplete ($pURL = '') {
 		if ($pURL === '') {
 			$ret = $this -> url;
@@ -284,12 +319,15 @@ class SG_SiteInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* initialise une @PageInternet à partir du texte html reçu d'une requête
-	* @param (string) $pURL : l'adresse de la page
-	* @param (string) $pHTML : le texte html de la page
-	* @return (@PageInternet) : la page créée
-	**/
+
+	/**
+	 * initialise une @PageInternet à partir du texte html reçu d'une requête
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param string $pURL : l'adresse de la page
+	 * @param string $pHTML : le texte html de la page
+	 * @return SG_PageInternet la page créée
+	 */
 	function initPageInternet ($pURL = '', $pHTML = '') {
 		if(getTypeSG($pHTML) === '@Erreur') {
 				$ret = $pHTML;
