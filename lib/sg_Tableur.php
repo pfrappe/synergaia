@@ -1,42 +1,65 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.3.0 (see AUTHORS file)
-* SG_Tableur : Classe SynerGaia de gestion des tableaur via PHPExcel
-*/
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Tableur */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
+ * SG_Tableur : Classe SynerGaia de gestion des tableaur via PHPExcel
+ * @since 1.3.0
+ * @version 2.4
+ * @uses PHPExcel
+ */
 class SG_Tableur extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Tableur' */
 	const TYPESG = '@Tableur';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	// Objet PHPExcel pour les manipulations
+	/** PHPExcel Objet PHPExcel pour les manipulations */
 	public $fichier;
 	
-	// feuille active (objet PHPExcel)
+	/** PHPExcel feuille active (objet PHPExcel) */
 	public $feuilleactive;
-	// ligne active (objet PHPExcel)
+	/** PHPExcel ligne active (objet PHPExcel) */
 	public $ligneactive;
-	// colonne active (objet PHPExcel)
+	/** PHPExcel colonne active (objet PHPExcel) */
 	public $colonneactive;
+	
+	/** string format de date sur tableur **/
+	private $formatDate;
 
-	/** 1.3.0 ajout
+	/**
 	* Construction de l'objet
-	*
+	* 
+	* @since 1.3.0
+	* @version 2.4 init feuille 1
 	* @param indéfini $pSource emplacement de la source (url ou fichier)
 	*/
 	function __construct($pSource = '') {
-		$fichier = SG_Texte::getTexte($pSource);
-		if ($fichier !== '') {
-			try {
-				$this -> fichier = PHPExcel_IOFactory::load($fichier);
-			} catch(Exception $e) {
-				$this -> fichier = new SG_Erreur($e -> getMessage());
-			}
+		if (!class_exists('PHPExcel_IOFactory')) {
+			SG_Pilote::OperationEnCours() -> STOP('0272');
 		} else {
-			$this -> fichier = new PHPExcel();
+			$source = SG_Texte::getTexte($pSource);
+			if ($source !== '') {
+				try {
+					$this -> fichier = PHPExcel_IOFactory::load($source);
+				} catch(Exception $e) {
+					SG_Pilote::OperationEnCours() -> STOP('0271', $e -> getMessage());
+				}
+			} else {
+				$this -> fichier = new PHPExcel();
+			}
+			$this -> Feuille(1);
 		}
 	}
-	/** 1.3.0 ajout ; 2.0 test fichier
+
+	/**
 	* Sélection une feuille
+	* 
+	* @since 1.3.0 ajout
+	* @version 2.0 test fichier
+	* @version 2.4 return this
 	* @param (any) si string : par nom, si numérique pas n°
+	* @return SG_Tableur ce tableur
 	*/
 	public function Feuille() {
 		if (getTypeSG($this -> fichier) === '@Erreur') {
@@ -64,10 +87,14 @@ class SG_Tableur extends SG_Objet {
 		$this -> feuilleactive = $feuille;
 		return $feuille;
 	}
-	/** 1.3.0 ajout
+
+	/**
 	* Sélection d'une cellule de feuille
-	* @param $indexLigne (numeric) indice de ligne (de 1 à maxLigne)
-	* @param $indexColonne (numeric) indice de ligne (de 1 à maxColonne)
+	* 
+	* @since 1.3.0 ajout
+	* @param integer $indexLigne indice de ligne (de 1 à maxLigne)
+	* @param integer $indexColonne indice de ligne (de 1 à maxColonne)
+	* @return SG_DateHeure|SG_Texte|SG_Nombre contenu de la cellule
 	*/
 	public function Cellule($indexLigne = 1, $indexColonne = 'A') {
 		$iligne = new SG_Nombre($indexLigne);
@@ -89,9 +116,16 @@ class SG_Tableur extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.3.0 ajout ; 2.0 test $feuille
-	* parcourt une ligne et transfère une cellule dans chaque champ du document
-	*/
+
+	/**
+	 * parcourt une ligne et transfère une cellule dans chaque champ du document
+	 * 
+	 * @since 1.3.0 ajout
+	 * @version 2.0 test $feuille
+	 * @param integer|SG_Nombre|SG_Formule $pDebut
+	 * @param integer|SG_Nombre|SG_Formule $pFin
+	 * @return SG_Collection
+	 */
 	public function Lignes($pDebut = 1, $pFin = 0) {
 		// interprétation des paramètres
 		$debut = new SG_Nombre($pDebut);
@@ -132,20 +166,25 @@ class SG_Tableur extends SG_Objet {
 		}
 		return $ret; 
 	}
-	/** (1.3.0) Importer ; 2.0 getTexte, test fichier, test pas clé, variables document temporaires
-	* Importer une feuille de tableur dans des documents
-	* Chaque ligne représente les champs d'un document du type passé en paramètre.
-	* Rien n'est fait si aucun champ n'est passé ou les paramètres sont en erreur.
-	* La fonction .@Enregistrer n'est pas exécutée.
-	* @param $pTypeObjet = '' : le type d'objet de la collection 
-	* @param $pChampCle = '' : le nom du champ clé (devientdra @Code)
-	* @param $pColIndex = 'A' : la colonne où se trouve la valeur du champ clé
-	* @param $pChamps = null : la suite des champs (soit "champ1, champ2" si tout est pris, soit "A|champ1, C|champ2, Z|champs3" si sélection
-	* @param $pDebut = 1 : n0 de la première ligne (à partir de 1)
-	* @param $pFin = 0 : n° de la dernière ligne (0 si jusqu'à la fin)
-	* @param $pFiltre = '' : filtre exécuté sur le document avant de le garder dans la collection
-	* @return (SG_Collection) : la collection de documents
-	*/
+
+	/**
+	 * Importer une feuille de tableur dans des documents
+	 * Chaque ligne représente les champs d'un document du type passé en paramètre.
+	 * Rien n'est fait si aucun champ n'est passé ou les paramètres sont en erreur.
+	 * La fonction .@Enregistrer n'est pas exécutée.
+	 * 
+	 * @since 1.3.0
+	 * @version 2.0 getTexte, test fichier, test pas clé, variables document temporaires
+	 * @version 2.4 modif sur calcul modele propriété ; test dates
+	 * @param string|SG_Texte|SG_Formule $pTypeObjet = '' : le type d'objet de la collection 
+	 * @param string|SG_Texte|SG_Formule $pChampCle = '' : le nom du champ clé (devientdra @Code)
+	 * @param string|SG_Texte|SG_Formule $pColIndex = 'A' : la colonne où se trouve la valeur du champ clé
+	 * @param string|SG_Texte|SG_Formule $pChamps = null : la suite des champs (soit "champ1, champ2" si tout est pris, soit "A|champ1, C|champ2, Z|champs3" si sélection
+	 * @param integer|SG_Nombre|SG_Formule $pDebut = 1 : n0 de la première ligne (à partir de 1)
+	 * @param integer|SG_Nombre|SG_Formule $pFin = 0 : n° de la dernière ligne (0 si jusqu'à la fin)
+	 * @param SG_Formule $pFiltre = '' : filtre exécuté sur le document avant de le garder dans la collection
+	 * @return SG_Collection : la collection de documents
+	 */
 	public function Importer($pTypeObjet = '', $pChampCle = '', $pColIndex = 'A', $pChamps = '', $pDebut = 1, $pFin = 0, $pFiltre = '') {
 		if (getTypeSG($this -> fichier) === '@Erreur') {
 			$ret = $this -> fichier;
@@ -191,22 +230,56 @@ class SG_Tableur extends SG_Objet {
 					}
 					$champs = $tmp;
 				} else {
-					$ret = new SG_Erreur('la liste de champs n\' pas interprétable');
+					$ret = new SG_Erreur('0203');
 				}
 			}
 		}
+	
 		if (getTypeSG($ret) !== '@Erreur') {
+			// préparation des champs à traiter
+			$champsdoc = array();
+			$icol = 'A';
+			foreach($champs as $champ) {
+				$r = array();
+				if ($champ !== '') {
+					$c = explode('|', $champ);
+					if (sizeof($c) > 1) {
+						$r[0] = $c[1];
+						$icol = $c[0];
+						$r[1] = $icol;
+					} else {
+						$r[0] = $champ;
+						$r[1] = $icol;
+					}
+					// test si propriété locale temporaire
+					if (SG_Dictionnaire::isProprieteExiste($typeObjet, $r[0])) {
+						$r[2] = true;
+						$r[3] = SG_Dictionnaire::getModelePropriete($typeObjet, $r[0]);
+						$ipos = strpos($r[3],'/');
+						if ($ipos !== false) {
+							$r[3] = substr($r[3],$ipos + 1);
+						}
+					} else {
+						$r[2] = false;
+						$r[3] = '@Texte';
+					}
+					$champsdoc[] = $r;
+				}
+				$icol++;
+			}
 			// boucle sur les lignes
 			$lignes = $this -> Lignes($pDebut,$pFin) -> elements;
 			$iligne = 1;
 			$formule = new SG_Formule();
+			$cle = '';
 			foreach($lignes as $key => $ligne) {
+				// nouveau document ou rechercher sur clé ?
 				if ($champCle === '' or $cle === '') {
 					$doc = SG_Rien::Nouveau($typeObjet);
 				} else {
 					$cle = SG_Texte::getTexte($ligne -> elements[$index]);
 					$formule -> setFormule( '.' . $champCle . '.@Egale("'. $cle . '")');
-					$collec = SG_Rien::Chercher($pTypeObjet, '', $formule);
+					$collec = SG_Rien::Chercher($typeObjet, $formule);
 					if(getTypeSG($collec) === '@Collection') {
 						if(sizeof($collec -> elements) == 0) {
 							$doc = SG_Rien::Nouveau($typeObjet);
@@ -217,44 +290,68 @@ class SG_Tableur extends SG_Objet {
 						$doc = new SG_Erreur('0114', $typeObjet . ' : ' . $cle);
 					}
 				}
+				// mise à jour des propriétés
 				$doc -> proprietes['noligne'] = new SG_Nombre($key);
 				if (getTypeSG($doc) !== '@Erreur') {
-					$icol = 'A';
-					foreach($champs as $i => $champ) {
-						if ($champ !== '') {
-							$c = explode('|', $champ);
-							if (sizeof($c) > 1) {
-								$champ = $c[1];
-								$icol = $c[0];
-							}
-							if (isset($ligne -> elements[$icol])) {
+					foreach($champsdoc as $champ) {
+						if ($champ[0] !== '') {
+							if (isset($ligne -> elements[$champ[1]])) {
+								$val = $ligne -> elements[$champ[1]];
+								// traitement des dates
+								if ($champ[3] === '@Date' and getTypeSG($val) !== '@Date') {
+									$val = SG_Texte::getTexte($val);
+									if (!is_null($this -> formatDate)) {
+										$dt = new SG_Date();
+journaliser($val);
+										$dt -> _date = DateTime::createFromFormat($this -> formatDate, $val);
+										if ($dt -> _date instanceof DateTime) {
+											$val = $dt -> toString();
+										}
+									} elseif (strpos($val, '-')) { // date avec '-'
+										$dt = explode('-',$val);
+										if (sizeof($dt) > 2 and strlen($dt[2]) === 2) {
+											if ($dt[2] <= '25') { // cas 1900 ou 2000
+												$dt[2] = '20' . $dt[2];
+											} else {
+												$dt[2] = '19' . $dt[2];
+											}
+										}
+										$val = implode('/', $dt);
+									}
+								}
 								// test si propriété locale temporaire
-								if (SG_Dictionnaire::isProprieteExiste(getTypeSG($doc), $champ)) {
-									$doc -> setValeur($champ, $ligne -> elements[$icol]);
+								if ($champ[2]) {
+									// cas des dates en format spécial
+									$doc -> setValeur($champ[0], $val);
 								} else {
-									$doc -> proprietes[$champ] = $ligne -> elements[$icol];
+									$doc -> proprietes[$champ[0]] = $val;
 								}
 							}
 						}
-						$icol++;
 					}
 				}
-				if($pFiltre === '' or getTypeSG($doc) !== '@Erreur') {					
+				if($pFiltre === '' or getTypeSG($doc) === '@Erreur') {					
 					$ret -> elements[] = $doc;
-				} else {
+				} elseif (getTypeSG($pFiltre) === '@Formule') {
 					$ok = $pFiltre -> calculerSur($doc);
 					if($ok -> estVrai() === true) {
 						$ret -> elements[] = $doc;
 					}
+				} else {
+					$ret -> elements[] = $pFiltre;
 				}
 			}
 		}
 		return $ret;
 	}
-	/** (1.3.0) NoDerniereLigne ; 2.0 test fichier
-	* N° de la dernière ligne de la feuille active
-	* @return (@Nombre) n° dernière ligne
-	*/
+
+	/**
+	 * N° de la dernière ligne de la feuille active
+	 * 
+	 * @since 1.3.0
+	 * @version 2.0 test fichier
+	 * @return SG_Nombre n° dernière ligne
+	 */
 	public function NoDerniereLigne () {
 		if (getTypeSG($this -> fichier) === '@Erreur') {
 			$ret = new SG_Nombre(0);
@@ -263,20 +360,25 @@ class SG_Tableur extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** (1.3.0) NoDerniereColonne
-	* N° de la dernière colonne de la feuille active
-	* @return (@Nombre) n° dernière ligne
-	*/
+
+	/**
+	 * N° de la dernière colonne de la feuille active
+	 * @since 1.3.0
+	 * @return SG_Nombre n° dernière colonne
+	 */
 	public function NoDerniereColonne () {
 		$ret = new SG_Nombre($this -> Feuille() -> getHighestColumn());
 		return $ret;
 	}
-	/*** (1.3.1) Ajouter
-	* Ajouter des lignes après la dernière ligne de la page active
-	* @param (@Collection) collection source
-	* @param (any) liste des formules de donnée à ajouter provenant de chaque élément de la collection
-	* @return (@Tableur) la feuille de calcul modifiée non enregistrée
-	*/
+
+	/**
+	 * Ajouter des lignes après la dernière ligne de la page active
+	 * 
+	 * @since 1.3.1
+	 * @param SG_Collection $pCollection collection source
+	 * @param SG_Formule arg liste des formules de donnée à ajouter provenant de chaque élément de la collection
+	 * @return SG_Tableur la feuille de calcul modifiée non enregistrée
+	 */
 	function Ajouter ($pCollection = null) {
 		if(getTypeSG($pCollection) === '@Formule') {
 			$collection = $pCollection -> calculer();
@@ -306,12 +408,15 @@ class SG_Tableur extends SG_Objet {
 		}
 		return $this;
 	}
-	/** (1.3.1) Enregistrer
-	* Enregistrer le fichier
-	* @param (@Texte) $pCheminComplet chemin à partir de /synergaia/ (exemple tmp/test.xls)
-	* @param (@Texte) $pFormat (defaut "Excel2007")
-	* @return (@Tableur) $this
-	**/
+
+	/**
+	 * Enregistrer le fichier
+	 * 
+	 * @since 1.3.1
+	 * @param string|SG_Texte|SG_Formule $pCheminComplet chemin à partir de /synergaia/ (exemple tmp/test.xls)
+	 * @param string|SG_Texte|SG_Formule $pFormat (defaut "Excel2007")
+	 * @return SG_Tableur $this
+	 */
 	function Enregistrer($pCheminComplet = '', $pFormat = 'Excel2007') {
 		$format = SG_Texte::getTexte($pFormat);
 		$chemin = SG_Texte::getTexte($pCheminComplet);
@@ -319,11 +424,14 @@ class SG_Tableur extends SG_Objet {
 		$ret = $writer -> save($chemin);
 		return $this;
 	}
-	/** (1.3.1) getSimpleValue
-	* Retourne une valeur simple PHP
-	* @param (any) objet SynerGaia
-	* @return (string, numeric, datetime)
-	**/
+
+	/**
+	 * Retourne une valeur simple PHP
+	 * 
+	 * @since 1.3.1
+	 * @param SG_Objet $pObjet objet SynerGaia
+	 * @return string|numeric|datetime
+	 */
 	static function getSimpleValue($pObjet = null) {
 		$ret = '';
 		if (is_string($pObjet) or is_numeric($pObjet)) {
@@ -346,9 +454,12 @@ class SG_Tableur extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** (1.3.1) Afficher
-	* Afficher le tableau en HTML
-	**/
+
+	/**
+	 * Calculer le code HTML pour l'affichage
+	 * 
+	 * @since 1.3.1
+	 */
 	function Afficher() {
 		$ret = '<div class="tableur"><table>';
 		// pour chaque rangée...
@@ -367,5 +478,21 @@ class SG_Tableur extends SG_Objet {
 		}
 		$ret.='</table></div>';
 		return new SG_HTML($ret);
+	}
+
+	/**
+	 * Met à jour le format des dates sur le tableur
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pFormat format (avec d, m, y, h, i, s comme pour createFromFormat de DateTime)
+	 * @return SG_Tableur|SG_Erreur le tableur ou une erreur
+	 */
+	function FormatDate($pFormat = null) {
+		$ret = $this;
+		if ($pFormat !== null) {
+			$format = SG_Texte::getTexte($pFormat);
+			$this -> formatDate = $format;
+		}
+		return $ret;
 	}
 }
