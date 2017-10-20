@@ -1,29 +1,33 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* Classe SynerGaia de gestion d'une icone
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Icone */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Icone_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Icone_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Icone_trait{};
 }
+
+/**
+ * Classe SynerGaia de gestion d'une icone
+ * @version 2.1.1
+ */
 class SG_Icone extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Icone' */
 	const TYPESG = '@Icone';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	/**
-	 * Contenu texte de l'objet
-	 */
+	/** string Contenu texte de l'objet */
 	public $code = '';
 	
-	// 1.1 categorie de l'icône
+	/** string 1.1 categorie de l'icône */
 	public $categ = '';
 
-	/** 1.1
+	/**
 	 * Construction de l'objet
-	 *
+	 * @since 1.1
 	 * @param indéfini $pQuelqueChose valeur à partir de laquelle le SG_Icone est créé
 	 * @param string $pCateg categorie de l'icone
 	 */
@@ -35,44 +39,52 @@ class SG_Icone extends SG_Objet {
 	}
 
 	/**
-	* Conversion en chaine de caractères
-	*
-	* @return string texte
-	*/
+	 * Conversion en chaine de caractères
+	 *
+	 * @return string texte
+	 */
 	function toString() {
 		return $this -> code;
 	}
 
 	/**
-	* Conversion en code HTML
-	*
-	* @return string code HTML
-	*/
+	 * Conversion en code HTML
+	 *
+	 * @return string code HTML
+	 */
 	function toHTML() {
 		return '<img src="' . SG_Navigation::URL_THEMES . 'defaut/img/icons/' . $this -> categ . '/' . $this -> code . '" alt="' . htmlentities($this -> code, ENT_QUOTES, 'UTF-8') . '" title="' . htmlentities($this -> code, ENT_QUOTES, 'UTF-8') . '"/>';
 	}
 
 	/**
-	* Affichage
-	*
-	* @return string code HTML
-	*/
+	 * Affichage
+	 *
+	 * @version 2.6 retour SG_HTML
+	 * @return string code HTML
+	 */
 	function afficherChamp() {
-		return '<span class="champ_Icone">' . $this -> toHTML() . '</span>';
+		return new SG_HTML('<span class="champ_Icone">' . $this -> toHTML() . '</span>');
 	}
-	/** 1.1 ajout
-	*/
+
+	/**
+	 * Teste si l'objet existe
+	 * @since 1.1 ajout
+	 */
 	function Existe() {
 		$ok = file_exists(SG_Navigation::URL_THEMES . 'defaut/img/icons/' . $this -> categ . '/' . $this -> code);
 		return new SG_VraiFaux($ok);
 	}
 
-	/** 1.1 categ ; 1.3.1 param 2
-	* Modification
-	* @param $pRefChamp référence du champ HTML
-	* @param $pListeElements (@Collection) : liste des valeurs possibles (par défaut toutes)
-	* @return string code HTML
-	*/
+	/**
+	 * Modification
+	 * 
+	 * @since 1.1 categ
+	 * @version 1.3.1 param 2
+	 * @version 2.6 retour SG_HTML
+	 * @param string $pRefChamp référence du champ HTML
+	 * @param SG_Collection $pListeElements liste des valeurs possibles (par défaut toutes)
+	 * @return string code HTML
+	 */
 	function modifierChamp($pRefChamp = '', $pListeElements = null) {
 		$ret = '<select class="champ_Icone" type="text" name="' . $pRefChamp . '">';
 
@@ -121,6 +133,7 @@ class SG_Icone extends SG_Objet {
 		$ret .= '</select>';
 		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Icone_trait;
 }
