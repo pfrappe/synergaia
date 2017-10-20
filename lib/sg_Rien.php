@@ -1,61 +1,82 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Rien : Classe d'origine pour tous les objets SynerGaïa
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** fichier contenant la gestion de l'objet @Rien */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Rien_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Rien_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Rien_trait{};
 }
+
+/**
+* SG_Rien : Classe gérant un objet SynerGaïa vide et toutes les méthodes ne commençant pas par un point
+* @version 2.6 suppression Table()
+*/
 class SG_Rien {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Rien' */
 	const TYPESG = '@Rien';
+	/** string contante pour l'arrêt d'un @PourChaque */
+	const ARRET = 'arrêt';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	const FLAGDEMANDER = '@Demander'; // 1.3.0
-	/**
-	 * Conversion en chaine de caractères
-	 *
-	 * @return string texte
+	/** string flag 
+	 * @todo probablement à supprimer
+	 * @since 1.3.0
 	 */
+	const FLAGDEMANDER = '@Demander';
+
+	/**
+	* Conversion en chaine de caractères
+	* 
+	* @return string texte
+	*/
 	static function toString() {
 		return '';
 	}
 
 	/**
-	 * Conversion valeur numérique
-	 *
-	 * @return float valeur numérique
-	 */
+	* Conversion valeur numérique
+	*
+	* @return float valeur numérique
+	*/
 	static function toFloat() {
 		return (double)0;
 	}
 
 	/**
-	 * Conversion valeur numérique
-	 *
-	 * @return integer valeur numérique
-	 */
+	* Conversion valeur numérique
+	*
+	* @return integer valeur numérique
+	*/
 	static function toInteger() {
 		return (integer)0;
 	}
 
 	/**
-	 * Conversion en code HTML
-	 *
-	 * @return string code HTML
-	 */
+	* Conversion en code HTML
+	*
+	* @return string code HTML
+	*/
 	static function toHTML() {
 		return '';
 	}
-	// 1.1 ajout
+
+	/**
+	 * Affiche une chaine vide
+	 * 
+	 * @since 1.1 ajout
+	 * @version 2.6 : SG_HTML
+	 * @return SG_HTML vide
+	 */
 	static function Afficher() {
-		return '';
+		return new SG_HTML();
 	}
-	/** 1.3
+	/**
 	 * Teste si la valeur est vide
-	 *
+	 * 
+	 * @since 1.3
 	 * @return SG_VraiFaux est vide
 	 */
 	static function EstVide() {
@@ -63,60 +84,72 @@ class SG_Rien {
 	}
 
 	/**
-	 * Renvoie un @Rien
-	 *
-	 */
+	* Renvoie un @Rien
+	*
+	* @return SG_Rien
+	*/
 	static function Vide() {
 		return new SG_Rien();
 	}
 
-	/** 1.0.5
-	 * Renvoie un @VraiFaux VRAI
-	 *
-	 */
+	/**
+	* Renvoie un @VraiFaux VRAI
+	*
+	* @since 1.0.5
+	* @return SG_VraiFaux
+	*/
 	static function Vrai() {
 		return new SG_VraiFaux(SG_VraiFaux::VRAIFAUX_VRAI);
 	}
 
-	/** 1.0.5
-	 * Renvoie un @VraiFaux FAUX
-	 *
-	 */
+	/**
+	* Renvoie un @VraiFaux FAUX
+	* 
+	* @since 1.0.5
+	* @return SG_VraiFaux
+	*/
 	static function Faux() {
 		return new SG_VraiFaux(SG_VraiFaux::VRAIFAUX_FAUX);
 	}
 
-	/** 1.0.5
-	 * Renvoie un @VraiFaux VRAI
-	 *
-	 */
+	/**
+	* Renvoie un @VraiFaux VRAI
+	* 
+	* @since 1.0.5
+	* @return SG_VraiFaux
+	*/
 	static function Oui() {
 		return new SG_VraiFaux(SG_VraiFaux::VRAIFAUX_VRAI);
 	}
 
-	/** 1.0.5
-	 * Renvoie un @VraiFaux FAUX
-	 *
-	 */
+	/**
+	* Renvoie un @VraiFaux FAUX
+	* 
+	* @since 1.0.5
+	* @return SG_VraiFaux
+	*/
 	static function Non() {
 		return new SG_VraiFaux(SG_VraiFaux::VRAIFAUX_FAUX);
 	}
 
-	/** 1.0.5
-	 * Renvoie un @VraiFaux INDEFINI
-	 *
-	 */
+	/**
+	* Renvoie un @VraiFaux INDEFINI
+	* 
+	* @since 1.0.5
+	* @return SG_VraiFaux
+	*/
 	static function Indefini() {
 		return new SG_VraiFaux(SG_VraiFaux::VRAIFAUX_INDEF);
 	}
 	
 	/**
-	 * Renvoie la date du jour
-	 *
-	 * @return SG_Date aujourd'hui
-	 */
+	* Renvoie la date du jour
+	*
+	* @return SG_Date aujourd'hui
+	*/
 	static function Aujourdhui() {
-		return new SG_Date(time());
+		$ret = new SG_Date(new DateTime());
+		return $ret;
 	}
 
 	/**
@@ -150,7 +183,7 @@ class SG_Rien {
 	* @return SG_Operation opération en cours
 	*/
 	static function OperationEnCours() {
-		return SG_Navigation::OperationEnCours();
+		return SG_Pilote::OperationEnCours();
 	}
 
 	/** 1.3.3 retourne un @Log
@@ -169,7 +202,7 @@ class SG_Rien {
 		return new SG_Log();
 	}
 
-	/** 1.0.7 ; 2.1 ret si pas formule ; 2.3 si deux paramètres : sinon complet
+	/** 1.0.7 ; 2.1 ret si pas formule ; 2.3 si deux paramètres : sinon complet ; 2.4 err 0199
 	* Conditionne l'exécution de formule au résultat d'une autre
 	*
 	* @param indéfini $pCondition Condition testée
@@ -201,7 +234,7 @@ class SG_Rien {
 				$ret = $pValeurSiIndefini;
 			}
 		} else {
-			$ret = new SG_Erreur('La condition du @Si ne donne pas une valeur @VraiFaux'); // todo
+			$ret = new SG_Erreur('0199',getTypeSG($resultatCondition));
 		}
 		return $ret;
 	}
@@ -225,7 +258,7 @@ class SG_Rien {
 			$classe = SG_Dictionnaire::getClasseObjet($typeObjet);
 			if ($classe !== '') {
 				if(!class_exists($classe)) {
-					$objet = new SG_Erreur('Classe inexistante', $pType);// TODO
+					$objet = new SG_Erreur('0270', $classe);// TODO
 				} else {
 					$objet = new $classe($uid);
 					if (!SG_Dictionnaire::isObjetDocument($typeObjet)) {
@@ -255,24 +288,48 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 2.1 parm compilés
-	* 1.1 n'est plus static (à cause de @Document.@Chercher) ; 1.3.0 redevient static ; 
-	* Cherche dans l'univers SynerGaia les objets demandés
-	* @param string $pTypeObjet type de l'objet
-	* @param string $pCodeObjet code de l'objet
-	* @param string $pFiltre formule de filtre immédiat
-	* @return SG_Collection collection des objets trouvés
-	*/
-	static function Chercher($pTypeObjet = '', $pCodeObjet = '', $pFiltre = '') {
+
+	/**
+	 * Cherche dans l'univers SynerGaia les objets demandés
+	 * 
+	 * @version 2.4 cursor ; param2 = nom de champ
+	 * @param SG_Formule|string $pTypeObjet type de l'objet
+	 * @param SG_Formule|string $pNomChamp code de l'objet ou nom du champ (ou filtre si syntaxe à 2 paramètres)
+	 * @param SG_Formule|string $pFiltre valeur du champ (ou minimum) si le champ est fourni, formule de filtre immédiat ou filtre si nom champ = '')
+	 * @param SG_Formule $pMax : valeur maximum (incluse) du champ si fourchette
+	 * @return SG_Collection collection des objets trouvés
+	 */
+	static function Chercher($pTypeObjet = '', $pNomChamp = '', $pFiltre = '', $pMax = null) {
 		$typeObjet = SG_Texte::getTexte($pTypeObjet);
-		$codeObjet = SG_Texte::getTexte($pCodeObjet);
-		$collection = new SG_Collection();
-		// Dans quelle base chercher ?
-		$codeBase = SG_Dictionnaire::getCodeBase($typeObjet);
-		if ($codeBase !== '') {
-			$collection = $_SESSION['@SynerGaia']->getChercherDocuments($codeBase, $typeObjet, $codeObjet, $pFiltre);
+		$ret = '';
+		$n = func_num_args();
+		if ($n === 0 or $typeObjet === '') {
+			$ret = new SG_Erreur('0263');
+		} else {
+			// Dans quelle base chercher ?
+			$codeBase = SG_Dictionnaire::getCodeBase($typeObjet, true);
+			if ($codeBase === '') {
+				$ret = new SG_Erreur('0264', $typeObjet);
+			} else {
+				$ret = new SG_Collection();
+				if ($n === 1) { 		// un paramètre : tous les objets de ce type
+					$ret = $_SESSION['@SynerGaia'] -> getChercherDocuments($codeBase, $typeObjet);
+				} elseif ($n === 2) {	// parm2 est un filtre
+					$ret = $_SESSION['@SynerGaia'] -> getChercherDocuments($codeBase, $typeObjet, '', $pNomChamp);
+				} else {
+					$champ = SG_Texte::getTexte($pNomChamp);
+					if ($n === 3 and $champ === '') {	// parm3 est un filtre car parm2 est ''
+						$ret = $_SESSION['@SynerGaia'] -> getChercherDocuments($codeBase, $typeObjet, '', $pFiltre);
+					} else {	// 3 ou 4 paramètres donc champ et $pFiltre=valeur (et max)
+						$ret = $_SESSION['@SynerGaia'] -> sgbd -> getCollectionObjetsParChamp ($typeObjet, $champ, $pFiltre, $pMax);
+					}
+				}
+				if ($ret instanceof SG_Collection) {
+					$ret -> AllerAuDebut();// positionne le curseur au début
+				}
+			}
 		}
-		return $collection;
+		return $ret;
 	}
 
 	/**
@@ -300,7 +357,6 @@ class SG_Rien {
 		$jsSelection = "function(doc) { if (" . $jsFormule . ") { emit(doc['@Code'],doc['_id']); } }";
 		$vue = new SG_Vue('', $codeBase, $jsSelection, true);
 		$collection = $vue -> ChercherElements();
-
 		return $collection;
 	}
 
@@ -404,8 +460,10 @@ class SG_Rien {
 		$ret = new SG_VraiFaux($_SESSION['debug']['on']);
 		return $ret;
 	}
-	/** 1.0.1
+
+	/**
 	* Permet de tester le temps de réponse d'une formule
+	* @since 1.0.1
 	* @param SG_Formule $pFormule : texte de la formule à tester
 	* @param nombre $pNb : nombre de fois que la formule doit être testée (par défaut : 1)
 	* @param string $pCodeDebug : le code de benchmark qui sera utiliser pour stocker les temps de réponse (par défaut 'Tester')
@@ -434,12 +492,19 @@ class SG_Rien {
 		journaliser ('<-Tester');
 		return $collec;
 	}
-	/** 2.3 err 0184
-	* 1.1 test si retour collection ; 1.3.1 ajout menu accueil même vide ; 2.0 modif formule ; 2.1.1 remplace formule
+
+	/**
 	* retourne la collection des thèmes de mes opérations, triés par ordre de position
-	* @param boolean : force le recalcul plutôt que la valeur en cache
-	* @return : 
-	* @formula : @Moi.@ModelesOperations.@PourChaque(.@Theme).@Ajouter(@Theme("Accueil")).@Unique.@Trier(.@Position)
+	* 
+	* @since 1.0.1
+	* @version 1.1 test si retour collection 
+	* @version 1.3.1 ajout menu accueil même vide
+	* @version 2.0 modif formule
+	* @version 2.1.1 remplace formule 
+	* @version 2.3 err 0184
+	* @param boolean $recalcul force le recalcul plutôt que la valeur en cache
+	* @return SG_Collection
+	* formule sg : @Moi.@ModelesOperations.@PourChaque(.@Theme).@Ajouter(@Theme("Accueil")).@Unique.@Trier(.@Position)
 	*/ 
 	static function MesThemes($recalcul = false) {
 		if ($recalcul or !isset($_SESSION['page']['mesthemes'])) {
@@ -461,13 +526,13 @@ class SG_Rien {
 				}
 				$ret = new SG_Collection();
 				$ret -> elements = $mmot;
-				$accueil = new SG_Theme("Accueil");
+				$accueil = new SG_Theme('Accueil');
 				$ret -> Ajouter($accueil);
 				$ret = $ret -> Unique();
 				$formule = new SG_Formule('.@Position');
 				$collec = $ret -> Trier($formule);
 				$compacter = false;
-				if (getTypeSG($collec) === '@Collection') {
+				if ($collec instanceof SG_Collection) {
 					foreach($collec -> elements as $key => $theme) {
 						if ($theme === NULL) {
 							unset ($collec -> elements[$key]);
@@ -492,8 +557,8 @@ class SG_Rien {
 	
 	/**
 	* ThemeEnCours : retourne le @Theme en cours (sinon null)
+	* formule sg : @OperationEnCours.@Theme
 	* @return @Theme : thème auquel appartient l'opération en cours
-	* @formula : @OperationEnCours.@Theme
 	*/ 
 	static function ThemeEnCours () {
 		$ret = null;
@@ -505,13 +570,18 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 1.3.3 return @HTML ; 2.3 test err
-	* retourne le menu du @Theme fourni en paramètre (sinon null) si le thème m'appartient
-	* @param string ou formule donnat un string : Thème dont on veut le menu
-	* @param boolean : force le recalcul du thème (plutôt que celui du cache)
-	* @return @HTML : le texte du menu 
-	* @formula : @Si(@MesThemes.@Contient(theme),@Navigation.@MenuTheme(theme),@Rien)
-	*/ 	
+
+	/**
+	 * retourne le menu du @Theme fourni en paramètre (sinon null) si le thème m'appartient
+	 * 
+	 * @since 1.0
+	 * @version 1.3.3 return @HTML
+	 * @version 2.3 test err
+	 * @param string|SG_Texte|SG_Formule $pTheme donnant un string : Thème dont on veut le menu
+	 * @param boolean|SG_VraiFaux|SG_Formule $recalcul : force le recalcul du thème (plutôt que celui du cache)
+	 * @return SG_HTML : le texte du menu
+	 * formule sg : @Si(@MesThemes.@Contient(theme),@Navigation.@MenuTheme(theme),@Rien)
+	 */ 	
 	static function MenuTheme($pTheme = '', $recalcul = true) {
 		$ret = '';
 		$nom = $pTheme;
@@ -533,11 +603,14 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/* 1.0
-	* Active ou désactive l'envoi effectif des messages
-	* @param indéfini flag : soit "oui" ou @Vrai ou true, soit "non" ou @Faux ou false
-	* @return @Vrai si envoi effectif activé, @Faux si envoi désactivé
-	*/
+
+	/**
+	 * Active ou désactive l'envoi effectif des messages
+	 * 
+	 * @since 1.0
+	 * @param boolean|SG_VraiFaux|SG_Formule $pActif flag : soit "oui" ou @Vrai ou true, soit "non" ou @Faux ou false
+	 * @return SG_VraiFaux @Vrai si envoi effectif activé, @Faux si envoi désactivé
+	 */
 	static function MailEnvoi ($pActif = true) {
 		if( ! SG_Rien::Moi() -> EstAdministrateur() -> estVrai()) {
 			$ret = new SG_Erreur('Méthode réservée à l\'administrateur');
@@ -582,13 +655,19 @@ class SG_Rien {
 		}
 		return $ret;
 	}
+
 	/** 1.0
-	* 
-	*/
+	 * @return string
+	 */
 	static function NouvelleLigne () {
 		return PHP_EOL;
 	}
-	
+
+	/** 
+	 * table (périmé ou inutilisé)
+	 * @todo à supprimer
+	 * @param any $pCode
+	 * @return string
 	static function Table($pCode = '') {
 		$valeurs = array();
 		$code = $pCode;
@@ -602,7 +681,7 @@ class SG_Rien {
 		if (SG_Cache::estEnCache($codeCache, false)) {
 			$valeurs = json_decode(SG_Cache::valeurEnCache($codeCache, false));
 		} else {
-			$collec = SG_Rien::Chercher('@Table', $code);
+			$collec = $_SESSION['@SynerGaia'] -> sgbd -> getCollectionObjetsParCode('@Table', $code);
 			if (sizeof($collec -> elements) !== 0) {
 				$valeurs = $collec -> elements[0] -> getValeur('Valeurs');
 				SG_Cache::mettreEnCache(json_encode($codeCache, $valeurs, false));
@@ -612,16 +691,34 @@ class SG_Rien {
 		$ret -> elements = $valeurs;
 		return $ret;
 	}
-	/** 1.0
-	 * getValeurPropriete : pour éviter de provoquer des erreurs quand la pile de recherche de l'objet parent arrive à @Rien
 	 */
-	static function getValeurPropriete ($pNom) {
-		return '';
+
+	/**
+	 * getValeurPropriete : pour éviter de provoquer des erreurs quand la pile de recherche de l'objet parent arrive à @Rien
+	 * @since 1.0
+	 * @version 2.6 parm 2
+	 * @param string $pNom
+	 * @param any $pDefaut 
+	 * @return string '' ou defaut
+	 */
+	static function getValeurPropriete ($pNom, $pDefaut = '') {
+		if (is_null($pDefaut)) {
+			$ret = $this;
+		} else {
+			$ret = $pDefaut;
+		}
+		return $ret;
 	}
-	/** 1.1 ajout ; 1.3.2 message 0013 -> 0078 ; ok si $pValeur est objet ; 2.3 0186
-	* crée un objet SynerGaïa vide à partir de son type
-	* @param string $pType type d'objet à créer
-	**/
+
+	/**
+	 * crée un objet SynerGaïa vide à partir de son type
+	 * 
+	 * @since 1.1 ajout
+	 * @version 2.3 erreur 0186
+	 * @param string $pType type d'objet à créer
+	 * @param any $pValeur valeur de l'objet à créer
+	 * ]return SG_Objet ou dérivé
+	 */
 	static function creerObjet($pType = '', $pValeur = null) {
 		$classe = SG_Dictionnaire::getClasseObjet($pType, false);
 		if ($classe !== '') {
@@ -648,16 +745,17 @@ class SG_Rien {
 			$objet = new SG_Erreur('0078', $pType);
 		}
 		return $objet;
-	}	
-	/** 1.1 utilise getClasseObjet
-	* Retourne un objet SynerGaïa à partir d'un tableau. Il doit contenir une propriété "typeSG" sauf si l'objet est déjà fourni.
-	* Cette fonction peut travailler récursivement
-	*
-	* @param string $pTableau le tableau à p artir duquel on construit l'objet
-	* @param indéfini $pValeurDefaut valeur de la propriété si le champ n'existe pas (défaut null)
-	* @param boolean $pRecursive nombre de niveau de récursivité (0 : pas récursif, -1 tout récursif).
-	* @return indéfini retourne l'objet SynerGaïa si typeSG défini, ou la valeur initiale fournie sinon
-	*/
+	}
+
+	/**
+	 * Retourne un objet SynerGaïa à partir d'un tableau. Il doit contenir une propriété "typeSG" sauf si l'objet est déjà fourni.
+	 * Cette fonction peut travailler récursivement
+	 *
+	 * @version 1.1 utilise getClasseObjet
+	 * @param string $pTableau le tableau à p artir duquel on construit l'objet
+	 * @param boolean $pRecursive nombre de niveau de récursivité (0 : pas récursif, -1 tout récursif).
+	 * @return SG_Objet retourne l'objet SynerGaïa si typeSG défini, ou la valeur initiale fournie sinon
+	 */
 	static public function creerObjetSynerGaia($pTableau = null, $pRecursive = 0) {
 		$ret = $pTableau;
 		// Si la valeur est nulle ne cherche pas plus
@@ -691,13 +789,20 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 1.1 ajout ; 1.3.1 correction $code ; 1.3.4 vue domino directe
-	* Crée une collection à partir d'une vue sur un serveur de vue
-	*/
+
+	/**
+	 * Crée une collection à partir d'une vue sur un serveur de vue
+	 * @since 1.1 ajout
+	 * @version 1.3.4 vue domino directe
+	 * @param string|SG_Texte|SG_Formule $pCodeVue
+	 * @param string|SG_Texte|SG_Formule $pFiltre
+	 * @param boolean|SG_VraiFaux $IncludeDocs
+	 * @return SG_Collection
+	 */
 	static function ChercherVue($pCodeVue = '', $pFiltre = '', $IncludeDocs = false) {
 		$codevue = SG_Texte::getTexte($pCodeVue);
-		$defvue = SG_Rien::Chercher('@DictionnaireVue', $codevue);
-		if (sizeof($defvue -> elements) === 0) {
+		$defvue = $_SESSION['@SynerGaia'] -> sgbd -> getCollectionObjetsParCode('@DictionnaireVue', $codevue);
+		if (getTypeSG($defvue) === '@Collection' and sizeof($defvue -> elements) === 0) {
 			$elts = explode(':', $codevue);
 			if (sizeof($elts) > 1) {
 				$vue = new SG_VueDominoDB($elts[0], $elts[1]);
@@ -706,7 +811,9 @@ class SG_Rien {
 				$ret = new SG_Erreur('0030', $codevue);
 			}
 		} else {
-			$defvue = $defvue -> Premier();
+			if (getTypeSG($defvue) === '@Collection' and sizeof($defvue -> elements) !== 0) {
+				$defvue = $defvue -> Premier();
+			}
 			if (! is_object($defvue)) {
 				$ret = new SG_Erreur('0032', $codevue);
 			} else {
@@ -725,7 +832,7 @@ class SG_Rien {
 						$code = $objet -> getValeur('@Code');
 						$nomVue = $code . '_' . $defvue -> code;
 						// phrase de sélection
-						$jsSelection = "function(doc) {if (doc['@Type']==='" . $code . "'";
+						$jsSelection = "function(doc) {if (doc['@Type']=='" . $code . "'";
 						$filtre = $defvue -> getValeur('@Filtre', '');
 						if ($filtre !== '') {
 							$jsSelection .= " && (" . $filtre .")";
@@ -740,7 +847,10 @@ class SG_Rien {
 						$colonnes = $defvue -> getValeur('@Colonnes');
 						$colonnes = explode(',', $colonnes);
 						foreach ($colonnes as $col) {
-							$col = str_replace('"', "'", $col);
+							$col = trim(str_replace('"', "'", $col));
+							if(substr($col,0,1) !== "'") {
+								$col = "'" . $col . "'";
+							}
 							$jsSelection .= " ". $col . ":doc[" . $col . "],";
 						}
 						$jsSelection .= " '_base': '" . $base . "', '_id': doc['_id'],'@Type':doc['@Type']";
@@ -749,11 +859,6 @@ class SG_Rien {
 						$vue = new SG_Vue($base . '/' . strtolower($nomVue),$base,$jsSelection, true);
 						$ret = $vue -> Contenu('', $pFiltre, $IncludeDocs);
 					}
-					/*
-					$selection = 
-					$vuephysique = new SG_Vue($vue -> code, $base, $selection, true);
-					$ret = new SG_Erreur('0022', $canal);
-					*/
 				} elseif ($canal === 'domino') { // IBM Domino
 					if ($defvue -> code === '') {
 						$ret = new SG_Erreur('0023');
@@ -768,36 +873,41 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 1.1 new ; 1.3.0 variables dans opération en cours;  ; 2.0 défini par modele.propriété ; 2.3 corrigé modele.propriete
-	*/
+
+	/**
+	 * Afficher un html de demande de saisie de valeurs
+	 * Chaque variable est donnée par un SG_Texte comportant "nom,type,libelle".
+	 * le type par défaut est @Texte
+	 * le libéllé par défaut est nom
+	 * 
+	 * @since 1.1 new 
+	 * @version 2.3 corrigé modele.propriete
+	 * @param string|SG_Texte|SG_Formule
+	 * @return SG_HTML
+	 */
 	static function Demander() {
 		$ret = '';
 		$args = func_get_args();
 		if (isset($args[0])) {
 			$_SESSION['saisie'] = true;
 			// crée un document basé sur l'opération			
-			$opEnCours = SG_Navigation::OperationEnCours();
+			$opEnCours = SG_Pilote::OperationEnCours();
 			$doc = $opEnCours;
-			$ret = $opEnCours -> getChampEnregistrer();
-			
 			// crée les propriétés (une par paramètre)
-			$ret .= '<ul data-role="listview">';
+			$ret .= '<ul data-role="listview" class="sg-demander">';
 			$docs = SG_Dictionnaire::ObjetsDocument();
 			for($i = 0; $i < sizeof($args); $i++) {
 				$proprietes = explode(',',SG_Texte::getTexte($args[$i]));
 				if (isset($proprietes[1]) and $proprietes[1] !== '' and strpos($proprietes[1], '.') !== false) {
-					// le type est du genre modele.propriété
+					// le type est du genre modele.propriété. On prépare le champ approprié
 					$ipos = strpos($proprietes[1], '.');
 					$type = substr($proprietes[1], 0, $ipos);
 					$tmpdoc = SG_Rien::Nouveau($type);
 					$champ = new SG_Champ(substr($proprietes[1], $ipos + 1), $tmpdoc);
-					//$champ -> codeBase = SG_Dictionnaire::getCodeBase($type);
 					$champ -> document = $doc;
 					$champ -> codeDocument = $doc -> doc -> codeDocument;
 					$champ -> codeBase = $doc -> doc -> codeBase;
 					$champ -> refChamp = $champ -> codeBase . '/' . $champ -> codeDocument . '/' . $proprietes[0];
-					// bind the field to the current operation
-					//$champ -> initContenu();
 					$doc -> proprietes['@Type_' . $proprietes[0]] = SG_Dictionnaire::getCodeModele($proprietes[1]);
 				} else {
 					$champ = new SG_Champ('');
@@ -828,19 +938,31 @@ class SG_Rien {
 				$ret .= '<li>' . $champ -> txtModifier() . '</li>';
 			}
 			$ret .= '</ul>';
-			$opEnCours -> setValeur('@Principal',null);
-			$_SESSION['principal'][$opEnCours -> reference] = $opEnCours;
+			$opEnCours -> setPrincipal($opEnCours);
 		}
 		$ret = new SG_HTML($ret);
 		return $ret;
 	}
-	//1.2 ajout : permet de se passer de gérer la compatibilité avec .@Principal dans les anciennes versions
+
+	/**
+	 * Permet de se passer de gérer la compatibilité avec .@Principal dans les anciennes versions
+	 * 
+	 * @since 1.2 ajout
+	 * @return SG_Objet principal de l'opération
+	 */
 	static function Principal() {
-		$ret = SG_Navigation::OperationEnCours() -> Principal();
+		$ret = SG_Pilote::OperationEnCours() -> Principal();
 		return $ret;
 	}
-	// 1.3.0 vient de SG_Texte
-	// normalise le nom en enlevant les caractères hors nomes et en compactant (restent lettres chiffres et _
+
+	/**
+	 * normalise le nom en enlevant les caractères hors nomes et en compactant (restent lettres chiffres et _
+	 * 
+	 * @todo retourner SG_Texte
+	 * @since 1.3.0 vient de SG_Texte
+	 * @param SG_Texte
+	 * @return string
+	 */ 
 	static function Normaliser($pTexte = '') {
 		$texte = new SG_Texte($pTexte);
 		$orig = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿ &~#{}()[]|`^@=°¨£¤%+-?!,;.:§/$µ*\\\'';
@@ -853,9 +975,14 @@ class SG_Rien {
 		}
 		return $nomNormalise;
 	}
-	/* 1.3.0 ajout
-	* Retourne un @Nombre entier au hasard entre 1 et $pMax (par défaut 32768 = 2^15)
-	*/
+
+	/**
+	 * Retourne un @Nombre entier au hasard entre 1 et $pMax (par défaut 32768 = 2^15)
+	 * 
+	 * @since 1.3.0 ajout
+	 * @param integer|SG_Nombre $pMax maximum (par défaut 32768)
+	 * @return SG_Nombre
+	 */
 	static function AuHasard($pMax = 32768) {
 		$max = $pMax;
 		if(getTypeSG($max) === '@Formule') {
@@ -870,24 +997,42 @@ class SG_Rien {
 		}
 		return rand(1, $max);
 	}
-	/** 1.3.0 ajout
-	* Branchement vers une autre étape de l'opération
-	* @param SG_Texte ou SG_Formule donnant un SG_Texte : code de l'étape (vide = début)
-	*/
-	static function ContinuerA($pEtapeOperation = '') {
-		$etape = new SG_Texte($pEtapeOperation);
-		$_SESSION['page']['etape_prochaine'] = $etape -> texte;
-		return '';
+
+	/**
+	 * Branchement vers une autre étape de l'opération
+	 * 
+	 * @since 1.3.0 ajout
+	 * @param SG_Texte|SG_Formule $pEtapeOperation donnant un SG_Texte : code de l'étape (vide = début)
+	 * @param SG_Objet $pPrincipal le principal avec lequel il faut comencer cette étape
+	 * @return SG_Texte code de la prochaine étape
+	 */
+	static function ContinuerA($pEtapeOperation = '', $pPrincipal = null) {
+		$op = SG_Pilote::OperationEnCours();
+		$ret = $op -> prochaineEtape = SG_Texte::getTexte($pEtapeOperation);
+		if (!is_null($pPrincipal)) {
+			$op -> prochainPrincipal = $pPrincipal;
+		}
+		return new SG_Texte($ret);
 	}
-	/** 1.3.1 ajout
-	* @return (SG_Texte) vide
-	*/
+
+	/**
+	 * Titre de SG_Rien (vide)
+	 * 
+	 * @since 1.3.1 ajout
+	 * @return SG_Texte ''
+	 */
 	static function Titre() {
 		return new SG_Texte('');
 	}
-	/** 1.3.1 ajout
-	* @return (SG_Texte) vide
-	*/
+
+	/**
+	 * Indique si l'objet testé est un @Rien
+	 * 
+	 * @return (SG_Texte) vide
+	 * @since 1.3.1 ajout
+	 * @param any $pQuelqueChose objet à comparer
+	 * @return SG_VraiFaux
+	 */
 	static function Egale($pQuelqueChose) {
 		if(getTypeSG($pQuelqueChose) === self::TYPESG) {
 			$ret = new SG_VraiFaux(true);
@@ -896,9 +1041,14 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* @return (@VraiFaux) L'objet est défini et n'est pas @Erreur
-	**/
+
+	/**
+	 * Teste si l'objet est défini et n'est pas @Erreur
+	 * 
+	 * @since 1.3.1 ajout
+	 * @param SG_Objet $pQuelqueChose objet SynerGaia à tester
+	 * @return SG_VraiFaux
+	 */
 	static function EstDefini($pQuelqueChose = null) {
 		$r = $pQuelqueChose;
 		if(getTypeSG($pQuelqueChose) === '@Formule') {
@@ -911,12 +1061,15 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Initialise la connexion à un site Internet
-	* @param (@Texte) code du site à ouvrir
-	* @return (@SiteInternet) le site
-	* @formula Chercher("@SiteInternet","code du site")
-	**/
+
+	/**
+	 * Initialise la connexion à un site Internet
+	 * @since 1.3.1 ajout
+	 * @param SG_Texte $pCodeSite code du site à ouvrir
+	 * @param boolean|SG_VraiFaux|SG_Formule $pRefresh faut-il rafraichir la page
+	 * @return SG_SiteInternet objet représentant le site
+	 * @formula Chercher("@SiteInternet","code du site")
+	 */
 	static function SiteInternet($pCodeSite = '', $pRefresh = false) {
 		$codeSite = SG_Texte::getTexte($pCodeSite);
 		$refresh = SG_VraiFaux::getBooleen($pRefresh);
@@ -925,36 +1078,59 @@ class SG_Rien {
 		}
 		return $_SESSION['page']['sites'][$codeSite];
 	}
-	/** 1.3.1 ajout
-	*/
+
+	/**
+	 * retourne le texte passé en paramètre (pour compatibilité de l'appel de la méthode)
+	 * @since 1.3.1 ajout
+	 * @version 2.6 simplifié
+	 * @param string|SG_Texte|SG_Formule $pTexte
+	 * @return SG_Texte
+	 */
 	static function Concatener($pTexte) {
-		$ret = new SG_Texte('');
-		$ret = $ret -> Concatener($pTexte);
+		$ret = new SG_Texte($pTexte);
 		return $ret;
 	}
-	/** 1.3.2 ajout
-	*/
+
+	/**
+	 * retourne le texte passé en paramètre (pour compatibilité de l'appel de la méthode)
+	 * 
+	 * @since 1.3.2 ajout
+	 * @param string|SG_Texte|SG_Formule $pTexte
+	 * @return SG_Texte vide
+	 */
 	static function JSON($pTexte) {
 		return new SG_Texte('');
 	}
-	/** 1.3.4 ajout
+
+	/**
 	* pour tous les objets : false sauf SG_Erreur et dérivés
+	* 
+	* @since 1.3.4 ajout
+	* @return boolean false
 	**/
 	function estErreur() {
 		return false;
 	}
-	/** 1.3.4 ajout
+
+	/**
+	 * Teste si SG_Rien est d'un certain type SynerGaïa
+	 * 
+	 * @since 1.3.4 ajout
+	 * @param string|SG_Texte|SG_Formule $pType type à comparer
+	 * @return SG_VraiFaux
 	*/ 
 	function EstUn($pType = '') {
 		return new SG_VraiFaux(SG_Texte::getTexte($pType) === self::TYPESG);
 	}
-	/** 2.0 ajout
+
+	/**
 	* Conditionne l'exécution de formule au résultat d'une autre
 	*
-	* @param indéfini $pCondition Condition testée
+	* @since 2.0 ajout
+	* @param SG_Formule $pCondition Condition testée
 	* @param SG_Formule $pValeurSiVrai formule à exécuter si condition vraie (plusieurs possibles)
-	* @param SG_Nombre : nombre maximum d'exécutions (par défaut 10)
-	* @return indéfini : la dernière valeur calculée (ou erreur)
+	* @param SG_Nombre $pNbMax nombre maximum d'exécutions (par défaut 10)
+	* @return SG_Erreur|any la dernière valeur calculée (ou erreur)
 	*/
 	static function TantQue($pCondition = '', $pValeurSiVrai = null, $pNbMax = 10) {
 		$ret = null;
@@ -975,22 +1151,151 @@ class SG_Rien {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Fait rester sur la même étape au lieu de passer à l'étape suivante (sauf si on utilise un bouton)
-	* @param : code de l'étape suivante
-	**/
-	static function EtapeSuivante($pEtape = '') {
-		$etape = SG_Texte::getTexte($pEtape);
-		$_SESSION['page']['etape_prochaine'] = $etape;
-		return new SG_Texte($etape);
+
+	/**
+	 * Fait rester sur la même étape au lieu de passer à l'étape suivante (sauf si on utilise un bouton)
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.5 adapté au prochaineetape et parm2
+	 * @param string $pEtape code de l'étape suivante
+	 * @param objet $pPrincipal principal de la prochaine étape
+	 * @return SG_Texte code de la prochaine étape
+	 */
+	static function EtapeSuivante($pEtape = '', $pPrincipal = null) {
+		$op = SG_Pilote::OperationEnCours();
+		if (func_num_args() !== 0) {
+			$op -> prochaineEtape = SG_Texte::getTexte($pEtape);
+			if (!is_null($pPrincipal)) {
+				if ($pPrincipal instanceof SG_Formule) {
+					$op -> prochainPrincipal = $pPrincipal -> calculer();
+				} else {
+					$op -> prochainPrincipal = $pPrincipal;
+				}
+			}
+		}
+		$ret = new SG_Texte($op -> prochaineEtape);
+		return $ret;
 	}
-	/** 2.1 ajout : cette méthode est exécutée directement dans le compilateur
-	* Fournit le code de l'étape en-cours
-	* @param : ce paramètre n'est utilisé que par le compilateur
-	**/
+
+	/**
+	 * Fournit le code de l'étape en-cours
+	 * cette méthode est exécutée directement dans le compilateur
+	 * 
+	 * @since 2.1 ajout : 
+	 * @param : ce paramètre n'est utilisé que par le compilateur
+	 * @return SG_Texte code de l'étape en cours
+	 */
 	static function EtapeEnCours($etape = '1') {
 		return new SG_Texte($etape);
 	}
+
+	/**
+	 * exécute une formule pour chaque objet du type demandé. 
+	 * Les objets sont accédés les uns après les autres, ce qui permet de traiter des très gros volumes (mais plus lentement...)
+	 * 
+	 * @since 2.4 ajout
+	 * @version 2.6 instanceof ; test ARRET
+	 * @param string|SG_Texte|SG_Formule $pObjet type de l'objet à traiter
+	 * @param SG_Formule $pFormule : formule à exécuter sur chaque objet. Si absent ou "", on retourne la collection des objets filtrés
+	 * @param SG_Formule $pFiltre : formule de filtre : l'exécution et donc le résultat ne sont fournis que si le filtre retourne @Vrai
+	 * @return SG_Collection la collection des résultats
+	 */
+	static function PourChaque($pObjet = '', $pFormule = null, $pFiltre = null) {
+		$ret = new SG_Collection();
+		$objet = SG_Texte::getTexte($pObjet);
+		$formule = $pFormule;
+		if ($formule === null) {
+			$formule = new SG_Formule();
+		}
+		$filtre = $pFiltre;
+		if ($filtre === null) {
+			$filtre = new SG_Formule();
+		}
+		if (! SG_Dictionnaire::isObjetExiste($objet)) {
+			$ret = new SG_Erreur('0201');
+		} else {
+			// recherche des id des objets de toute la base
+			$codeBase = SG_Dictionnaire::getCodeBase($objet);
+			$codeBaseComplet = SG_Config::getCodeBaseComplet($codeBase);
+			$sgbd = $_SESSION['@SynerGaia'] -> sgbd;
+			$pref = '';
+			$res = $sgbd -> getAllIDs($codeBase, '', true);
+			if ($res instanceof SG_Erreur) {
+				$ret = $res;
+			} else {
+				$indice = new SG_Nombre();
+				foreach ($res -> elements as $row) {
+					$id = $row['id'];
+					if (substr($id, 0, 8) !== '_design/') { // pas le design de la base
+						$doc =  $sgbd -> getObjetByID($codeBase . '/' . $id);
+						if ($objet === '' or getTypeSG($doc) === $objet) {
+							// ajout de l'indice dans la boucle
+							$indice -> valeur++;
+							$doc -> proprietes['@Indice'] = $indice;
+							if ($pFiltre === null) {
+								$ok = true;
+							} else {
+								$ok = false;
+								$res = $filtre -> calculerSur($doc);
+								if ($res === SG_Rien::ARRET) {
+									break;
+								} elseif ($res instanceof SG_VraiFaux) {
+									$ok = $res -> estVrai();
+								} elseif ($res instanceof SG_Erreur){
+									$ret-> elements[] = $res;
+								} else {
+									$ret-> elements[] = new SG_Erreur('0202',$id);
+								}
+							}
+							if ($ok) {
+								if ($pFormule !== null) {
+									$doc = $formule -> calculerSur($doc);
+								}
+								if (!$doc instanceof SG_Rien) {
+									$ret-> elements[] = $doc;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return $ret;
+	}
+	
+	/**
+	 * crée un objet SG_Controle
+	 * 
+	 * @since 2.4 ajout ?
+	 * @todo vérifier si nécessaire ainsi que la classe SG_Controle
+	 * @return SG_Controle
+	 */
+	static function Controler() {
+		$ret = new SG_Controle(func_get_args());
+	}
+
+	/**
+	 * Chercher un objet de type SG_Document par son code
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pType type d'objet
+	 * @param string|SG_Texte|SG_Formule $pCode type d'objet
+	 * @return SG_Document|SG_Erreur
+	 */
+	static function ChercherParCode($pType = '', $pCode = '') {
+		$type = SG_Texte::getTexte($pType);
+		$code = SG_Texte::getTexte($pCode);
+		if ($type instanceof SG_Erreur) {
+			$ret = $type;
+		} elseif ($code instanceof SG_Erreur) {
+			$ret = $code;
+		} else {
+			$base = SG_Dictionnaire::getCodeBase($type);
+			$ret = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode($base, $type, $code);
+		}
+		return $ret;
+	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Rien_trait;
 }
