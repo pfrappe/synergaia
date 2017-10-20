@@ -1,22 +1,33 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 1.1 (see AUTHORS file)
- * 
+<?php
+/** SYNERGAIA fichier pour le tratement de l'objet @CanalODBC */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
  * SG_CanalODBC : Classe de gestion des bases de données ODBC
- *
+ * @since 1.1
  */
 class SG_CanalODBC extends SG_Objet {
-	// Type SynerGaia
+	/** string Type SynerGaia  '@CanalODBC' */
 	const TYPESG = '@CanalODBC';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
-	
+	/** string Code user du canal */
 	public $user = '';
+	/** string mot de passe du canal */
 	public $psw = '';
+	/** string source ODBC du canal */
 	public $source = '';
+	/** ODBCConnexion objet connexion */
 	public $connexion;
 	
-	/** 1.1
-	* Construction d'un objet @CanalODBC
-	*/
+	/**
+	 * Construction d'un objet @CanalODBC
+	 * 
+	 * @since 1.1
+	 * @param string|SG_Texte|SG_Formule $pSource
+	 * @param string|SG_Texte|SG_Formule $pUser
+	 * @param string|SG_Texte|SG_Formule $pPassword
+	 */
 	public function __construct($pSource = '', $pUser = '', $pPassword = '') {
 		$this -> source = SG_Texte::getTexte($pSource);		
 		if ($this -> source === '') {
@@ -34,46 +45,67 @@ class SG_CanalODBC extends SG_Objet {
 			$this -> psw = SG_Config::getConfig('CanalODBC_password', '');
 		}
 		if ($this -> source !== '') {
+			if (!function_exists("odbc_connect")) {
+				$ret = SG_Operation::STOP('0270');
+			}
 			$r = $this -> Connecter();
 		}
 	}
 	
-	/** 1.1
-	* établir la connexion ODBC (connexion persistante)
-	*/
+	/**
+	 * établir la connexion ODBC (connexion persistante)
+	 * @since 1.1
+	 * @return SG_CanalODBC
+	 */
 	public function Connecter() {
-		$this -> connexion = odbc_connect ($this -> source , $this -> user, $this -> psw, SQL_CUR_USE_ODBC);
+		$this -> connexion = odbc_connect ('Driver={FreeTDS};dbname="' . $this -> source . '";' , $this -> user, $this -> psw, SQL_CUR_USE_ODBC);
 		if ($this -> connexion === false) {
 			$this -> connexion = new SG_Erreur('0034', $this -> source . ': ' . odbc_errormsg());
 		}
 		return $this;
 	}
 	
-	/** 1.1
-	* obtenir le résultat d'une requête ODBC
-	*/
+	/**
+	 * obtenir le résultat d'une requête ODBC
+	 * 
+	 * @since 1.1
+	 * @param string|SG_Texte|SG_Formule $pRequete requete ODBC
+	 * @return any résultat de bla requête
+	 */
 	public function Requete($pRequete = '') {
+		$requete = SG_Texte::getTexte($pRequete);
 		if (! isset($this -> connection)) {
 			$this -> Connecter();
 		}
 		if (getTypeSG($this -> connexion) === '@Erreur') {
 			$ret = new SG_Erreur('0035', $this -> connexion -> getMessage());
 		} else {
-			$resultat = $this -> connection -> execute(pRequete);
-			$rs_fld0 = $rs->Fields(0);
-			$rs_fld1 = $rs->Fields(1);
-			while (!$rs->EOF) {
-				$empNameLoc    = $rs_fld0->value;
-				$empWPPos    = $rs_fld1->value;
-				$rs->MoveNext();
+			$res = $this -> connection -> execute($requete);
+			$res_fld0 = $res -> Fields(0);
+			$res_fld1 = $res -> Fields(1);
+			while (!$res -> EOF) {
+				$empNameLoc    = $res_fld0 -> value;
+				$empWPPos    = $res_fld1 -> value;
+				$res -> MoveNext();
 			}
 
-			$rs->Close();
+			$res -> Close();
 		}
 		return $ret;
 	}
-	/** 1.1 new
-	*/
+
+	/**
+	 * Etablit le type de source et retourne le texte ODBC à envoyer
+	 * 
+	 * @since 1.1 new
+	 * @param string|SG_Texte|SG_Formule $pType
+	 * @param string|SG_Texte|SG_Formule $pServeur
+	 * @param string|SG_Texte|SG_Formule $pDatabase
+	 * @param string|SG_Texte|SG_Formule $pHost
+	 * @param string|SG_Texte|SG_Formule $pFile
+	 * @param string|SG_Texte|SG_Formule $pCnxName
+	 * @return string|SG_Erreur
+	 */
 	public function SourceDeType($pType = '', $pServeur = '', $pDatabase = '', $pHost = '', $pFile = '', $pCnxName = '') {
 		$type = strtolower(SG_Texte::getTexte($pType));
 		$serveur = SG_Texte::getTexte($pServeur);
@@ -115,8 +147,11 @@ class SG_CanalODBC extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 1.1 new
-	*/
+
+	/**
+	 * Ferme le canal
+	 * @since 1.1 new
+	 */
 	public function Fermer() {
 		$this -> connexion -> Close(); 
 	}
