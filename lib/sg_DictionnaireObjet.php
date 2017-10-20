@@ -1,23 +1,38 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
+<?php
+/** SynerGaia fichier contenant le traitement de l'objet @DictionnaireObjet */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_DictionnaireObjet_trait.php')) {
+	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_DictionnaireObjet_trait.php';
+} else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+	 * @since 2.4
+	 */
+	trait SG_DictionnaireObjet_trait{};
+}
+
+/**
  * SG_DictionnaireObjet : Classe de gestion d'un objet du dictionnaire
+ * @version 2.4 ajout de Methodes(), Proprietes()
+ * @version 2.6 ajout de AjouterPropriete(), AjouterMethode()
  */
 class SG_DictionnaireObjet extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia '@DictionnaireObjet' */
 	const TYPESG = '@DictionnaireObjet';
 
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Code de l'objet du dictionnaire
+	/** string Code de l'objet du dictionnaire */
 	public $code;
 
-	/** 1.0.6
-	* Construction de l'objet
-	*
-	* @param string $pCodeObjet code de l'objet demandé
-	* @param array tableau éventuel des propriétés
-	*/
+	/**
+	 * Construction de l'objet
+	 *
+	 * @since 1.0.6
+	 * @param string $pCodeObjet code de l'objet demandé
+	 * @param array $pTableau tableau éventuel des propriétés
+	 */
 	public function __construct($pCodeObjet = null, $pTableau = null) {
 		$tmpCode = new SG_Texte($pCodeObjet);
 		$base = SG_Dictionnaire::CODEBASE;
@@ -30,10 +45,12 @@ class SG_DictionnaireObjet extends SG_Document {
 		$this -> setValeur('@Type', '@DictionnaireObjet');
 	}
 
-	/** 2.0 parm ; 2.1 '' si null
-	* Conversion en chaine de caractères
-	* @return string texte
-	*/
+	/**
+	 * Conversion en chaine de caractères
+	 * @version 2.1 return '' si null
+	 * @param any $pDefaut inutilisé
+	 * @return string texte
+	 */
 	function toString($pDefaut = null) {
 		if ($this -> code === null) {
 			$ret = '';
@@ -43,40 +60,45 @@ class SG_DictionnaireObjet extends SG_Document {
 		return $ret;
 	}
 
-	/** 2.0 parm
-	* Conversion en code HTML
-	* @return string code HTML
-	*/
+	/**
+	 * Conversion en code HTML
+	 * @version 2.0 parm pour compatibilité
+	 * @param any $pDefaut inutilisé
+	 * @return string code HTML
+	 */
 	function toHTML($pDefaut = null) {
 		return $this -> toString();
 	}
 
 	/**
-	* Affichage
-	*
-	* @return string code HTML
-	*/
+	 * Calcule le code html pour l'affichage en saisie dans un champ
+	 *
+	 * @return string code HTML
+	 */
 	function afficherChamp() {
 		return '<span class="champ_DictionnaireObjet">' . $this -> toHTML() . '</span>';
 	}
 
 	/**
-	* Comparaison à un autre modèle d'objet
-	*
-	* @param indéfini $pQuelqueChose modèle d'objet avec lequel comparer
-	* @return SG_VraiFaux vrai si les deux modèles d'objets sont identiques
-	*/
+	 * Comparaison à un autre modèle d'objet
+	 * Retourne vrai si les objets ont le même code
+	 *
+	 * @param SG_Objet $pQuelqueChose modèle d'objet avec lequel comparer
+	 * @return SG_VraiFaux vrai si les deux modèles d'objets sont identiques
+	 */
 	function Egale($pQuelqueChose) {
 		$autreObjet = new SG_DictionnaireObjet($pQuelqueChose);
 		return new SG_VraiFaux($this -> code === $autreObjet -> code);
 	}
 
-	/** 1.3.1 param 2
-	* Modification
-	* @param $pRefChamp référence du champ HTML
-	* @param $pListeElements (collection) : liste des valeurs possibles (par défaut toutes)
-	* @return string code HTML
-	*/
+	/**
+	 * Calcule le code html pour la modification dans un champ
+	 * @version 1.3.1 param 2
+	 *
+	 * @param $pRefChamp référence du champ HTML
+	 * @param $pListeElements (collection) : liste des valeurs possibles (par défaut toutes)
+	 * @return string code HTML
+	 */
 	function modifierChamp($pRefChamp = '', $pListeElements = null) {
 		$ret = '<select class="champ_DictionnaireObjet" type="text" name="' . $pRefChamp . '">';
 		// Propose le choix par défaut (vide)
@@ -107,7 +129,15 @@ class SG_DictionnaireObjet extends SG_Document {
 		$ret .= '</select>';
 		return $ret;
 	}
-	//1.2 ajout
+
+	/**
+	 * Teste si cet objet dérive d'un autre modèle passé en paramètre
+	 * 
+	 * @since 1.2 ajout
+	 * @param string $pModele code du modèle à vérifier
+	 * @param boolean $pRefresh force le rafriachissement des valeurs en cache
+	 * @return boolean
+	 */
 	function deriveDe($pModele = '', $pRefresh = false) {
 		$ret = false;
 		$codeCache = '@DictionnaireObjet.deriveDe(' . $this->code . '.' . $pModele . ')';
@@ -132,38 +162,70 @@ class SG_DictionnaireObjet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Prépare la compilation de la formule et met à jout le fichier .php
-	**/
+
+	/**
+	 * Prépare la compilation de la formule et met à jout le fichier .php
+	 * 
+	 * @since  2.1 ajout
+	 * @return boolean|SG_Erreur
+	 */
 	function preEnregistrer() {
-		$ret = $this -> compiler();
+		$ret = $this -> Compiler();
 		return $ret;
 	}
-	/** 2.1 ajout
-	* Compile les méthodes et formules de l'objet en PHP
-	**/
+
+	/**
+	 * Compile les méthodes et formules de l'objet en PHP et stocke le résultat dans le répertoire des objets compilés
+	 * 
+	 * @since 2.1 ajout
+	 * @return boolean|SG_Erreur
+	 */
 	function Compiler() {
 		// compiler et calculer les formules vers php puis sauvegarder la classe correspondante
 		$formule = $this -> getValeur('@Phrase', '');
 		$this -> setValeur('@PHP', '');
 		$ret = '';
 		if ($this -> getValeur('@Original', '0') === '0') {
+			// calculer le PHP
 			$compil = new SG_Compilateur($formule);
+			$compil -> titre = 'Objet : ' . $this -> toString();
 			$tmp = $compil -> Traduire();
-			if ($compil -> php !== '') {
-				$this -> setValeur('@PHP', 'oui' );
-				$ret = $this;
-			} else {
-				$this -> setValeur('@PHP', '' );
+			if (getTypeSG($compil -> erreur) === '@Erreur') {
+				SG_Pilote::OperationEnCours() -> erreurs[] = $compil -> erreur;
 				$ret = $compil -> erreur;
+			} else {
+				if ($compil -> php !== '') {
+					$this -> setValeur('@PHP', 'oui' );
+					$ret = $this;
+				} else {
+					$this -> setValeur('@PHP', '' );
+					$ret = $compil -> erreur;
+				}
+				// créer et enregistrer la classe .php correspondante
+				$ret = $compil -> compilerObjet($this);
+				if (getTypeSG($compil -> erreur) === '@Erreur') {
+					SG_Pilote::OperationEnCours() -> erreurs[] = $compil -> erreur;
+				}
 			}
-			$ret = $compil -> compilerObjet($this);
 		}
 		return $ret;
 	}
-	/** 2.1 ajout ; 2.2 param affichertableau = formule
-	* @formula : .@Afficher(.@Titre, .@Code,.@Modele,.@Base,.@Description);"Propriétés".@AfficherTitre;.@Chercher("@DictionnairePropriete").@Afficher(.@Titre);"Méthodes".@AfficherTitre;.@Chercher("@DictionnaireMethode").@Afficher(.@Titre)
-	**/
+
+	/**
+	 * Calcule le code html pour l'affichage de l'objet
+	 * Sans paramètres : ajoute la liste des popriétés et méthodes)
+	 * 
+	 * @since 2.1 ajout
+	 * @version 2.2 param affichertableau = formule
+	 * @version 2.6 propriétés ajout @Modele
+	 * @return SG_HTML
+	 * @formula :
+	 *	.@Afficher(.@Titre, .@Code,.@Modele,.@Base,.@Description);
+	 *	"Propriétés".@AfficherTitre;
+	 *	.@Chercher("@DictionnairePropriete").@Afficher(.@Titre);
+	 *	"Méthodes".@AfficherTitre;
+	 *	.@Chercher("@DictionnaireMethode").@Afficher(.@Titre)
+	 */
 	function Afficher() {
 		$args = func_get_args();
 		if (sizeof($args) === 0) {
@@ -176,7 +238,10 @@ class SG_DictionnaireObjet extends SG_Document {
 			$p2 = new SG_Formule();
 			$p2 -> php = '$ret = $objet -> getValeur(\'@Titre\',\'\');';
 			$p2 -> titre = 'Titre';
-			$tmp = $this -> Chercher('@DictionnairePropriete', '@Objet', 'e') -> AfficherTableau($p1,$p2);
+			$p3 = new SG_Formule();
+			$p3 -> php = '$ret = $objet -> getValeurPropriete(\'@Modele\',\'\');';
+			$p3 -> titre = 'Modèle';
+			$tmp = $this -> Chercher('@DictionnairePropriete', '@Objet', 'e') -> AfficherTableau($p1,$p2,$p3);
 			$proprietes = $txt . '<br>' . $tmp -> texte;
 			$txt = new SG_Texte ("Méthodes");
 			$txt = $txt -> AfficherCommeTitre() -> texte;
@@ -186,7 +251,154 @@ class SG_DictionnaireObjet extends SG_Document {
 		} else {
 			$ret = call_user_func_array(array('SG_Document', 'Afficher'), $args);
 		}
+		return new SG_HTML($ret);
+	}
+
+	/**
+	 * Retourne la collection des propriétés d'un objet
+	 * 
+	 * @since 2.4 ajout
+	 * @param string|SG_Texte|SG_Formule $pOriginal : seules les propriétés ajoutées ("a") ou SynerGaia ("s") ou tout ("") défaut
+	 * @param boolean|SG_VraiFaux|SG_Formule $pRecursif : donne aussi les propriétés des classes parentes
+	 * @return SG_Collection : collection des propriétés
+	 */
+	function Proprietes($pOriginal = '', $pRecursif = true) {
+		$ret = new SG_Collection();
+		$p = SG_Dictionnaire::getProprietesObjet($this -> code);
+		foreach ($p as $key => $id) {
+			$ret -> elements[] = SG_Dictionnaire::getPropriete($this -> code, $key);
+		}
 		return $ret;
 	}
+
+	/**
+	 * retourne la collection des propriétés d'un objet
+	 * 
+	 * @since 2.4 ajout
+	 * @param string|SG_Texte|SG_Formule $pOriginal : seules les propriétés ajoutées ("a") ou SynerGaia ("s") ou tout ("") défaut
+	 * @param boolean|SG_VraiFaux|SG_Formule $pRecursif @VraiFaux : donne aussi les propriétés des classes parentes
+	 * @return SG_Collection : collection des propriétés
+	 */
+	function Methodes($pOriginal = '', $pRecursif = true) {
+		$ret = new SG_Collection();
+		$p = SG_Dictionnaire::getMethodesObjet($this -> code);
+		foreach ($p as $key => $id) {
+			$ret -> elements[] = SG_Dictionnaire::getMethode($this -> code, $key);
+		}
+		return $ret;
+	}
+
+	/**
+	 * Ajoute ou met à jour une propriété (SG_DictionnairePropriete) d'un objet existant
+	 * Si elle n'existe pas, son id sera objet.code
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pCode code de la propriété
+	 * @param string|SG_Texte|SG_Formule $pTitre (défaut = code)
+	 * @param string|SG_Texte|SG_Formule $pModele (par défaut @Texte)
+	 * @return SG_DicionnairePropriete|SG_Erreur la proprieté créée ou une erreur
+	 */
+	function AjouterPropriete($pCode = '', $pTitre = '', $pModele = '') {
+		$codeObjet = $this -> getValeur('@Code','');
+		$code = SG_Texte::getTexte($pCode);
+		$codedoc = $codeObjet . '.' . $code;
+		// voir si la propriété existe déjà
+		$doc = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(SG_Dictionnaire::CODEBASE, SG_DictionnairePropriete::TYPESG, $codedoc);
+		if ($doc instanceof SG_Erreur) {
+			if ($doc -> code === '0234') {
+				$doc = new SG_DictionnairePropriete();
+				$tab = array();
+				$tab['_id'] = $codedoc;
+			} else {
+				$ret = $doc;
+			}
+		} else {
+			$tab = $doc -> doc -> proprietes;
+		}
+		if (! $doc instanceof SG_Erreur) {
+			$ret = $doc;
+			$tab['@Code'] =  $codedoc;
+			$tab['@Propriete'] = $code;
+			$tab['@Objet'] = $this -> getUUID();
+			if ($pModele instanceof SG_DictionnaireObjet) {
+				$modele = $pModele;
+			} else {
+				$modele = SG_Texte::getTexte($pModele);
+				if ($modele === '') {
+					$modele = SG_Texte::TYPESG;
+				}
+				$modele = SG_Dictionnaire::getDictionnaireObjet($modele);
+			}
+			$tab['@Modele'] = $modele -> getUUID();
+			$titre =  SG_Texte::getTexte($pTitre);
+			if ($titre === '') {
+				$titre = $code;
+			}
+			$tab['@Titre'] = $titre;
+			$doc -> doc -> proprietes = $tab;
+			$doc -> Enregistrer();
+		}
+		return $ret;
+	}
+
+	/**
+	 * Ajoute ou met à jour une méthode (SG_DictionnaireMethode) d'un objet existant
+	 * Si elle n'existe pas, son id sera objet.code
+	 * 
+	 * @since 2.6
+	 * @param string|SG_Texte|SG_Formule $pCode code de la propriété
+	 * @param string|SG_Texte|SG_Formule $pTitre (défaut = code)
+	 * @param string|SG_Texte|SG_Formule $pModele (par défaut @Texte)
+	 * @param string|SG_Texte|SG_Formule $pFormule la formule de la méthode
+	 * @return SG_DicionnaireMethode|SG_Erreur la méthode créée ou une erreur
+	 */
+	function AjouterMethode($pCode = '', $pTitre = '', $pModele = '', $pFormule = '') {
+		$codeObjet = $this -> getValeur('@Code','');
+		$code = SG_Texte::getTexte($pCode);
+		$codedoc = $codeObjet . '.' . $code;
+		// voir si la propriété existe déjà
+		$doc = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(SG_Dictionnaire::CODEBASE, SG_DictionnaireMethode::TYPESG, $codedoc);
+		if ($doc instanceof SG_Erreur) {
+			if ($doc -> code === '0234') {
+				$doc = new SG_DictionnaireMethode();
+				$tab = array();
+				$tab['_id'] = $codedoc;
+			} else {
+				$ret = $doc;
+			}
+		} else {
+			$tab = $doc -> doc -> proprietes;
+		}
+		if (! $doc instanceof SG_Erreur) {
+			$ret = $doc;
+			$tab = array();
+			$tab['_id'] = $codedoc;
+			$tab['@Code'] =  $codedoc;
+			$tab['@Methode'] = $code;
+			$tab['@Objet'] = $this -> getUUID();
+			if ($pModele instanceof SG_DictionnaireObjet) {
+				$modele = $pModele;
+			} else {
+				$modele = SG_Texte::getTexte($pModele);
+				if ($modele === '') {
+					$modele = SG_Texte::TYPESG;
+				}
+				$modele = SG_Dictionnaire::getDictionnaireObjet($modele);
+			}
+			$tab['@Modele'] = $modele -> getUUID();
+			$titre =  SG_Texte::getTexte($pTitre);
+			if ($titre === '') {
+				$titre = $code;
+			}
+			$tab['@Titre'] = $titre;
+			$doc -> doc -> proprietes = $tab;
+			$doc -> setValeur('@Action', $pFormule);
+			$doc -> Enregistrer();
+		}
+		return $ret;
+	}
+
+	// 2.4 complément de classe créée par compilation
+	use SG_DictionnaireObjet_trait;
 }
 ?>
