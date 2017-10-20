@@ -1,27 +1,32 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.3 (see AUTHORS file)
-* SG_Email : Classe SynerGaia de traitement des adresses mail
-**/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Email */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Email_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Email_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Email_trait{};
 }
+
+/**
+ * SG_Email : Classe SynerGaia de traitement des adresses mail
+ * @version 2.3
+ */
 class SG_Email extends SG_Texte {
-	// Type SynerGaia
+	/** string Type SynerGaia '@Email' */
 	const TYPESG = '@Email';
-	// Type SynerGaia de l'objet
+	/** string Type SynerGaia de l'objet */
 	public $typeSG = self::TYPESG;
 
-	// Valeur interne de l'adresse mail
+	/** string Valeur interne de l'adresse mail */
 	public $texte;
 
 	/**
-	* Construction de l'objet
-	*
-	* @param indéfini $pQuelqueChose valeur à partir de laquelle créer l'adresse
-	*/
+	 * Construction de l'objet
+	 *
+	 * @param indéfini $pQuelqueChose valeur à partir de laquelle créer l'adresse
+	 */
 	function __construct($pQuelqueChose = null) {
 		$tmpTypeSG = getTypeSG($pQuelqueChose);
 		if ($tmpTypeSG === 'string') {
@@ -38,9 +43,15 @@ class SG_Email extends SG_Texte {
 			}
 		}
 	}
-	/** 1.3.0 ajout param et return objet @HTML ; 2.3 sg-email
-	* @param titre inséré dans les adresses si n'existe pas déjà
-	*/
+
+	/**
+	 * Calcule le code html pour l'affichage d'une adresse email
+	 * 
+	 * @since 1.3.0 ajout param et return objet SG_HTML 
+	 * @version 2.3 classe css sg-email
+	 * @param string|SG_Texte|SG_Formule titre inséré dans les adresses si n'existe pas déjà
+	 * @return SG_HTML
+	 */
 	function toHTML($pTitre = '') {
 		$titre = new SG_Texte($pTitre);
 		$titre = $titre -> texte;
@@ -53,28 +64,32 @@ class SG_Email extends SG_Texte {
 		}
 		$ret = new SG_HTML(implode($liste, ','));
 		return $ret;
-	}    
-	/** 1.3 param 2
-	* Affichage
-	*
-	* @param string $pOption style d'affichage demandé
-	* @param titre (@Texte ou string) pour insérer dans l'adresse mail
-	*
-	* @return string code HTML
-	*/
+	}
+	
+	/**
+	 * Calcule le code html pour l'affichage comme champ
+	 * @since 1.3.0 param 2
+	 * @version 2.6 return SG_HTML
+	 * @param string|SG_Texte|SG_Formule $pOption style d'affichage demandé
+	 * @param string|SG_Texte|SG_Formule $pTitre titre pour insérer dans l'adresse mail
+	 * @return SG_HTML code HTML
+	 */
 	function Afficher($pOption = '', $pTitre = '') {
-		return $this -> afficherChamp($pOption, $pTitre);
-	}    
-	/** 1.3 param 2
-	* Affichage d'un champ
-	*
-	* @param string $pOption style d'affichage demandé
-	*
-	* @return string code HTML
-	*/
+		return new SG_HTML($this -> afficherChamp($pOption, $pTitre));
+	}
+
+	/**
+	 * Affichage d'un champ
+	 * @version 1.3 param 2
+	 * @param string|SG_Texte|SG_Formule $pOption style d'affichage demandé
+	 * @param string|SG_Texte|SG_Formule $pTitre titre pour insérer dans l'adresse mail
+	 * @param string $pOption style d'affichage demandé
+	 *
+	 * @return string code HTML
+	 */
 	function afficherChamp($pOption = '', $pTitre = '') {
 		$style = '';
-		$class = 'champ_Texte';
+		$class = 'sg-texte';
 
 		// Lit l'option passée
 		if ($pOption !== '') {
@@ -90,6 +105,7 @@ class SG_Email extends SG_Texte {
 		}
 		return $this -> toHTML($pTitre);
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Email_trait;
 }
