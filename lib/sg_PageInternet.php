@@ -1,43 +1,57 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1 (see AUTHORS file)
-* SG_PageInternet : classe SynerGaia de gestion d'une page internet
-*/
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @PageInternet */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
+/**
+ * SG_PageInternet : classe SynerGaia de gestion d'une page internet
+ * @since 1.3.1
+ * @version 2.1
+ */
 class SG_PageInternet extends SG_Document {
-	// (string) Type SynerGaia
+	/** string Type SynerGaia '@PageInternet' */
 	const TYPESG = '@PageInternet';
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 
-	// (@HTML) Document physique associé de la page d'origine)
+	/** SG_HTML Document physique associé de la page d'origine */
 	public $doc;
 	
-	// (@SiteInternet) site d'origine
+	/** SG_SiteInternet site d'origine de la page */
 	public $site;
 	
-	// (string) status de la réponse ('200 OK' par exemple)
+	/** string status de la réponse ('200 OK' par exemple) */
 	public $status;
 	
-	/** 1.3.1 ajout
-	* Construction de l'objet
-	* @param string $pRefenceDocument $url du document
-	* @param indefini $pTableau tableau éventuel des propriétés du document
-	*/
+	/**
+	 * Construction de l'objet
+	 * @since 1.3.1
+	 * @param string|SG_Texte|SG_Formule $pRefDocument $url du document
+	 * @param indefini $pTableau tableau éventuel des propriétés du document
+	 */
 	public function __construct($pRefDocument = null, $pTableau = null) {
 	}
-	/** 1.3.1 ajout
-	* Met à jour la propriété
-	* @param (string ou @Texte) nom de la propriété
-	* @param (any) valeur à stocker
-	* @return (@PageInternet) ceci
-	**/
+
+	/**
+	 * Met à jour une propriété
+	 * @since 1.3.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pNomChamp nom de la propriété
+	 * @param any $pValeur valeur à stocker
+	 * @return SG_PageInternet ceci
+	 */
 	public function MettreValeur($pNomChamp = '', $pValeur = '') {
 		$this -> doc -> MettreValeur($pNomChamp, $pValeur);
 		return $this;
 	}
-	/** 1.3.1 ajout ; 2.0 parm 2 ; 2.1 supp test provisoire
-	* Met à jour la page sur le site d'origine
-	* @param (boolean) $pAppelMethodesEnregistrer (inutilisé ici)
-	* @return SG_VraiFaux résultat de l'enregistrement
-	*/
+
+	/**
+	 * Met à jour la page sur le site d'origine
+	 * @since 1.3.1
+	 * @version 2.0 parm 2
+	 * @version 2.1 supp test provisoire
+	 * @param boolean|SG_VraiFaux|SG_Formule $pAppelMethodesEnregistrer (inutilisé ici)
+	 * @param boolean|SG_VraiFaux|SG_Formule $pCalculTitre
+	 * @return SG_VraiFaux résultat de l'enregistrement
+	 */
 	public function Enregistrer($pAppelMethodesEnregistrer = true, $pCalculTitre = true) {
 		$preenr = SG_VraiFaux::getBooleen($pAppelMethodesEnregistrer);
 		$ret = false;
@@ -62,11 +76,14 @@ class SG_PageInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* extrait du texte html la première partie html correspondant aux critères fournis
-	* @param suite de triplets (balise, attribut, valeur)
-	* @return (SG_HTML) le noeud demandé ou la collection
-	**/
+
+	/**
+	 * extrait du texte html la première partie html correspondant aux critères fournis
+	 * 
+	 * @since 1.3.1
+	 * @param string|SG_Texte|SG_Formule $pBalise suite de triplets (balise, attribut, valeur)
+	 * @return SG_HTML|SG_Erreur le noeud demandé ou la collection
+	 */
 	public function Extraire ($pBalise = '') {
 		if ($this -> doc -> texte) {
 			if (SG_Texte::getTexte($pBalise) === '') {
@@ -79,12 +96,15 @@ class SG_PageInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* extraire les options d'un champ select sous forme d'une formule SynerGaïa
-	* S'il y a une traduction, la valeur retournée sera xxxxx|X
-	* @param (string) balise du champ à extraire
-	* @return (string) formule donnant la collection des valeurs
-	**/
+
+	/**
+	 * extraire les options d'un champ select sous forme d'une formule SynerGaïa
+	 * S'il y a une traduction, la valeur retournée sera xxxxx|X
+	 * 
+	 * @since 1.3.1
+	 * @param  string|SG_Texte|SG_Formule $pBalise balise du champ à extraire
+	 * @return (string) formule donnant la collection des valeurs
+	 */
 	function ExtraireOptions ($pBalise = '') {
 		if ($this -> doc -> texte) {
 			$ret = $this -> doc -> ExtraireOptions($pBalise);
@@ -93,12 +113,14 @@ class SG_PageInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* extraire les options d'un champ select sous forme d'une formule SynerGaïa
-	* S'il y a une traduction, la valeur retournée sera xxxxx|X
-	* @param (string) balise du champ à extraire
-	* @return (string) formule donnant la collection des valeurs
-	**/
+
+	/**
+	 * Comparer le texte de deux versions d'un document ou deux documents
+	 * 
+	 * @since 1.3.1
+	 * @param SG_PageInternet $pDocument document à comparer
+	 * @return array tableau des différences
+	 */
 	function Comparer ($pDocument = '') {
 		if ($this -> doc -> texte) {
 			$ret = call_user_func_array(array($this -> doc, 'Comparer'), func_get_args());
@@ -107,10 +129,13 @@ class SG_PageInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Retourne true si la page est une page de login (contient un champ login + mot de passe
-	* @return (boolean) résultat
-	**/
+
+	/**
+	 * Retourne true si la page est une page de login (contient un champ login + mot de passe
+	 * 
+	 * @since 1.3.1 ajout
+	 * @return boolean résultat
+	 **/
 	function estPageLogin () {
 		// recherche des champs login psw sur la page
 		$ret = false;
@@ -123,13 +148,14 @@ class SG_PageInternet extends SG_Document {
 		}
 		return $ret;
 	}
-	/** 1.3.1 ajout
-	* Fournit la valeur de la propriété
-	* @param (@Texte) nom de la propriété
-	* @param (@Texte) valeur par défaut (si inexistant ou texte vide)
-	* @param (@Texte) modele attendu (sinon @Texte)
-	* @return (any) valeur en texte de la propriete
-	**/
+	/**
+	 * Fournit la valeur de la propriété
+	 * @since 1.3.1
+	 * @param string|SG_Texte|SG_Formule $pNomChamp nom de la propriété
+	 * @param string|SG_Texte|SG_Formule $pValeurDefaut valeur par défaut (si inexistant ou texte vide)
+	 * @param string|SG_Texte|SG_Formule $pModele modele attendu (sinon @Texte)
+	 * @return SG_Objet valeur de la propriete selon le modèle fourni en paramètre
+	 */
 	public function Valeur($pNomChamp = '', $pValeurDefaut = '', $pModele = '@Texte') {
 		$nomchamp = SG_Texte::getTexte($pNomChamp);
 		$modele = sg_Dictionnaire::getClasseObjet(SG_Texte::getTexte($pModele));
