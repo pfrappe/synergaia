@@ -1,32 +1,42 @@
-<?php defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
-/** SynerGaia 2.1.1 (see AUTHORS file)
-* Classe SynerGaia de getion d'une échelle de mesure
-*/
-// 2.1.1 Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur
+<?php
+/** SYNERGAIA fichier pour le traitement de l'objet @Echelle */
+defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
+
 if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Echelle_trait.php')) {
 	include_once SYNERGAIA_PATH_TO_APPLI . '/var/SG_Echelle_trait.php';
 } else {
+	/** Pour ajouter les méthodes et propriétés spécifiques de l'application créées par le compilateur */
 	trait SG_Echelle_trait{};
 }
+
+/** SynerGaia
+ * Classe SynerGaia de getion d'une échelle de mesure
+ * @version 2.1.1
+ */
 class SG_Echelle extends SG_Document {
-	// Type SynerGaia
+	/** string Type SynerGaia */
 	const TYPESG = '@Echelle';
+	
+	/** string base de stockage par défaut */
+	const CODEBASE = 'synergaia_echelles';
+
+	/** string Type SynerGaia */
 	public $typeSG = self::TYPESG;
 	
-	// base de stockage par défaut
-	const CODEBASE = 'synergaia_echelles';
-	
-	//unité de base
+	/** string code unité de base */
 	public $uniteDeBase = '';
 	
-	// tableau de correspondance entre unités
-	// [unite contenant => [coeff, unitecomposant]]
+	/** @var array tableau de correspondance entre unités
+	 * [unite contenant => [coeff, unitecomposant]]
+	 */
 	public $conversions = array();
 	
-	/** 1.1 ajout
-	* Construction de l'échelle de mesure
-	*
-	*/
+	/**
+	 * Construction de l'échelle de mesure
+	 * @since 1.1 ajout
+	 * @param string|SG_Texte|SG_Formule $pRefDocument
+	 * @param array $pTableau
+	 */
 	public function __construct ($pRefDocument = null, $pTableau = null) {
 		if (strpos($pRefDocument, '.nsf/') !== false) {
 			$this -> initDocumentDominoDB($pRefDocument);
@@ -47,9 +57,12 @@ class SG_Echelle extends SG_Document {
 			$this -> conversions[$key] = array($qte, $un);
 		}
 	}
-	/** 1.1 ajout
-	* Liste des unités employées
-	*/
+
+	/**
+	 * Liste des unités employées
+	 * @since 1.1
+	 * @return SG_Collection
+	 */
 	function Unites() {
 		$ret = new SG_Collection();
 		$ret -> elements[] = $this -> uniteDeBase;
@@ -58,6 +71,7 @@ class SG_Echelle extends SG_Document {
 		}
 		return $ret;
 	}
+
 	// 2.1.1. complément de classe créée par compilation
 	use SG_Echelle_trait;
 }
