@@ -62,11 +62,12 @@ class SG_VueCouchDB extends SG_Objet {
 	 * @return SG_Collection les objets SynerGaia lus
 	 */
 	function Contenu($pCleRecherche = '', $pFiltre = '', $pIncludeDocs = false, $pExactMatch = true, $pView = 'all') {
-		if(getTypeSG($pFiltre) === '@Formule') {
+		if($pFiltre instanceof SG_Formule) {
 			$filtre = $pFiltre;
 		} else {
 			$filtre = new SG_Formule($pFiltre);
 		}
+//journaliser($filtre);
 		if(($filtre -> texte === '' or $filtre -> texte === '""') and $filtre -> php === '' and $filtre -> fonction === '') {
 			$filtre = '';
 		}
@@ -74,7 +75,7 @@ class SG_VueCouchDB extends SG_Objet {
 		$listeElements = $this -> contenuBrut($pCleRecherche, $pIncludeDocs, $pExactMatch, $pView);
 		$collection = new SG_Collection();
 		if(is_array($listeElements)) {
-			// Pour chaque élément fabrique l'objet correpondant
+			// Pour chaque élément fabrique l'objet correspondant
 			foreach ($listeElements as $key => $row) {
 				$codeElement = $row['value'];
 				// on vient d'une vue calculée ($row['value'] = tableau de champs)
@@ -188,6 +189,7 @@ class SG_VueCouchDB extends SG_Objet {
 	/**
 	 * Cherche la première valeur trouvée dans la vue par une clé
 	 *
+	 * @version 2.7 test SG_Erreur
 	 * @param string $pCleRecherche clé de recherche
 	 * @param string $pView type de vue (défaut 'all')
 	 * @return string valeur trouvée
@@ -201,22 +203,25 @@ class SG_VueCouchDB extends SG_Objet {
 		}
 
 		$resultat = $sgbd -> requete($vueURL, "GET");
+		if ($resultat instanceof SG_Erreur) {
+			$ret = $resultat;
+		} else {
+			$resultat_Tab = json_decode($resultat, true);
+			$listeElements = $resultat_Tab['rows'];
 
-		$resultat_Tab = json_decode($resultat, true);
-		$listeElements = $resultat_Tab['rows'];
-
-		// Ne prend que la première occurence :
-		$element = null;
-		if (sizeof($listeElements) !== 0) {
-			$element = $listeElements[0]['value'];
+			// Ne prend que la première occurence :
+			$ret = null;
+			if (sizeof($listeElements) !== 0) {
+				$ret = $listeElements[0]['value'];
+			}
 		}
-
-		return $element;
+		return $ret;
 	}
 
 	/**
 	 * Chercher toutes les valeurs à partir d'une clé
 	 *
+	 * @version 2.7 test SG_Erreur
 	 * @param string $pCleRecherche clé de recherche
 	 * @param string $pView type de vue (défaut 'all')
 	 * @return SG_Collection résultat de la recherche
@@ -230,23 +235,25 @@ class SG_VueCouchDB extends SG_Objet {
 			$vueURL .= '?key="' . urlencode($cleRecherche) . '"';
 		}
 		$resultat = $sgbd -> requete($vueURL, "GET");
-
-		$resultat_Tab = json_decode($resultat, true);
-		if (! isset($resultat_Tab['rows'])) {
-			$ret = new SG_Erreur('0029', $this -> code . $pView);
+		if ($resultat instanceof SG_Erreur) {
+			$ret = $resultat;
 		} else {
-			$listeElements = $resultat_Tab['rows'];
+			$resultat_Tab = json_decode($resultat, true);
+			if (! isset($resultat_Tab['rows'])) {
+				$ret = new SG_Erreur('0029', $this -> code . $pView);
+			} else {
+				$listeElements = $resultat_Tab['rows'];
 
-			$collection = new SG_Collection();
-			$nbResultats = sizeof($listeElements);
-			if ($nbResultats !== 0) {
-				for ($i = 0; $i < $nbResultats; $i++) {
-					$collection -> Ajouter($listeElements[$i]['value']);
+				$collection = new SG_Collection();
+				$nbResultats = sizeof($listeElements);
+				if ($nbResultats !== 0) {
+					for ($i = 0; $i < $nbResultats; $i++) {
+						$collection -> Ajouter($listeElements[$i]['value']);
+					}
 				}
+				$ret = $collection;
 			}
-			$ret = $collection;
 		}
-
 		return $ret;
 	}
 

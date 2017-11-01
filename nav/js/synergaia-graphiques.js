@@ -1,6 +1,8 @@
-/** SynerGaïa 1.3.2 Tracer de courbes graphiques (histogramme, seceteurs, courbes)
- * 2.3 largeur adaptée au nombre de colonnes
- **/
+/** SynerGaïa
+ * @version 1.3.2 Tracer de courbes graphiques (histogramme, seceteurs, courbes)
+ * @version 2.3 largeur adaptée au nombre de colonnes
+ * @version 2.4 title pour survol
+ */
 
 function graphiqueHistogramme(idBloc,data) {
 	var margin = {top: 20, right: 100, bottom: 20, left: 20},
@@ -39,7 +41,10 @@ function graphiqueHistogramme(idBloc,data) {
 	var colonne = chart.selectAll("rect")
 		.data(data)
 		.enter().append("g")
-		.attr("transform", function(d, i) { return "translate(" + (x(i) - .5) + "," + height + ")"; });
+		.attr("transform", function(d, i) { return "translate(" + (x(i) - .5) + "," + height + ")"; })
+		.on("click", function(d, i) { gh(d, i, this);});
+	// 2.4 Etiquette si survol
+	colonne.append("title").text( function(d){return d[0] + ' : ' + d[1]; });
 	// Colonne de donnée
 	colonne.append("rect")
 		.attr("x", 0)
@@ -311,4 +316,28 @@ function graphiqueCourbes(idBloc,data,echelle) {
 	}
 	d3.selectAll(".etiquette")
 		.attr("id",function(d, i) {return "etiq-" + i;});
+}
+function gh(d, i, action, id) {
+	url = action + "&c=sub&w=" + id;
+	$.ajax({
+		type: "GET",
+		url: url,
+		data: data,
+		processData: false,
+		contentType: false,
+		success: function(result) {
+			SynerGaia.distribuerResult(result, []);
+			SynerGaia.finResult(timeInMs);
+			if (close == true) {
+				SynerGaia.closePopup();
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			$('#debug').html('erreur d\'exécution : ' + errorThrown + ' ' + textStatus);
+			$('#erreurs').html(jqXHR.responseText);
+			SynerGaia.imageLoader("", false);
+		}
+	});
+	SynerGaia.submit(event, id, action, msgcond, close)
+	return false;
 }

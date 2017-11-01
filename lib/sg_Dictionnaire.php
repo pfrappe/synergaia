@@ -333,7 +333,7 @@ class SG_Dictionnaire extends SG_Base {
 		$codeCache = 'IPE(' . $codePropriete . ')';
 		if (SG_Cache::estEnCache($codeCache, false) !== true or $pForce === true) {
 			$doc = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnairePropriete', $codePropriete);
-			if (getTypeSG($doc) !== '@Erreur') {
+			if (! $doc instanceof SG_Erreur) {
 				SG_Cache::mettreEnCache($codeCache, 'o', false);
 			} else {
 				SG_Cache::mettreEnCache($codeCache, 'n', false);
@@ -347,6 +347,7 @@ class SG_Dictionnaire extends SG_Base {
 
 	/**
 	 * Cherche l'action de la méthode demandée
+	 * 
 	 * @since 1.0.7
 	 * @version 2.4 fournit le texte (au lieu de l'action)
 	 * @param string $pTypeObjet objet sur lequel la méthode est demandée
@@ -362,7 +363,7 @@ class SG_Dictionnaire extends SG_Base {
 			$ret = SG_Cache::valeurEnCache($codeCache, false);
 		} else {
 			$action = $_SESSION['@SynerGaia'] -> sgbd -> getObjetParCode(self::CODEBASE,'@DictionnaireMethode', $codeMethode);
-			if (getTypeSG($action) === '@DictionnaireMethode') {
+			if ($action instanceof SG_DictionnaireMethode) {
 				$ret = $action -> getValeur('@Action','');
 			}
 			SG_Cache::mettreEnCache($codeCache, $ret, false);
@@ -600,10 +601,14 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $multiple;
 	}
-	/** 1.1 : paramètre peut être un objet ; 1.3.1 in_array
+	/**
 	 * isObjetDocument ; true si le type d'objet dérive de @Document, false sinon
-	 * @param (string) $pType : type de l'objet à analyse
-	 * @return (boolean) : true si le type d'objet dérive de @Document
+	 * 
+	 * @version 1.1 : paramètre peut être un objet ;
+	 * @version 1.3.1 in_array
+	 * @version 2.7 getObjetsDocument
+	 * @param string|SG_Objet $pType : type de l'objet à analyse
+	 * @return boolean : true si le type d'objet dérive de @Document
 	 */
 	static function isObjetDocument ($pType = '') {
 		if (is_object($pType)) {
@@ -611,7 +616,7 @@ class SG_Dictionnaire extends SG_Base {
 		} else {
 			$type = $pType;
 		}
-		return array_key_exists($type, SG_Dictionnaire::ObjetsDocument(true) -> elements);
+		return in_array($type, self::getObjetsDocument());
 	}
 
 	/**
@@ -625,7 +630,6 @@ class SG_Dictionnaire extends SG_Base {
 		$urlJSON = SG_Navigation::URL_PRINCIPALE . '?' . SG_Navigation::URL_VARIABLE_CODE . '=xdi';
 		$html = '<div id="dictionnaire' . $idBloc . '" class="consultationDictionnaire"></div>' . PHP_EOL;
 		$script = '<script>consulter_dictionnaire("' . $idBloc . '","' . $urlJSON . '");</script>' . PHP_EOL;
-		$_SESSION['libs']['dictionnaire'] = true;
 
 		return $html . $script;
 
@@ -710,13 +714,14 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return exportObjetsDuModele(SG_Dictionnaire::Objets());
 	}
-	/** 1.0.6
+
+	/**
 	 * Retourne le tableau des objets du type @Document ou en dérivant
-	 * Attention il y a un return dans la boucle
 	 * 
+	 * @since 1.0.6
+	 * @version 2.7 getObjetsDocument, DOD
 	 * @param boolean $pNomsSeuls : ne retourner qu'un tabeau de nom s (au lieu des objets)
 	 * @param boolean $pRefresh : forcer la mise à jour du cache
-	 * 
 	 * @return SG_Collection|SG_Erreur tableau des noms ou des objets @DictionnaireObjet trouvés ; ou erreur
 	 */	
 	static function ObjetsDocument ($pNomsSeuls = false, $pRefresh = false) {
@@ -724,39 +729,31 @@ class SG_Dictionnaire extends SG_Base {
 		$nomsSeuls = getBooleanValue($pNomsSeuls);		
 		$refresh = getBooleanValue($pRefresh);
 		
-		$codeCache = '@Dictionnaire.@ObjetsDocument';
+		$codeCache = 'DOD';
 		if (SG_Cache::estEnCache($codeCache, false) and $pRefresh === false) {
-			$ret -> elements = json_decode(SG_Cache::valeurEnCache($codeCache, false), true);
-		} else {
-			$listeObjets = array();
-			$modeles = array('@Document');
-			do {
-				$trouveUn = false;
-				$noms = array();
-				foreach ($modeles as $modele) {
-					$objets = SG_Dictionnaire::ObjetsDuModele($modele);
-					if ($objets instanceof SG_Erreur) {
-						return $objets;
-					} else {
-						foreach ($objets -> elements as $objet) {
-							$trouveUn = true;
-							$nom = $objet -> toString();
-							$noms[] = $nom;
-							$listeObjets[$nom] = '';
-						}
-					}
+			if ($nomsSeuls) {
+				$tmp = self::getObjetsDocument();
+				foreach ($tmp as $code) {
+					$ret -> elements[] = new SG_Texte($code);
 				}
-				$modeles  = $noms;
-			} while ($trouveUn === true);
-			$ret -> elements =  $listeObjets;
-			SG_Cache::mettreEnCache($codeCache, json_encode($listeObjets), false);
-		}
-		if ($nomsSeuls === false) {
-			$listeObjets = $ret -> elements;
-			foreach ($listeObjets as $nom => $objet) {
-				$listeObjets[$nom] = SG_Dictionnaire::getDictionnaireObjet($nom);
+			} else {
+				$ret -> elements = unserialize(SG_Cache::valeurEnCache($codeCache, false));
 			}
-			$ret -> elements = $listeObjets;
+		} else {
+			if ($nomsSeuls) {
+				$tmp = self::getObjetsDocument(true);
+				foreach ($tmp as $code) {
+					$ret -> elements[] = new SG_Texte($code);
+				}
+			} else {
+				$liste = array();
+				$tmp = self::getObjetsDocument(true);
+				foreach ($tmp as $code) {
+					$liste[] = new SG_DictionnaireObjet($code);
+				}
+				$ret -> elements = $liste;
+				SG_Cache::mettreEnCache($codeCache, serialize($liste), false);
+			}
 		}
 		return $ret;
 	}
@@ -827,7 +824,6 @@ class SG_Dictionnaire extends SG_Base {
 		$ret = '';
 		// en cache ?
 		$codeCache = '@Dictionnaire.isLien(' . $codeElement . ')';
-
 		if (SG_Cache::estEnCache($codeCache, false) === true) {
 			$ret = SG_Cache::valeurEnCache($codeCache, false);
 		} else {
@@ -1159,11 +1155,11 @@ class SG_Dictionnaire extends SG_Base {
 
 	/**
 	 * retourne le tableau des propriétés d'un objet sous la forme méthode => modèle
+	 * 
 	 * @since 1.2
 	 * @param string $pCodeObjet code de l'objet à analyser
 	 * @param string $pModele est un filtre supplémentaire éventuel
 	 * @param boolean $pRefresh permet de forcer le rafraichissement du cache
-	 * 
 	 * @return SG_Collection dont le tableau est composé d'array ('nom' : propriété, 'idmodele' : modele de la propriété)
 	 */
 	static function getMethodesObjet ($pCodeObjet = '', $pModele = '', $pRefresh = false) {
@@ -1203,15 +1199,18 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $valeurs;
 	}
-	/** 1.2 ajout
+	/**
 	* crée le tableau des liens entrant vers un modele de document
-	* @param (string) $pModele  modele de l'objet
-	* @param (boolean) $pRefresh : rafraichir le cache
-	* @return (array) liste des modeles trouvés (cité une seule fois)
+	* 
+	* @since 1.2
+	* @version 2.7 refresh false ; code = DLE
+	* @param string $pModele  modele de l'objet
+	* @param boolean $pRefresh : rafraichir le cache (défaut false)
+	* @return array liste des modeles trouvés (cité une seule fois)
 	*/
-	static function getLiensEntrants($pModele = '', $pRefresh = true) {		
+	static function getLiensEntrants($pModele = '', $pRefresh = false) {		
 		$valeurs = array();
-		$codeCache = '@Dictionnaire.getLiensEntrants(' . $pModele . ')';
+		$codeCache = 'DLE(' . $pModele . ')';
 		if (SG_Cache::estEnCache($codeCache, false) === false or $pRefresh) {
 			$objets = self::ObjetsDocument();
 			$objetsok = array();
@@ -1230,15 +1229,19 @@ class SG_Dictionnaire extends SG_Base {
 		}
 		return $valeurs;
 	}
-	/** 1.2 ajout
+
+	/**
 	* Liste des codes de propriétés de type TexteRiche pour un modèle d'objet donné
-	* @param (string) $pModele  : modele de l'objet 
-	* @param (boolean) $pRefresh : rafraichir le cache
-	* @return (array) liste des champs trouvés
+	* 
+	* @since 1.2
+	* @version 2.7 code DTR
+	* @param string $pModele  : modele de l'objet 
+	* @param boolean $pRefresh : rafraichir le cache (défaut false)
+	* @return array liste des champs trouvés
 	*/
 	static function getTextesRiches($pModele = '', $pRefresh = false) {		
 		$valeurs = array();
-		$codeCache = '@Dictionnaire.getTextesRiches(' . $pModele . ')';
+		$codeCache = 'DTR(' . $pModele . ')';
 		if (SG_Cache::estEnCache($codeCache, false) === false or $pRefresh) {
 			$champs = self::ChampsDocument($pModele);
 			foreach($champs -> elements as $champ) {
@@ -1294,6 +1297,7 @@ class SG_Dictionnaire extends SG_Base {
 	 * @since 1.0.5 dans SG_SynerGaia ;
 	 * @version 1.3.1 déplace de SG_SynerGaia et changement de code cache  ; erreur si nom inconnu
 	 * @version 2.6 code err 0293 ; @Dictionnaire.getProprietesObjet => DPO
+	 * @version 2.7 @Texte si ['idmodele'] inexistant
 	 * @param string $pCodeObjet code de l'objet à analyser
 	 * @param string $pModele est un filtre supplémentaire éventuel
 	 * @param boolean $pRefresh permet de forcer le rafraichissement du cache
@@ -1306,7 +1310,11 @@ class SG_Dictionnaire extends SG_Base {
 			$collec = $_SESSION['@SynerGaia'] -> sgbd -> getProprietesObjet($pCodeObjet, $pModele, $pRefresh);
 			foreach($collec -> elements as $element) {
 				if (isset($element['nom'])) {
-					$valeurs[$element['nom']] = $element['idmodele'];
+					if (isset($element['idmodele'])) {
+						$valeurs[$element['nom']] = $element['idmodele'];
+					} else {
+						$valeurs[$element['nom']] = SG_Texte::TYPESG;
+					}
 				} else {
 					// élément sans code dans le dictionnaire
 					$valeurs[''] = new SG_Erreur('0293');
@@ -1561,6 +1569,41 @@ class SG_Dictionnaire extends SG_Base {
 			}
 		}
 		$ret = $texte;
+		return $ret;
+	}
+
+	/**
+	 * Retourne la liste des code des modèles de type Document
+	 * Elle est en cache sauf si $pRefresh est à true
+	 * 
+	 * @param boolean $pRefresh rafraichir le cache ? (défaut false)
+	 * @return array tableau des codes (sous la forme '@Texte' etc)
+	 */
+	static function getObjetsDocument($pRefresh = false) {
+		$codeCache = 'gOD';
+		if ($pRefresh === false and SG_Cache::estEnCache($codeCache, false)) {
+			$cache = SG_Cache::valeurEnCache($codeCache, false);
+			$ret = explode(',', $cache);
+		} else {
+			$ret = new SG_Collection();
+			$documents = array();
+			$objets = self::Objets();
+			foreach($objets -> elements as $objet) {
+				$classe = self::getClasseObjet($objet -> code);
+				if (class_exists($classe)) {
+					try {
+						$doc = new $classe();
+					} catch (Exception $e) {
+						$doc = new SG_Erreur('');
+					}
+					if ($doc instanceof SG_Document) {
+						$documents[] = $objet -> code;
+					}
+				}
+			}
+			$ret = $documents;
+			SG_Cache::mettreEnCache($codeCache, implode(',', $documents), false);
+		}
 		return $ret;
 	}
 

@@ -144,12 +144,71 @@ class SG_Base extends SG_Objet {
 	}
 
 	/** 
-	 * Compacte la base
-	 * @since 1.1 : ajout
-	 * @return SG_Texte
+	 * Compacts the database
+	 * 1. if suppression of doubles for a model is required, only one document is kept for a same md5 (as in SG_Photo)
+	 * 2. compact database for the sgbd (CouchDB for example)
+	 * This method may be long...
+	 * 
+	 * @since 1.1
+	 * @version 2.7 add parm $pModele
+	 * @param boolean|SG_VraiFaux $pModele if true : suppress doubles files (like Photos) if same @MD5
+	 * @return SG_Texte explaining what has been done
 	 */
-	public function Compacter() {
+	public function Compacter($pModele = null) {
+		$nb = 0;
+		// if model then delete documents when they contain the same files
+		if (! is_null($pModele)) {
+			$model = SG_Texte::getTexte($pModele);
+			$allids = $_SESSION['@SynerGaia'] -> sgbd -> getAllIDs($this -> codeBase, '', true);
+			if ($allids instanceof SG_Erreur) {
+				$ret = $allids;
+			} else {
+				$indice = new SG_Nombre();
+				// forall docs in the database
+				foreach ($allids -> elements as $row) {
+					$id = $row['id'];
+					if (substr($id, 0, 8) !== '_design/') { // not database design (CouchDB)
+						$doc =  $_SESSION['@SynerGaia'] -> sgbd -> getObjetByID($this -> codeBase . '/' . $id);
+						// may be it has already been deleted before ?
+						if (! $doc instanceof SG_Erreur) {
+							// filtering on model
+							if (getTypeSG($doc) === $model) {
+								// filtering on md5
+								$dbl = $doc -> Doubles();
+								if ($dbl instanceof SG_Collection and sizeof($dbl -> elements) > 0) {
+									// there are others docs with the same md5
+									// I delete those not included in a SG_Repertoire
+									$todelete = array();
+									$ok = false;
+									foreach ($dbl -> elements as $docdbl) {
+										// is the doc in some directory ?
+										$inrep = $docdbl -> DansRepertoires();
+										if (sizeof($inrep -> elements) === 0) {
+											// no then i can delete it
+											$todelete[] = $docdbl;
+										} else {
+											$ok = true;
+										}
+									}
+									// and - only if I keep at least one document - I check if I must delete my current doc
+									if ($ok and sizeof($doc -> DansRepertoires() -> elements) === 0) {
+										$todelete[] = $doc;
+									}
+									// then I delete...
+									foreach($todelete as $docdbl) {
+										$nb++;
+										$docdbl -> Supprimer();
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		// compacts depending on database system features
 		$ret = new SG_Texte($this -> base -> Compacter());
+		$ret -> texte = 'Supprimés : ' . $nb . ' ; ' . $ret -> texte;
 		return $ret;
 	}
 

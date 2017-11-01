@@ -13,7 +13,7 @@ if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Annuaire_trait.php')) {
  * SG_Annuaire : Classe SynerGaia de gestion d'un annuaire d'utilisateurs
  * @since 0.0
  * @version 2.1.1
- * @version 2.6 ajout getAnonyme, modif getUtilisateur
+ * @version 2.6 ajout getAnonyme() ; ajout parm getUtilisateur()
  */
 class SG_Annuaire extends SG_Base {
 	/** string Type SynerGaia '@Annuaire' */
@@ -37,7 +37,7 @@ class SG_Annuaire extends SG_Base {
 	 * @since 0.0
 	 * @version 1.1 cache $_SESSION
 	 * @version 2.6 parm $pForce pour forcer la recherche de l'utilisateur dans l'annuaire (sans cache)
-	 * @version test $collec SG_Erreur
+	 * @version 2.7 test $collec SG_Erreur
 	 * @param any $pUtilisateur code ou formule donnant un identifiant d'utilisateur
 	 * @param boolean $pForce si true, force directement la recherche de l'utilisateur dans l'annuaire (false par défaut)
 	 * @return SG_Utilisateur|SG_Erreur trouvé ou erreur ou false si inconnu

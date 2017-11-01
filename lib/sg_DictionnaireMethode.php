@@ -82,6 +82,7 @@ class SG_DictionnaireMethode extends SG_Document {
 	 * 
 	 * @since 2.1 ajout
 	 * @version 2.3 $ret
+	 * @return boolean|SG_Erreur
 	 */
 	function postEnregistrer() {
 		$ret = false;
@@ -125,7 +126,7 @@ class SG_DictionnaireMethode extends SG_Document {
 	 */
 	function Afficher() {
 		$args = func_get_args();
-		if (sizeof($args) === 0) { 
+		if (sizeof($args) === 0) {
 			$ret = parent::Afficher('@Titre','@Objet','@Methode','@Action','@Modele','@Description'); 
 		} else {
 			$ret = call_user_func_array(array('SG_Document', 'Afficher'), $args);

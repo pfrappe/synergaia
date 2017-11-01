@@ -428,7 +428,7 @@ class SG_Document extends SG_Objet {
 	 * @version 2.6 init @Type si pas déjà fait
 	 * @param boolean $pAppelMethodesEnregistrer appel des méthodes Enregistrer et @Enregistrer
 	 * @param boolean $pCalculTitre
-	 * @return SG_Dcoument|SG_Erreur résultat de l'enregistrement (@Ceci si ok sinon erreur retournée)
+	 * @return SG_Document|SG_Erreur résultat de l'enregistrement (@Ceci si ok sinon erreur retournée)
 	 */
 	public function Enregistrer($pAppelMethodesEnregistrer = true, $pCalculTitre = true) {
 		$ret = $this;
@@ -483,7 +483,7 @@ class SG_Document extends SG_Objet {
 						$ret = $this -> postEnregistrer();
 					}
 				}
-				if (getTypeSG($ret) !== '@Erreur') {
+				if (! $ret instanceof SG_Erreur) {
 					if(is_null($ok) or $ok === true) {
 						$ret = $this;
 					} else {
@@ -512,11 +512,14 @@ class SG_Document extends SG_Objet {
 	/**
 	 * Affichage du document
 	 * @since 0.0
+	 * @version 1.1 : titre non affiché si vide, <h2> toujours ; 
+	 * @version 1.3.1 isEmpty ; $valeur est object 
+	 * @version 1.3.2 toggle $infosdoc, correction ligne 500 calculerSUR() 
+	 * @version 1.3.3 seulement champs non vides
+	 * @version 1.3.4 test $codedocument existe, condensé $infos ; supp lignes vides
 	 * @version 2.1 si parametre est string (donc on est en interne), les fichiers visibles : 
 	 * @version 2.4 getTexte $titre
-	 * @version 1.1 : titre non affiché si vide, <h2> toujours ; 
-	 * @version 1.3.1 isEmpty ; $valeur est object ; 1.3.2 toggle $infosdoc, correction ligne 500 calculerSUR() ; 1.3.3 seulement champs non vides
-	 * @version 1.3.4 test $codedocument existe, condensé $infos ; supp lignes vides
+	 * @version 2.6 test si objet est vide
 	 * @param SG_Formule noms de champs ou résultats à afficher (autant que nécessaires ou aucun pour tout afficher)
 	 * @return string contenu HTML affichable
 	 * @uses SynerGaia.montrercacher()
@@ -622,7 +625,7 @@ class SG_Document extends SG_Objet {
 				// calcule la valeur de chaque paramètre
 				if (is_string($parametre)) {
 					$element = $this -> get($parametre);
-				} elseif (getTypeSG($parametre) === '@Formule') {
+				} elseif ($parametre instanceof SG_Formule) {
 					$element = $parametre -> calculerSur($this);
 				} else {
 					$element = $parametre;
@@ -634,7 +637,7 @@ class SG_Document extends SG_Objet {
 						if ($tmpChamp -> isEmpty() === false) {
 							$texte = $tmpChamp -> Afficher();
 						}
-					} elseif (getTypeSG($element) === '@Collection') {
+					} elseif ($element instanceof SG_Collection) {
 						$tmpChamp = new SG_Champ();
 						$tmpChamp -> contenu = $element;
 						$tmpChamp -> libelle = $element -> titre;
@@ -643,7 +646,7 @@ class SG_Document extends SG_Objet {
 							$texte = $tmpChamp -> Afficher();
 						}
 					} else {
-						if(is_object($element) and !($element -> EstVide() -> estVrai())) {
+						if (is_object($texte) and $texte -> EstVide() -> estVrai() === false) {
 							$texte = $element -> Afficher();
 							$texte = $texte -> texte;
 						}
@@ -656,7 +659,7 @@ class SG_Document extends SG_Objet {
 			$ret .= '</ul>';
 		}
 		SG_Pilote::OperationEnCours() -> setPrincipal($this);
-		if (getTypeSG($ret) !== '@HTML') {
+		if (! $ret instanceof SG_HTML) {
 			$ret = new SG_HTML($ret);
 		}
 		return $ret;
@@ -804,6 +807,7 @@ class SG_Document extends SG_Objet {
 	 * Modification du document : calcul du html permettat la saisie en modification
 	 * @since 0.0
 	 * @version 2.6 traitement des champs de type @Collection
+	 * @version 2.7 test si $titre est SG_HTML
 	 * @param any liste facultative de paramètres donnant les propriétés ou formules à afficher
 	 * @return SG_HTML contenu HTML affichable / modifiable
 	 * @todo supprimer la pirouette du '.' devant les propriétés
@@ -833,7 +837,10 @@ class SG_Document extends SG_Objet {
 		} else {
 			// titre du document
 			$titre = $this -> toHTML('');
-			if($titre !== '') {
+			if ($titre instanceof SG_HTML) {
+				$titre = $titre -> texte;
+			}
+			if ($titre !== '') {
 				$ret .= '<h2>' . $titre . '</h2>';
 			}
 			// si aucun : récupère la liste complète des champs du document
@@ -857,12 +864,7 @@ class SG_Document extends SG_Objet {
 				$nom = $propriete -> methode;
 				// calcul de l'objet du champ à modifier
 				$tmp = $propriete -> calculerSur($this);
-			//	if ($tmp -> DeriveDeDocument() -> estVrai()) { // 2.5 pour .Contact.@ValeursPossibles(etc) pas au point
-			//		$index = $tmp -> index;
-			//		$doc = $tmp;
-			//	} else {
-					$doc = $tmp -> contenant;
-			//	}
+				$doc = $tmp -> contenant;
 				// cas d'une formule de valeurs possibles de la propriété
 				if(isset($tmp -> proprietes['@vp'])) {
 					$valeurspossibles = $tmp -> proprietes['@vp'];
@@ -2048,6 +2050,17 @@ class SG_Document extends SG_Objet {
 	 */
 	function ID() {
 		$ret = new SG_Texte($this -> getUUID());
+		return $ret;
+	}
+
+	/**
+	 * Cherche les répertoires dans lequel se trouve le document
+	 * 
+	 * @since 2.7
+	 * @return SG_Collection collection des répertoires dans lequel est cité le document
+	 */
+	function DansRepertoires() {
+		$ret = $_SESSION['@SynerGaia'] -> sgbd -> getRepertoires($this -> getUUID());
 		return $ret;
 	}
 

@@ -419,7 +419,6 @@ class SG_Pilote {
 	 **/
 	static function initialiserNouvelleEtape() {
 		//raz des contenus de la page
-		$_SESSION['libs'] = array(); // bibliothèques nécessaires dans le header
 		$_SESSION['page']['aide'] = '';
 		$_SESSION['page']['entete'] = '';
 		$_SESSION['script'] = array();
@@ -462,6 +461,7 @@ class SG_Pilote {
 	 * Traiter une opération
 	 * @version 2.4 pi=new SG_Texte
 	 * @param string SG_Operation|SG_Erreur $operation code ou opération en cours à traiter ou erreur venant d'avant
+	 * @todo mettre erreurs en libellés
 	 **/
 	static function traiterOperationDemandee($operation) {
 		if (getTypeSG($operation) === '@Erreur') {

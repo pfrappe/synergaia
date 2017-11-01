@@ -177,21 +177,23 @@ class SG_Nombre extends SG_Objet {
 
 	/**
 	 * Comparaison à un autre nombre
+	 * vrai si ce nombre est strictement supérieur à celui passé en paramètre
+	 * 
 	 * @version 2.4 Superieur => SuperieurA
 	 * @param indéfini $pQuelqueChose objet avec lequel comparer
-	 * @return SG_VraiFaux vrai si les deux nombres sont égaux
+	 * @return SG_VraiFaux 
 	 */
 	function SuperieurA($pQuelqueChose = 0) {
 		$autreNombre = new SG_Nombre($pQuelqueChose);
-		$comparaison = null;
+		$ret = null;
 		if ($this -> valeur !== null) {
 			if ($this -> valeur > $autreNombre -> valeur) {
-				$comparaison = true;
+				$ret = true;
 			} else {
-				$comparaison = false;
+				$ret = false;
 			}
 		}
-		return new SG_VraiFaux($comparaison);
+		return new SG_VraiFaux($ret);
 	}
 
 	/**

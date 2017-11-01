@@ -537,7 +537,7 @@ class SG_Collection extends SG_Objet {
 		if ($nbLignes === 0) {
 			$ret = self::libelle('0108'); // rien à afficher
 		} else {
-			if (getTypeSG($pParametres) !== '@Formule') {
+			if (! $pParametres instanceof SG_Formule) {
 				$php = false;
 				// Traite les parametres passés
 				$paramTitre = '.@toHTML';
@@ -549,7 +549,7 @@ class SG_Collection extends SG_Objet {
 				for ($i = 0; $i < $nbParametres; $i++) {
 					$formule = '';
 					$parametre = func_get_arg($i);
-					if (getTypeSG($parametre) === '@Formule') {
+					if ($parametre instanceof SG_Formule) {
 						$formule = $parametre -> formule;
 					} else {
 						$formule = new SG_Formule(SG_Texte::getTexte($parametre));
@@ -625,16 +625,15 @@ class SG_Collection extends SG_Objet {
 			$nbLignes = sizeof($this -> elements);
 			foreach ($this -> elements as &$element) {
 				// Si on a un élément 'simple' on en fait un élément SynerGaïa
-				if (getTypeSG($element) === 'string') {
+				if (is_string($element)) {
 					$element = new SG_Texte($element);
 				}
-
 				// Exécute la formule sur l'élément de la ligne
 				if (!$php) {
 					$tmpResultatFormule = SG_Formule::executer($formule, $element);
 					// On met tous les résultats de la ligne dans un tableau
 					$valeursColonnes = array();
-					if (getTypeSG($tmpResultatFormule) === '@Collection') {
+					if ($tmpResultatFormule instanceof SG_Collection) {
 						$valeursColonnes = $tmpResultatFormule -> elements;
 					}
 					$nbColonnes = sizeof($valeursColonnes);
@@ -653,7 +652,7 @@ class SG_Collection extends SG_Objet {
 					} else {
 						if ($formule[$numColonne] !== null) {
 							$f = $formule[$numColonne];
-							if (getTypeSG($f) === '@Formule') {
+							if ($f instanceof SG_Formule) {
 								$res = $f -> calculerSur($element);
 							} else {
 								$res = $f;
@@ -726,7 +725,7 @@ class SG_Collection extends SG_Objet {
 				}
 				$journeeComplete = false;
 				if ($evnmtDebut !== '') {
-					if (getTypeSG($evnmtDebut) !== '@DateHeure') {
+					if (! $evnmtDebut instanceof SG_DateHeure) {
 						$journeeComplete = true;
 					}
 					$annee = date('Y', $evnmtDebut -> getTimestamp());
@@ -737,7 +736,7 @@ class SG_Collection extends SG_Objet {
 					$codeJS .= '	  start: new Date(' . $annee . ', ' . ($mois - 1) . ', ' . $jour . ', ' . $heures . ', ' . $minutes . '),' . PHP_EOL;
 				}
 				if ($evnmtFin !== '') {
-					if (getTypeSG($evnmtFin) !== '@DateHeure') {
+					if (! $evnmtFin instanceof SG_DateHeure) {
 						$journeeComplete = true;
 					}
 					$annee = date('Y', $evnmtFin -> getTimestamp());
@@ -1160,46 +1159,53 @@ class SG_Collection extends SG_Objet {
 	 * Si aucun paramètre, on suppose que chaque terme est un @nombre dont on fait la somme
 	 * @since 1.0.6
 	 * @version 2.2 test formule
+	 * @version 2.7 $pFiltre
 	 * @param indéfini $pFormule formule a appliquer à chaque élément.
+	 * @param SG_Formule $pFiltre filtre des documents pour le calcul de la somme
 	 * @return SG_Nombre ou SG_Erreur
 	 **/
-	public function Somme($pFormule = '.@toFloat') {
-		$somme = (double)0;
-
-		$formule = '';
-		// pas d'arguments : somme directe des élement
-		if(func_num_args() === 0) {
-			foreach ($this -> elements as &$elt) {
-				if (is_numeric($elt)) {
-					$somme+= $elt;
-				} elseif (getTypeSG($elt) === '@Nombre') {
-					$somme+= $elt -> toFloat();
-				}
-			}
+	public function Somme($pFormule = '.@toFloat', $pFiltre = null) {
+		if ($pFiltre != null and ! $pFiltre instanceof SG_Formule) {
+			$somme = new SG_Erreur("le filtre n'est pas une formule exécutable !");
 		} else {
-			// somme des résultats de formule
-			if (!$pFormule instanceof SG_Formule) {
-				$ret = new SG_Erreur('0302', getTypeSG($pFormule));
+			$somme = (double)0;
+			$formule = '';
+			// pas d'arguments : somme directe des élement
+			if(func_num_args() === 0) {
+				foreach ($this -> elements as &$elt) {
+					if (is_numeric($elt)) {
+						$somme+= $elt;
+					} elseif (getTypeSG($elt) === '@Nombre') {
+						$somme+= $elt -> toFloat();
+					}
+				}
 			} else {
-				$formule = $pFormule;
-				$nbElements = sizeof($this -> elements);
-				foreach ($this -> elements as &$element) {
-					if (SG_Dictionnaire::isObjetExiste(getTypeSG($element)) === true) {
-						$valeur = $formule -> calculerSur($element);
-						if (SG_Dictionnaire::isObjetExiste(getTypeSG($valeur))) {
-							$valeur = $valeur -> toFloat();
-						} elseif (is_string($valeur)) {
-							$valeur = strval($valeur);
-						} elseif ($valeur instanceof SG_Erreur) {
-							$somme = $valeur;
-							break;
-						} else {
-							$somme = new SG_Erreur('0303');
-							break;
+				// somme des résultats de formule
+				if (!$pFormule instanceof SG_Formule) {
+					$ret = new SG_Erreur('0302', getTypeSG($pFormule));
+				} else {
+					$formule = $pFormule;
+					$nbElements = sizeof($this -> elements);
+					foreach ($this -> elements as &$element) {
+						if ($pFiltre == null or ($pFiltre !== null and $pFiltre -> calculerSur($element) -> estVrai())) {
+							if (SG_Dictionnaire::isObjetExiste(getTypeSG($element)) === true) {
+								$valeur = $formule -> calculerSur($element);
+								if (SG_Dictionnaire::isObjetExiste(getTypeSG($valeur))) {
+									$valeur = $valeur -> toFloat();
+								} elseif (is_string($valeur)) {
+									$valeur = strval($valeur);
+								} elseif ($valeur instanceof SG_Erreur) {
+									$somme = $valeur;
+									break;
+								} else {
+									$somme = new SG_Erreur('0303');
+									break;
+								}
+								$somme += $valeur;
+							} else {
+								$somme += floatval($element);
+							}
 						}
-						$somme += $valeur;
-					} else {
-						$somme += floatval($element);
 					}
 				}
 			}
@@ -1226,7 +1232,7 @@ class SG_Collection extends SG_Objet {
 		
 		$nbargs = sizeof($args);
 		if (isset($args[1]) and $args[1] !== '') {
-			if (getTypeSG($args[1]) === '@Formule') {
+			if ($args[1] instanceof SG_Formule) {
 				$formuleLibelle = $args[1];
 			} else {
 				$formuleLibelle = new SG_Formule(SG_Texte::getTexte($args[1]));
@@ -1236,7 +1242,7 @@ class SG_Collection extends SG_Objet {
 		$formuleValeur = array();
 		for($n = 2; $n < $nbargs; $n++) {
 			$pFormuleValeur = $args[$n];
-			if (getTypeSG($pFormuleValeur) === '@Formule') {
+			if ($pFormuleValeur instanceof SG_Formule) {
 				$formuleValeur[] = $pFormuleValeur;
 			} else {
 				$formuleValeur[] = new SG_Formule(SG_Texte::getTexte($pFormuleValeur));
@@ -1299,6 +1305,7 @@ class SG_Collection extends SG_Objet {
 						}
 					}
 				}
+				$ligne[] = $key;
 				$tableauDonnees[] = $ligne;
 			} else {
 				$tableauDonnees[] = array(strval($element), floatval($element));
@@ -1362,15 +1369,15 @@ class SG_Collection extends SG_Objet {
 			$ret .= ' var data_' . $idGraphique . ' = ' . $tableauJSON . ';' . PHP_EOL;
 			$ret .= ' graphique' . $classe . '("div#' . $idGraphique . '",data_' . $idGraphique . ', true);' . PHP_EOL;
 			$ret .= '</script>' . PHP_EOL;
-			$_SESSION['libs']['graphiques'] = true;
 		}
 		$ret = new SG_Graphique($ret);
 		return $ret;
 	}
 
-	/** 2.0 libellé 0108
+	/**
 	* Génération d'un graphique en "histogramme"
-	*
+	* 
+	* @version 2.0 libellé 0108
 	* @param indéfini $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
 	* @param indéfini $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
 	*
@@ -1397,14 +1404,14 @@ class SG_Collection extends SG_Objet {
 			$ret .= ' var data_' . $idGraphique . ' = ' . $tableauJSON . ';' . PHP_EOL;
 			$ret .= ' graphiqueHistogramme("div#' . $idGraphique . '",data_' . $idGraphique . ');' . PHP_EOL;
 			$ret .= '</script>' . PHP_EOL;
-			$_SESSION['libs']['graphiques'] = true;
 		}
 		return new SG_HTML($ret);
 	}
 
-	/** 2.0 libellé 0108
+	/**
 	 * Génération d'un graphique en "secteurs"
-	 *
+	 * 
+	 * @version 2.0 libellé 0108
 	 * @param indéfini $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
 	 * @param indéfini $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
 	 *
@@ -1431,13 +1438,14 @@ class SG_Collection extends SG_Objet {
 			$ret .= ' var data_' . $idGraphique . ' = ' . $tableauJSON . ';' . PHP_EOL;
 			$ret .= ' graphiqueSecteurs("div#' . $idGraphique . '",data_' . $idGraphique . ');' . PHP_EOL;
 			$ret .= '</script>' . PHP_EOL;
-			$_SESSION['libs']['graphiques'] = true;
 		}
 		return new SG_HTML($ret);
 	}
-	/** 1.3.2 idRandom ; 2.0 libellé 0108
+	/**
 	 * Génération d'un graphique en "secteurs"
-	 *
+	 * 
+	 * @version 1.3.2 idRandom
+	 * @version 2.0 libellé 0108
 	 * @param indéfini $pFormuleValeur formule a appliquer à chaque élément pour obtenir la valeur
 	 * @param indéfini $pFormuleLibelle formule a appliquer à chaque élément pour obtenir le libellé
 	 *
@@ -1462,9 +1470,12 @@ class SG_Collection extends SG_Objet {
 		return new SG_HTML($ret);
 	}
 
-	/** 1.0.7 ; 2.1 traiter formule php ; 2.4 formules -> texte != '' ; @Effectif => @Nombre ; @param $pLiens, @Docs @Doc
+	/**
 	 * Grouper la collection et calculer un cumul par catégorie
-	 *
+	 * 
+	 * @version 1.0.7
+	 * @version 2.1 traiter formule php
+	 * @version 2.4 formules -> texte != '' ; @Effectif => @Nombre ; @param $pLiens, @Docs @Doc
 	 * @param indéfini $pFormuleCategorie
 	 * @param indéfini $pFormuleValeur
 	 * @param indéfini $pFormuleLigne : formule à exécuter à chaque ligne de catégorie (sur les variables 'c2', 'c3', 'nb' et 'total')
@@ -1517,7 +1528,7 @@ class SG_Collection extends SG_Objet {
 					$doc = $formuleCategorie -> calculerSur($element);
 					$tmpTitre = $doc -> toString();
 					$tmpCle = $tmpTitre;
-					if ($doc -> DeriveDeDocument() -> estVrai() and !is_null($doc -> doc -> codeDocument)) {
+					if ($doc instanceof SG_Document and !is_null($doc -> doc -> codeDocument)) {//$doc -> DeriveDeDocument() -> estVrai()
 						$tmpDoc = new SG_IDDoc($doc);
 						$tmpCle = $doc -> getUUID();
 					}
@@ -1626,6 +1637,7 @@ class SG_Collection extends SG_Objet {
 	}
 	/**
 	* AjouterColonne : ajoute une colonne à une collection de type tableau
+	* 
 	* @since 1.0.7
 	* @version 1.3.1 si $pFormule déjà formule garder telle quelle
 	* @param string|SG_Texte|SG_Formule $pCode code de l'élément à ajouter
@@ -1684,6 +1696,7 @@ class SG_Collection extends SG_Objet {
 	}
 	/**
 	* MoyenneMobile : ajoute une colonne moyenne mobile à une collection de type tableau
+	* 
 	* @since 1.0.7
 	* @param SG_Formule $pFormule : la formule donnant le nombre à moyenner
 	* @param string|SG_Formule $pCode code de l'élément à ajouter
@@ -1819,7 +1832,11 @@ class SG_Collection extends SG_Objet {
 				if ($titres[$i] === '') {
 					if (sizeof($formules) > $i) {
 						// libellé du dernier élément de la formule
-						$tmpCodeColonne = $typePremierElement . $formules[$i] -> methode;
+						if(!is_object($formules[$i])) {
+							$tmpCodeColonne = $typePremierElement . $formules[$i];
+						} else {
+							$tmpCodeColonne = $typePremierElement . $formules[$i] -> methode;
+						}
 					} else {
 						$tmpCodeColonne = $typePremierElement;
 					}
@@ -1891,8 +1908,8 @@ class SG_Collection extends SG_Objet {
 				if ($parametre instanceof SG_Formule) {
 					$formules[] = $parametre;
 				} else {
-					$i = strrpos($texte, ':');
 					$texte = SG_Texte::getTexte($parametre);
+					$i = strrpos($texte, ':');
 					if ($i !== false) {
 						$titres[] = substr($texte, $i + 1);
 						$formules[]= substr($texte, 0, $i);
@@ -2057,6 +2074,7 @@ class SG_Collection extends SG_Objet {
 				// panneau d'entête
 				$ret .= '<thead><tr>'; // entête
 				$titres = $donnees['metadata'];
+				$css = array();
 				for($i = 0; $i < sizeof($titres); $i++) {
 					if ($i === 0) {
 						$ret .= '<th class="sg-th-cell">';
@@ -2064,8 +2082,14 @@ class SG_Collection extends SG_Objet {
 						$ret .= '<th class="sg-th-cell" data-priority="' . $i . '">';
 					}
 					$value = $titres[$i];
-					if(isset($value['label'])) {
+					if (isset($value['label'])) {
 						$ret .= $value['label'];
+					}
+					// classe des cellules du tableau
+					if (isset($value['datatype'])) {
+						$css[$i] = 'sg-td-' . $value['datatype'];
+					} else {
+						$css[$i] = '';
 					}
 					$ret .= '</th>';
 				}
@@ -2086,7 +2110,9 @@ class SG_Collection extends SG_Objet {
 					}
 					$ret.= $l['clic'] . '>';
 					// chaque cellule de la ligne
+					$j = 0;
 					foreach ($l['values'] as $valeur) {
+						$td = '<td class="sg-td-cell ' . $css[$j];
 						if (is_array($valeur)) {
 							$tmpcol = new SG_Collection($valeur);
 							$txt = $tmpcol -> Lister() -> texte . '</td>';
@@ -2095,11 +2121,12 @@ class SG_Collection extends SG_Objet {
 						}
 						if (getTypeSG($valeur) === '@HTML' and $valeur -> saisie === true) {
 							// il y a de la saisie sur la ligne, donc on remonte l'info et on arrête la propagation du clic sur la ligne
-							$ret .= '<td class="sg-td-cell" onClick="SynerGaia.stopPropagation(event)">' . $txt . '</td>';
+							$ret.= $td . '" onClick="SynerGaia.stopPropagation(event)">' . $txt . '</td>';
 							$saisie = true;
 						} else {
-							$ret .= '<td class="sg-td-cell">' . $txt . '</td>';
+							$ret.= $td . '">' . $txt . '</td>';
 						}
+						$j++;
 					}
 					$ret .= '</tr>';
 				}
@@ -2532,6 +2559,7 @@ class SG_Collection extends SG_Objet {
 	 * @since 1.3.2
 	 * @version 2.4 style @Texte
 	 * @version 2.6 $clic vers étape
+	 * @version 2.7 sup test lien 1ere colonne pour avoir le type de cellule
 	 * @param array $formules
 	 * @param any $element objet de la ligne
 	 * @param boolean $pCheckBox
@@ -2614,40 +2642,36 @@ class SG_Collection extends SG_Objet {
 			// calcul du type de données
 			if (!$sanstype) {
 				if (! isset($typesDonnees[$numColonne])) {
-					if ($lienSurPremiereColonne === true) {
-						$typesDonnees[$numColonne] = 'html';
-					} else {
-						$typeValeurColonne = getTypeSG($valeurColonne);
-						if (SG_Dictionnaire::isObjetExiste($typeValeurColonne)) {
-							// Cherche le type de donnée à afficher
-							switch($typeValeurColonne) {
-								case '@Texte' :
-									$typesDonnees[$numColonne] = 'string';
-									break;
-								case '@Nombre' :
-									$typesDonnees[$numColonne] = 'double';
-									break;
-								case '@Date' :
-								case '@DateHeure' :
-								case '@Heure' :
-									$typesDonnees[$numColonne] = 'date';
-									break;
-								case '@HTML' :
-								case '@Collection' :
-								case '@Email' :
-								case '@Bouton' :
-								case '@Icone' :
-								case '@Utilisateur' :
-									$typesDonnees[$numColonne] = 'html';
-									break;
-								default :
-									$typesDonnees[$numColonne] = 'string';
-									break;
-							}
-						} else {
-							// Sinon ajoute directement
-							$typesDonnees[$numColonne] = 'string';
+					$typeValeurColonne = getTypeSG($valeurColonne);
+					if (SG_Dictionnaire::isObjetExiste($typeValeurColonne)) {
+						// Cherche le type de donnée à afficher
+						switch($typeValeurColonne) {
+							case '@Texte' :
+								$typesDonnees[$numColonne] = 'string';
+								break;
+							case '@Nombre' :
+								$typesDonnees[$numColonne] = 'double';
+								break;
+							case '@Date' :
+							case '@DateHeure' :
+							case '@Heure' :
+								$typesDonnees[$numColonne] = 'date';
+								break;
+							case '@HTML' :
+							case '@Collection' :
+							case '@Email' :
+							case '@Bouton' :
+							case '@Icone' :
+							case '@Utilisateur' :
+								$typesDonnees[$numColonne] = 'html';
+								break;
+							default :
+								$typesDonnees[$numColonne] = 'string';
+								break;
 						}
+					} else {
+						// Sinon ajoute directement
+						$typesDonnees[$numColonne] = 'string';
 					}
 				}
 			}

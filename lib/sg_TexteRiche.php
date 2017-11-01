@@ -88,9 +88,6 @@ class SG_TexteRiche extends SG_Texte {
 		$id = SG_SynerGaia::idRandom();
 		$ret.= '<textarea id="' . $id . '" class="sg-richtext" name="' . $pRefChamp . '">' . htmlspecialchars($this -> texte) . '</textarea>' . PHP_EOL;
 		$ret.= '<script>tinymce.init({' . SG_TexteRiche::parametresTinyMCE($id) . '})</script>';
-		// pour n'ajouter le script qu'une seule fois
-		//$_SESSION['script']['texteriche'] = 'tinymce.init({' . SG_TexteRiche::parametresTinyMCE() . '})' . PHP_EOL;
-		//$_SESSION['libs']['tinymce'] = true;
 		return $ret;
 	}
 

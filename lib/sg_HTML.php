@@ -462,7 +462,7 @@ class SG_HTML extends SG_Texte {
 
 	/**
 	 * Permet de remplir la partie 'agauche'. Le Cadre est précisé
-	 * @since 1.3.3 ajout
+	 * @since 1.3.3
 	 * @version 2.6 sup encadrement par div agauche
 	 * @return SG_HTML $this
 	 */

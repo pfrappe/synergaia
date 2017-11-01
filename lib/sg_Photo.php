@@ -12,9 +12,11 @@ if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_Photo_trait.php')) {
 
 /**
  * SG_Photo : classe SynerGaia de gestion d'une photo
+ * 
  * @since 2.1
  * @version 2.4
- * @todo dans toutes les calsses normaliser les sorties de toHTML (string ou SG_HTML)
+ * @version 2.7 @Code now is md5 of file so its possible to see double files in database
+ * @todo dans toutes les classes normaliser les sorties de toHTML (string ou SG_HTML)
  */
 class SG_Photo extends SG_Document {
 	/** string Type SynerGaia '@Photo' */
@@ -23,7 +25,7 @@ class SG_Photo extends SG_Document {
 	/** string Code de la base */
 	const CODEBASE = 'synergaia_photos';
 	
-	/** integer Taille par défaut de la vignette */
+	/** integer Taille par défaut de la vignette 100px */
 	const VIGNETTE_MAX = 100;
 
 	/** string Type SynerGaia de l'objet */
@@ -143,6 +145,7 @@ class SG_Photo extends SG_Document {
 
 	/**
 	 * Ajoute un fichier photo à la propriété @Photo (via _attachments) ou restitue un @Fichier contenant la photo
+	 * Par défaut le @Titre et le @Code sont égaux au nom du fichier
 	 * 
 	 * @since 2.2 ajout
 	 * @version 2.6 instanceof
@@ -287,8 +290,10 @@ class SG_Photo extends SG_Document {
 	}
 
 	/**
-	 * Calculer les champs @Titre (si vide), @Vignette, @DatePriseDeVue
-	 * @since 2.2 ajout
+	 * Calculate fields @Code @Titre (if empty), @Exif, @Vignette, @DatePriseDeVue
+	 * 
+	 * @since 2.2
+	 * @version 2.7 .@Code contains the filename of the photo
 	 * @return boolean|SG_Erreur
 	 */
 	function preEnregistrer() {
@@ -299,6 +304,7 @@ class SG_Photo extends SG_Document {
 			$this -> setValeur('@Vignette', SG_Image::resizeTo(self::VIGNETTE_MAX, $fic['data']));
 			$this -> setMD5();
 		}
+		$this -> setValeur('@Code',$key);
 		// calcul d'un titre si non fourni, à partir du nom du fichier photo
 		if ($this -> getValeur('@Titre','') === '') {
 			$this -> setValeur('@Titre',$key);
@@ -477,6 +483,25 @@ class SG_Photo extends SG_Document {
 	 */
 	function getMD5() {
 		return $this -> getValeur('@MD5', '');
+	}
+
+	/**
+	 * Recherche les doubles d'une photos dans la base, c'est à dire celles qui ont le même md5 mais ne sont pas celle-ci
+	 * 
+	 * @since 2.7
+	 * @return SG_Collection
+	 */
+	function Doubles() {
+		$ret = $_SESSION['@SynerGaia'] -> sgbd -> getObjetsParMD5(getTypeSG($this), $this -> getMD5());
+		if ($ret instanceof SG_Collection) {
+			$uid = $this -> getUUID();
+			for ($i = 0; $i < sizeof($ret -> elements); $i++) {
+				if ($ret -> elements[$i] -> getUUID() === $uid) {
+					unset($ret -> elements[$i]);
+				}
+			}
+		}				
+		return $ret;
 	}
 
 	// 2.1.1. complément de classe créée par compilation

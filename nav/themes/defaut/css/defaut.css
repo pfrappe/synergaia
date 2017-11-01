@@ -603,6 +603,7 @@ hr.filet-blanc {
 	background-color: #f7f7f7;
 	text-align: left;
 	overflow:auto;
+	font-size: 10pt;
 }
 .sg-gauche:empty {
 	display: none;
@@ -880,6 +881,10 @@ hr.filet-blanc {
 .sg-td-cell a:hover {
 	background-color: rgb(245, 255, 245);
 	color: #208020;
+}
+.sg-td-double {
+	text-align: right;
+	font-family: 'Lucida Sans Typewriter', 'Lucida Console', monaco, 'Bitstream Vera Sans Mono', monospace;
 }
 .sg-lien {
 	cursor : pointer;
@@ -1326,7 +1331,6 @@ textarea.sg-texte:focus {
 	width: 95%;
 	font-size: 10pt;
 	white-space: pre;
-	border: solid 1px grey;
 }
 .sg-formule:focus {
 	resize: vertical;
@@ -1510,7 +1514,7 @@ input.sg-categorie {
 	color : #555;
 }
 span.sg-url-inconnue {
-	color:#aaa; 
+	color:#a22; 
 	text-decoration:underline;
 }
 /*-------- sg-email ----------*/

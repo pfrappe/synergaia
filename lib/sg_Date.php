@@ -32,6 +32,7 @@ class SG_Date extends SG_Objet {
 	/** 
 	 * Construction de l'objet
 	 * @version 2.6 instanceof, replace '-'
+	 * @version 2.7 correction strstr
 	 * @param indéfini $pQuelqueChose valeur à partir de laquelle créer la date
 	 */
 	public function __construct($pQuelqueChose = null) {
@@ -55,7 +56,7 @@ class SG_Date extends SG_Objet {
 					if ($d !== '') {
 						$d = trim(str_replace('/', '-', $d));
 						if (strstr($d, ' ') !== false) {
-							$d = substr($d, strpos($d, ' '));
+							$d = substr($d, 0, strpos($d, ' '));
 						}
 						try {
 							$this -> _date = new DateTime($d);
@@ -335,6 +336,7 @@ class SG_Date extends SG_Objet {
 	/**
 	* calcule le nombre de jours écoulé avec la date passée en paramètre
 	* @since 2.1.1
+	* @version 2.7 correction $d->date, _date()
 	* @param SG_Date $pDate : autre date pour l'intervalle
 	* @return SG_Nombre
 	**/
@@ -342,8 +344,8 @@ class SG_Date extends SG_Objet {
 		$ret = 0;
 		if ($pDate !== null) {
 			$d = new SG_Date($pDate);
-			if (! is_null($this -> _date) and ! is_null($d -> date)) {
-				$interval = $d -> diff($this -> _date());
+			if (! is_null($this -> _date) and ! is_null($d -> _date)) {
+				$interval = $d -> _date -> diff($this -> _date);
 				$ret = $interval -> days;
 			}
 		}

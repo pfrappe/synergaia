@@ -62,10 +62,11 @@ class SG_Lien extends SG_Texte {
 	/**
 	 * Calcule le code HTML pour afficher le champ
 	 * 
+	 * @param any $pOptions compatibilité avec SG_Objet
 	 * @since 2.3 ajout
 	 * @return SH_HTML
 	 */
-	function afficherChamp() {
+	function afficherChamp($pOptions = null) {
 		return $this -> toHTML();
 	}
 
@@ -75,7 +76,7 @@ class SG_Lien extends SG_Texte {
 	 * @param string $pRefChamp
 	 * @return SH_HTML
 	 */
-	function modifierChamp($pRefChamp = '') {
+	function modifierChamp($pRefChamp = '', $pValeursPossibles = NULL) {
 		$ret = '<textarea class="champ_lien" name="' . $pRefChamp . '" ondblclick="SynerGaia.stopPropagation(event);">' . $this -> toString() . '</textarea>';
 		return new SG_HTML($ret);
 	}

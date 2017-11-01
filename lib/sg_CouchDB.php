@@ -496,9 +496,10 @@ class SG_CouchDB extends SG_Objet {
 		// toujours vide...
 		return $ret;
 	}
+
 	/**
 	 * Lance une réplication avec un autre serveur CouchDB
-	 * @since 1.1 ajout
+	 * @since 1.1
 	 * @version 2.6 SG_SynerGaia static
 	 * @param string|SG_Texte|SG_Formule $pAdresse : adresse ip du serveur visé
 	 * @param string|SG_Texte|SG_Formule$pID : id de l'administrateur CouchDB sur le serveur visé
@@ -568,7 +569,7 @@ class SG_CouchDB extends SG_Objet {
 
 	/**
 	 * renvoie la liste des villes de la base couchdb synergaia_villes de l'application pour utilisation dans ajax
-	 * @since 1.1 ajout
+	 * @since 1.1
 	 * @param string $pCle début de cle spécifique
 	 * @param string $pSelected valeur d'une clé sélectée
 	 * @return string html <option>
@@ -601,7 +602,7 @@ class SG_CouchDB extends SG_Objet {
 
 	/**
 	 * Renvoi les mots du dictionnaire (objets, propriétés, méthodes) commençant par la clé
-	 * @since 1.2 ajout
+	 * @since 1.2
 	 * @param string $pCle
 	 * @return array html de la liste de mots
 	 */
@@ -718,7 +719,7 @@ class SG_CouchDB extends SG_Objet {
 	 * @param string $pCodeObjet : le code de l'objet si on le connait
 	 * @param boolean $pMultiple : acceptation (true) ou refus (false) des documents en double (si false, les doublons provoquent une erreur)
 	 * @param boolean $pCreer : si pas trouvé, créer un objet vide ?
-	 * @return SG_Collection des documents
+	 * @return SG_Collection|SG_Erreur les documents
 	 */
 	function getObjetParCode($pCodeBase = '', $pTypeObjet = '', $pCodeObjet = '', $pMultiple = false, $pCreer = false) {
 		$typeObjet = SG_Texte::getTexte($pTypeObjet);
@@ -784,7 +785,7 @@ class SG_CouchDB extends SG_Objet {
 	 * @param string $pTypeObjet : le type d'objet à retrouver
 	 * @param string $pChamp : le champ de l'objet à tester
 	 * @param string $pValeur : la valeur à trouver
-	 * @return SG_Collection des documents trouvés ou erreur
+	 * @return SG_Collection|SG_Erreur des documents trouvés ou erreur
 	 */
 	function getDocumentsParChamp($pTypeObjet = '', $pChamp = '',$pValeur = '') {
 		$base = SG_Dictionnaire::getCodeBase($pTypeObjet);
@@ -809,8 +810,9 @@ class SG_CouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.4 ajout
+	/**
 	 * retourne tous les ids d'un type de document ou ceux qui commmencent par un prefixe
+	 * @since 2.4
 	 * @param string $pNomBaseOuModele modèle de document
 	 * @param string $pPrefixe
 	 * @param boolean $pBase force le recalcul de la vue
@@ -857,7 +859,7 @@ class SG_CouchDB extends SG_Objet {
 	 * @since 2.4 ajout
 	 * @param array $doc liste des propriétés telles que récupérées de CouchDB
 	 * @return SG_Document
-	 **/
+	 */
 	static function creerObjet($doc) {
 		$ret = null;
 		if (isset($doc['@Type'])) {
@@ -883,11 +885,12 @@ class SG_CouchDB extends SG_Objet {
 
 	/**
 	* Retourne une collection d'objets de type @Document de code à code (accès CouchDB seul)
-	* @since 2.4 ajout
-	* @param string : type d'objet
-	* @param string : code du premier objet
-	* @param string : code de l'objet de fin
-	* @return @Collection des objets (éventuellement vide) ou erreur si paramètres inconséquents
+	* 
+	* @since 2.4
+	* @param string|SG_Texte|SG_Formule $pTypeObjet type d'objet
+	* @param string|SG_Texte|SG_Formule $pCodeDebut code du premier objet
+	* @param string|SG_Texte|SG_Formule $pCodeFin code de l'objet de fin
+	* @return SG_Collection|SG_Erreur les objets (éventuellement vide) ou erreur si paramètres inconséquents
 	**/
 	static function getCollectionObjetsParCode ($pTypeObjet = '', $pCodeDebut = '', $pCodeFin = '') {
 		$type = SG_Texte::getTexte($pTypeObjet);
@@ -928,14 +931,16 @@ class SG_CouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.4 ajout
-	* Retourne une collection d'objets de type @Document pour un champ d'une valeur de départ à une valeur de fin (accès CouchDB seul)
-	* @param (SG_Texte ou string) $pTypeObjet : type d'objet
-	* @param (SG_Texte ou string) $pChamp : champ
-	* @param (SG_Texte ou string) $pCodeDebut : valeur du premier objet
-	* @param (SG_Texte ou string) $pCodeFin : valeur de l'objet de fin
-	* @return @Collection des objets (éventuellement vide) ou erreur si paramètres inconséquents
-	**/
+	/**
+	 * Retourne une collection d'objets de type @Document pour un champ d'une valeur de départ à une valeur de fin (accès CouchDB seul)
+	 * 
+	 * @since 2.4
+	 * @param string|SG_Texte|SG_Formule $pTypeObjet : type d'objet
+	 * @param string|SG_Texte|SG_Formule $pChamp : champ
+	 * @param string|SG_Texte|SG_Formule $pCodeDebut : valeur du premier objet
+	 * @param string|SG_Texte|SG_Formule $pCodeFin : valeur de l'objet de fin
+	 * @return SG_Collection|SG_Erreur les objets (éventuellement vide) ou erreur si paramètres inconséquents
+	 */
 	static function getCollectionObjetsParChamp ($pTypeObjet = '', $pChamp = '', $pCodeDebut = '', $pCodeFin = '') {
 		$type = SG_Texte::getTexte($pTypeObjet);
 		$champ = SG_Texte::getTexte($pChamp);
@@ -975,12 +980,15 @@ class SG_CouchDB extends SG_Objet {
 		}
 		return $ret;
 	}
-	/** 2.4 ajout
-	* Retourne une collection d'objets de type @Document selon le MD5 du PREMIER fichier
-	* @param (SG_Texte ou string) $pTypeObjet : type d'objet
-	* @param (SG_Texte ou string) $pMD5 : md5 du premier fichier
-	* @return @Collection des objets (éventuellement vide) ou erreur si paramètres inconséquents
-	**/
+
+	/**
+	 * Retourne une collection d'objets de type @Document selon le MD5 du PREMIER fichier
+	 * 
+	 * @since 2.4
+	 * @param string|SG_Texte|SG_Formule $pTypeObjet : type d'objet
+	 * @param string|SG_Texte|SG_Formule $pMD5 : md5 du premier fichier
+	 * @return SG_Collection|SG_Erreur les objets (éventuellement vide) ou erreur si paramètres inconséquents
+	 */
 	static function getObjetsParMD5 ($pTypeObjet = '', $pMD5 = '') {
 		$type = SG_Texte::getTexte($pTypeObjet);
 		$base = SG_Dictionnaire::getCodeBase($type);
@@ -999,12 +1007,15 @@ class SG_CouchDB extends SG_Objet {
 		return $ret;
 	}
 
-	/** 2.4 ajout
+	/**
 	 * Crée le code javascript pour diverses vues
-	 * @param string : code de phrase ('1' à  '12')
-	 * @param $pTypeObjet : type d'objet sélecté ou ''
-	 * @param $pChamp : nom du champ testé
-	 * @return : phrase de javascript ou tableau map et reduce
+	 * 
+	 * @since 2.4
+	 * @version 2.7 correct '12', ajout '13'
+	 * @param string $pCodeJS code de phrase ('1' à  '12')
+	 * @param string $pTypeObjet type d'objet sélecté ou ''
+	 * @param string $pChamp nom du champ testé
+	 * @return string|array phrase de javascript ou tableau map et reduce
 	 * @todo '12' : cas des événements qui chevauchent les bornes (test date fin, test mois dans la période)
 	 */
 	static function javascript($pCodeJS, $pTypeObjet = '', $pChamp = '') {
@@ -1070,9 +1081,13 @@ class SG_CouchDB extends SG_Objet {
 		} elseif ($pCodeJS === '12') {
 			// pour @Calendrier->get3Mois() : 3 mois sur date début
 			// champ => 'champ': nom, 'val' : valeur
-			$champ = "doc['" . $pChamp['nom'] . 
 			$ret = "function(doc) { if (doc['@Type']==='" . $pTypeObjet . "') {val=doc['" . $pChamp['nom'] . "'];if(val!= null && val != ''){";
 			$ret.= "emit(val.substr(6,4) + val.substr(3,2), doc)}}}";
+		} elseif ($pCodeJS === '13') {
+			// pour recherche documents inclus dans répertoires
+			// iddoc => idrep
+			$ret = "function(doc) { if (doc['@Type']==='" . SG_Repertoire::TYPESG . "') {elt=doc['@Elements'];for(var i=0;i<elt.length;i++) {";
+			$ret.= "if(elt[i]['doc'] != null){emit(elt[i]['doc'], doc['_id'])}}}}";
 		} else {
 			$ret = new SG_Erreur('0238', $pCodeJS);
 		}
@@ -1147,6 +1162,29 @@ class SG_CouchDB extends SG_Objet {
 		// on cherche les documents entre les dates
 		if ($vue -> creerVue() === true) {
 			$ret = $vue -> vue -> getCollection($debut, $fin, true);
+		}
+		return $ret;
+	}
+
+	/**
+	 * Retourne la collection des répertoires dans lesquels est inclus un document
+	 * 
+	 * @since 2.7
+	 */
+	function getRepertoires($pIDDoc = null) {
+		$ret = new SG_Collection();
+		$base = SG_Repertoire::CODEBASE;
+		if (is_string($pIDDoc)) {
+			$id = $pIDDoc;
+		} elseif ($pIDDoc instanceof SG_Document or $pIDDoc instanceof SG_IDDoc) {
+			$id = $pIDDoc -> getUUID();
+		} else {
+			$id = $pIDDoc -> getString();
+		}
+		$js = self::javascript('13', '', $id);
+		$vue = new SG_Vue('', $base, $js, true);
+		if ($vue -> creerVue() === true) {
+			$ret = $vue -> vue -> Contenu($id);
 		}
 		return $ret;
 	}

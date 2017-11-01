@@ -24,8 +24,12 @@ class SG_Tableur extends SG_Objet {
 	/** PHPExcel colonne active (objet PHPExcel) */
 	public $colonneactive;
 	
-	/** string format de date sur tableur **/
+	/** string format de date sur tableur */
 	private $formatDate;
+	
+	/** array traduction enn chiffres des mois anglais en 3 lettres */
+	private $moistrad = array('jan'=>'01','feb' => '02','mar' => '03', 'apr' => '04','may' => '05','jun' => '06'
+		,'jul' => '07','aug' => '08','sep' => '09','oct' => '10','nov' => '11','dec' => '12');
 
 	/**
 	* Construction de l'objet
@@ -38,6 +42,9 @@ class SG_Tableur extends SG_Objet {
 		if (!class_exists('PHPExcel_IOFactory')) {
 			SG_Pilote::OperationEnCours() -> STOP('0272');
 		} else {
+			if (! class_exists('ZipArchive')) {
+				PHPExcel_Settings::setZipClass(PHPExcel_Settings::PCLZIP);
+			}
 			$source = SG_Texte::getTexte($pSource);
 			if ($source !== '') {
 				try {
@@ -186,7 +193,7 @@ class SG_Tableur extends SG_Objet {
 	 * @return SG_Collection : la collection de documents
 	 */
 	public function Importer($pTypeObjet = '', $pChampCle = '', $pColIndex = 'A', $pChamps = '', $pDebut = 1, $pFin = 0, $pFiltre = '') {
-		if (getTypeSG($this -> fichier) === '@Erreur') {
+		if ($this -> fichier instanceof SG_Erreur) {
 			$ret = $this -> fichier;
 		} else {
 			$ret = new SG_Collection();
@@ -198,6 +205,7 @@ class SG_Tableur extends SG_Objet {
 			}
 			$champCle = SG_Texte::getTexte($pChampCle);
 			$index = SG_Texte::getTexte($pColIndex);
+			// recherche de la liste des n° de colonne de la feuille
 			$colmax = $this -> NoDerniereColonne() -> toString();
 			$icol = 'A';
 			$champstous = array();
@@ -235,7 +243,7 @@ class SG_Tableur extends SG_Objet {
 			}
 		}
 	
-		if (getTypeSG($ret) !== '@Erreur') {
+		if (! $ret instanceof SG_Erreur) {
 			// préparation des champs à traiter
 			$champsdoc = array();
 			$icol = 'A';
@@ -280,7 +288,7 @@ class SG_Tableur extends SG_Objet {
 					$cle = SG_Texte::getTexte($ligne -> elements[$index]);
 					$formule -> setFormule( '.' . $champCle . '.@Egale("'. $cle . '")');
 					$collec = SG_Rien::Chercher($typeObjet, $formule);
-					if(getTypeSG($collec) === '@Collection') {
+					if($collec instanceof SG_Collection) {
 						if(sizeof($collec -> elements) == 0) {
 							$doc = SG_Rien::Nouveau($typeObjet);
 						} else {
@@ -292,23 +300,30 @@ class SG_Tableur extends SG_Objet {
 				}
 				// mise à jour des propriétés
 				$doc -> proprietes['noligne'] = new SG_Nombre($key);
-				if (getTypeSG($doc) !== '@Erreur') {
+				if (! $doc instanceof SG_Erreur) {
 					foreach($champsdoc as $champ) {
 						if ($champ[0] !== '') {
 							if (isset($ligne -> elements[$champ[1]])) {
 								$val = $ligne -> elements[$champ[1]];
 								// traitement des dates
-								if ($champ[3] === '@Date' and getTypeSG($val) !== '@Date') {
+								if ($champ[3] === '@Date' and ! $val instanceof SG_Date) {
 									$val = SG_Texte::getTexte($val);
 									if (!is_null($this -> formatDate)) {
 										$dt = new SG_Date();
-journaliser($val);
 										$dt -> _date = DateTime::createFromFormat($this -> formatDate, $val);
 										if ($dt -> _date instanceof DateTime) {
 											$val = $dt -> toString();
 										}
 									} elseif (strpos($val, '-')) { // date avec '-'
+										// enlever le temps ?
+										$ip = strpos($val, ' ');
+										if ($ip !== false) {
+											$val = substr($val, 0, $ip);
+										}
 										$dt = explode('-',$val);
+										if (sizeof($dt) > 1 and strlen($dt[1]) === 3) {
+											$dt[1] = $this -> moistrad[strtolower($dt[1])];
+										}
 										if (sizeof($dt) > 2 and strlen($dt[2]) === 2) {
 											if ($dt[2] <= '25') { // cas 1900 ou 2000
 												$dt[2] = '20' . $dt[2];
@@ -330,9 +345,9 @@ journaliser($val);
 						}
 					}
 				}
-				if($pFiltre === '' or getTypeSG($doc) === '@Erreur') {					
+				if($pFiltre === '' or $doc instanceof SG_Erreur) {					
 					$ret -> elements[] = $doc;
-				} elseif (getTypeSG($pFiltre) === '@Formule') {
+				} elseif ($pFiltre instanceof SG_Formule) {
 					$ok = $pFiltre -> calculerSur($doc);
 					if($ok -> estVrai() === true) {
 						$ret -> elements[] = $doc;

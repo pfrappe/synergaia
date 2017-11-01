@@ -14,6 +14,7 @@ if (file_exists(SYNERGAIA_PATH_TO_APPLI . '/var/SG_SynerGaia_trait.php')) {
  * SG_SynerGaia : Classe décrivant l'application et gérant les objets et paramètres permaments
  * @since 0.0
  * @version 2.6 : réintégration des classes SG_Installation et SG_Update qui disparaissent
+ * @version 2.7 ajout updateNecessaire()
  * @todo gérer le multilingue
  */
 class SG_SynerGaia extends SG_Objet {
@@ -28,14 +29,22 @@ class SG_SynerGaia extends SG_Objet {
 	/** string Fichier du contenu du dictionnaire par défaut */
 	const DICTIONNAIRE_REFERENCE_FICHIER = 'ressources/dictionnaire.json';
 
-	/** string 1.1 Fichier du contenu du dictionnaire par défaut */
+	/** string Fichier du contenu du dictionnaire par défaut
+	 * @since 1.1 */
 	const LIBELLES_REFERENCE_FICHIER = 'ressources/libelles.json';
+	
+	/** string Fichier du contenu des paquets par défaut
+	 * @since 2.7  */
+	const PAQUETS_REFERENCE_FICHIER = 'ressources/paquets.json';
 
 	/** string 1.1 Fichier du contenu du dictionnaire par défaut */
 	const VILLES_REFERENCE_FICHIER = 'ressources/villes_fr.csv';
 
 	/** string Clé de config de la version du dictionnaire */
 	const CLE_CONFIG_HASH_DICTIONNAIRE = 'HashDictionnaireDernierImport';
+
+	/** string Clé de config de la version des paquets */
+	const CLE_CONFIG_HASH_PAQUETS = 'HashPaquetsDernierImport';
 
 	/** string 1.1 Clé de config de la version du dictionnaire */
 	const CLE_CONFIG_HASH_LIBELLES = 'HashLibellesDernierImport';
@@ -95,7 +104,8 @@ class SG_SynerGaia extends SG_Objet {
 	/**
 	 * Determine la version de SynerGaïa exécutée
 	 * @since 1.1
-	 * @version2.2 php.ini
+	 * @version 2.2 php.ini
+	 * @version 2.7 type de cache
 	 * @param boolean|SG_VraiFaux $pTout Si @Vrai, afficher le détail des version de tous les modules utilisés. Par défaut @Faux. 
 	 * @return string code de version
 	 */
@@ -107,6 +117,7 @@ class SG_SynerGaia extends SG_Objet {
 			$ret.= '<li>php.ini chargé : ' . php_ini_loaded_file() . '</li>';
 			$versionsgbd = json_decode($this -> sgbd -> version());
 			$ret.= '<li>CouchDB : ' . $versionsgbd -> version . '</li>';
+			$ret.= '<li>Cache : ' . SG_Cache::getTypeCache() . '</li>';
 			$modules = get_loaded_extensions();
 			natcasesort($modules);
 			$ret.= '<li>' . implode('</li><li>', $modules) . '</li>';
@@ -430,6 +441,7 @@ class SG_SynerGaia extends SG_Objet {
 	 * @since 1.3.1 ajout
 	 * @param string|SG_Texte|SG_Formule $pOrigine : "" tous (defaut), "s" standard SynerGaïa, "l" paquets locaux
 	 * @return SG_Collection les paquets demandés
+	 * @todo : supprimer
 	 **/
 	function Paquets($pOrigine = '') {
 		$parmOrigine = strtolower(substr(SG_Texte::getTexte($pOrigine), 0, 1));
@@ -692,7 +704,7 @@ class SG_SynerGaia extends SG_Objet {
 	/**
 	 * afficher des informations sur l'état de PHP et d'Apache (notamment les sessions enregistrées)
 	 * autorisé aux seuls administrateurs
-	 * @since 2.5 ajout
+	 * @since 2.5
 	 * @param boolean|SG_VraiFaux|SG_Formule $pEcran : si true, sortie en echo
 	 * @return SG_Collection|SG_Erreur collection d'informations par session
 	 **/
@@ -717,7 +729,7 @@ class SG_SynerGaia extends SG_Objet {
 			}
 			$vide = new SG_Texte();
 			foreach($_SESSION['operations'] as $key => $entree) {
-				$size = selg::mesurerObjet($entree);
+				$size = self::mesurerObjet($entree);
 				$id = 'operation [' . $key . '] : ';
 				$type = getTypeSG($entree);
 				$txt = $id . $type . ' (' . $entree -> getValeur('@DateCreation', '') . ') ' . $size . ' octets';
@@ -806,6 +818,7 @@ class SG_SynerGaia extends SG_Objet {
 	 * Elle vide les caches et supprime les vues à recalculer
 	 * 
 	 * @version 2.6 Nettoyer préalable (enlever /var/MO_... et /var/OP_...
+	 * @version 2.7 update paquets 
 	 * @param boolean $pRecalcul true par defaut
 	 * @return string HTML de la mise à jour
 	 */
@@ -872,6 +885,22 @@ class SG_SynerGaia extends SG_Objet {
 				$updateTotal = false;
 			}
 		}
+		// Paquets
+		$updateTotal = true;
+		if (self::updatePaquetsNecessaire() === true) {
+			$update = self::updatePaquets();
+			if (getTypeSG($update) !== '@Erreur') {
+				if ($update === true) {
+					$ret .= '<b>' . SG_Libelle::getLibelle('0069', false) . '</b>' . $nl;
+				} else {
+					$ret .= '<b><p style="color:#ff0000">' . SG_Libelle::getLibelle('0070', false) . '</p></b> ' . $nl;
+					$updateTotal = false;
+				}
+			} else {
+				$ret .= '<b><p style="color:#ff0000">' . $update -> toString() . '</p></b> ' . $nl;
+				$updateTotal = false;
+			}
+		}
 		// recompilation des modèles d'opération et des objets
 		$ret .= self::recalcul2100();
 		// Mise à jour des villes
@@ -911,6 +940,7 @@ class SG_SynerGaia extends SG_Objet {
 	 * Installation de SynerGaia
 	 * @since 1.3.2 repris de install.php puis de SG_Installation qui disparait
 	 * @version 2.1.1 init @Moi
+	 * @version 2.7 suppression installation des modules packs
 	 * @version création lien /nav
 	 * @return SG_VraiFaux
 	 */
@@ -1096,7 +1126,7 @@ class SG_SynerGaia extends SG_Objet {
 			}
 		}
 
-		// Page 2 validée (modules complémentaires) => cherche les données envoyées
+/*		// Page 2 validée (modules complémentaires) => cherche les données envoyées
 		if ($numPageInstallRecue === '2') {
 			if (isset($_POST['sg_install_modules'])) {
 				$sg_install['modules'] = $_POST['sg_install_modules'];
@@ -1119,7 +1149,7 @@ class SG_SynerGaia extends SG_Objet {
 				$numPageInstallDemandee = '3';
 			}
 		}
-
+*/
 		// Aucune page en cours => page initiale
 		if ($numPageInstallRecue === '') {
 			$numPageInstallDemandee = '0';
@@ -1132,10 +1162,10 @@ class SG_SynerGaia extends SG_Objet {
 		} elseif ($numPageInstallDemandee === '1') {
 			$ret = self::install_admin($sg_install);
 		}
+//		if ($numPageInstallDemandee === '2') {
+//			$ret = self::install_modules($sg_install);
+//		}
 		if ($numPageInstallDemandee === '2') {
-			$ret = self::install_modules($sg_install);
-		}
-		if ($numPageInstallDemandee === '3') {
 			$ret = self::install_activation($sg_install);
 		}
 		if ($ret !== '') {
@@ -1379,6 +1409,7 @@ class SG_SynerGaia extends SG_Objet {
 	 * @since 1.3.4 repris de install_2.php puis de SG_Installation
 	 * @param array $sg_install tableau des paramètres de config
 	 * @return string HTML de l'instalation
+	 * @todo supprimer
 	 */
 	static function install_modules($sg_install) {
 		$ret = '<h2>Modules complémentaires</h2></div><div class="contenu"><form action="" method="post">
@@ -1833,6 +1864,55 @@ class SG_SynerGaia extends SG_Objet {
 			$m -> Supprimer();
 		}
 		$ret.='</ul>';
+		return $ret;
+	}
+
+	/**
+	 * Mise à jour nécessaire des paquets ?
+	 * @since 2.7
+	 * @return boolean
+	 */
+	static function updatePaquetsNecessaire() {
+		$hash_actuel = sha1_file(SYNERGAIA_PATH_TO_ROOT . '/' . self::PAQUETS_REFERENCE_FICHIER);
+		$hash_dernier = SG_Config::getConfig(self::CLE_CONFIG_HASH_PAQUETS, '');
+		return ($hash_actuel !== $hash_dernier);
+	}
+
+	/**
+	 * Mise à jour des définitions des paquets standards
+	 * @since 2.7
+	 * @return boolean
+	 */
+	static function updatePaquets() {
+		journaliser('Mise a jour des paquets : debut', false);
+		// Vide le cache
+		// Stocke les définitions des paquets par défaut
+		$import = new SG_Import(SYNERGAIA_PATH_TO_ROOT . '/' . self::PAQUETS_REFERENCE_FICHIER);
+		$import -> appelEnregistrer = false;
+		$ret = $import -> Importer();
+		if (! $ret instanceof SG_Erreur) {
+			if ($ret -> estVrai() === true) {
+				// Enregistre le hash du fichiers paquets importé
+				$hash_actuel = sha1_file(SYNERGAIA_PATH_TO_ROOT . '/' . self::PAQUETS_REFERENCE_FICHIER);
+				$ret = SG_Config::setConfig(self::CLE_CONFIG_HASH_PAQUETS, $hash_actuel);
+			}
+		}
+		journaliser('Mise a jour des paquets : fin', false);
+		return $ret;
+	}
+
+	/**
+	 * Teste si une nouvelle version est à mettre à jour
+	 * oui si fichiers Dictionnaire ou Libellés ou Villes ou Paquets modifiés
+	 * 
+	 * @since 2.7
+	 * @return boolean true si un fichier a été modifié
+	 */
+	static function updateNecessaire() {
+		$ret = SG_SynerGaia::updateDictionnaireNecessaire() === true
+			or SG_SynerGaia::updateLibellesNecessaire() === true
+			or SG_SynerGaia::updateVillesNecessaire() === true
+			or SG_SynerGaia::updatePaquetsNecessaire() === true;
 		return $ret;
 	}
 

@@ -673,7 +673,22 @@ class SG_Objet {
 			}
 		}
 		return $ret;
-	}		
+	}
+
+	/**
+	 * L'objet contenant l'objet en cours, si celui-ci en est extrait
+	 * 
+	 * @since 2.7
+	 * @return SG_Objet|SG_Rien
+	 */
+	function Contenant() {
+		if (is_null($this -> contenant)) {
+			$ret = new SG_Rien();
+		} else {
+			$ret = $this -> contenant;
+		}
+		return $ret;
+	}
 
 	// 2.3 complément de classe créée par compilation
 	use SG_Objet_trait;

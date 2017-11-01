@@ -857,13 +857,14 @@ class SG_Operation extends SG_Document {
 	 * Cela évite un dépassement mémoire au moment de la fin du traitement (sauvegarde de la session):
 	 * "PHP Fatal error:  Allowed memory size of 268435456 bytes exhausted (tried to allocate 49770496 bytes) in Unknown on line 0"
 	 * @since 2.5
+	 * @version 2.7 test is_object
 	 * @return integer taile de la mémoire utilisée après la réduction
 	 **/
 	function reduirePrincipal() {
 		foreach($this -> proprietes as $pkey => &$pelt) {
 			if (getTypeSG($pelt) === '@Collection') {
 				foreach ($pelt -> elements as $key => &$elt) {
-					if ($elt -> DeriveDeDocument() -> estVrai()) {
+					if (is_object($elt) and $elt -> DeriveDeDocument() -> estVrai()) {
 						$id = new SG_IDDoc($elt);
 						$id -> proprietes = $elt -> proprietes; // pour garder les propriétés particulière notamment les types de données ['@Type_xxx']
 						$this -> proprietes[$pkey] -> elements[$key] = $id;

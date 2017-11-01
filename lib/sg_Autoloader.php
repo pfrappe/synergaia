@@ -56,6 +56,12 @@ class SG_Autoloader {
 			} else {
 				try {
 					$ret = include ($pClassFilePath);
+					if (strpos($pClassName, 'PHPExcel') === 0) {
+						if (! class_exists('ZipArchive')) {
+journaliser('PHPExcel : ZIPARCHIVE intouvable');
+							PHPExcel_Settings::setZipClass(PHPExcel_Settings::PCLZIP);
+						}
+					}
 					if ($ret === false) {
 						throw new Exception('ERREUR GRAVE sur ' . $pClassFilePath . ' : le fichier ne se charge pas ou provoque une erreur de compilation');
 					}

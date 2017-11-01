@@ -446,6 +446,7 @@ class SG_Navigation {
 					$nomChamp = SG_Champ::nomChampDecode(substr($nomZoneHTML, strlen(SG_Champ::PREFIXE_HTML)));
 					$tmpChamp = explode('/', $nomChamp);
 					$idsup = '_sup_' . $nomZoneHTML;
+					// est-ce une suppression ?
 					if(isset($_POST[$idsup]) and $_POST[$idsup] !== '') {
 						$tmp = explode('.', $tmpChamp[2]);
 						switch (sizeof($tmp)) {// suppression (on n'a pas trouvé plus astucieux pour faire la boucle...!)
@@ -469,8 +470,9 @@ class SG_Navigation {
 								break;
 						}
 					} else {
-						if (is_null($objetEnCours)) { // cas de @Demander.@Fichiers
-							$tmpDoc = new SG_Document(); // temporaire
+						if (is_null($objetEnCours)) {
+							// cas de @Demander.@Fichiers
+							$tmpDoc = new SG_Document(); // création d'un document temporaire
 							$tmpChamp = new SG_Champ($nomChamp, $tmpDoc);
 							$tmpChamp -> DefinirFichier($valeurZoneHTML);
 							$nom = $tmpChamp -> codeChamp;
@@ -481,7 +483,7 @@ class SG_Navigation {
 							$opEnCours -> proprietes[$nom] = $fic;
 							$save = false;
 						} else {
-							if ($objetEnCours instanceof SG_Document) { //-> DeriveDeDocument() -> estVrai() === true) {
+							if ($objetEnCours instanceof SG_Document) {
 								// document normal
 								if ($tmpChamp[2] === '_attachments') {
 									// stockage dans les fichiers attachés (2.4 modif test)
@@ -601,14 +603,16 @@ class SG_Navigation {
 	 * Teste si une nouvelle version est à mettre à jour
 	 * 
 	 * @since 1.1 déplacé depuis theme.php
-	 * @version 2.6 f=@SynerGaia.@MettreAJour pour éviter d'utiliser la version obsolète de MO_Update
+	 * @version 2.6 f=@SynerGaia.@MettreAJour pour éviter d'utiliser un version obsolète de MO_Update
+	 * @version 2.7 test updateNecessaire au lieu du dictionnaire seul
 	 * @return string HTML pour la boite admin
 	 */
 	static function updateNecessaire() {
 		$ret ='';
-		if (SG_SynerGaia::updateDictionnaireNecessaire() === true) {
-			if (SG_SynerGaia::VERSION === '2.6.0') {
-				$url = SG_Navigation::URL_PRINCIPALE . '?' . SG_Navigation::URL_VARIABLE_FORMULE . '=@SynerGaia.@MettreAJour';
+		if (SG_SynerGaia::updateNecessaire() === true) {
+			// à partir de la 2.6, on préfère provoquer la mise à jour par une formule plutôt que risquer une opération périmée
+			if (SG_SynerGaia::VERSION >= '2.6.0') {
+				$url = self::URL_PRINCIPALE . '?' . SG_Navigation::URL_VARIABLE_FORMULE . '=@SynerGaia.@MettreAJour';
 				$resume = 'Mettre à jour la version';
 				$href = '<a href="' . $url . '" title="' . $resume . '" >';
 				$href.= '<span>' . $resume . '</span>';
@@ -1041,7 +1045,6 @@ class SG_Navigation {
 	 * @param string|SG_Formule $pTitre titre de l'application 
 	 */
 	static function Header($pTitre = '') {
-		//$lib = $_SESSION['libs'];
 		$ret = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 		<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" >
 		<head>

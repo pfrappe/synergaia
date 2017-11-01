@@ -731,6 +731,10 @@ sg-aide:empty {
 	height: 16px;
 	background-image: url("../img/icons/16x16/silkicons/cancel.png");
 }
+.sg-td-double {
+	text-align: right;
+	font-family: 'Lucida Sans Typewriter', 'Lucida Console', monaco, 'Bitstream Vera Sans Mono', monospace;
+}
 /*=========== fenêtres modales ================*/
 .sg-popup {
 	display: block;

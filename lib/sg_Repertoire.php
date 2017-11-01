@@ -1030,6 +1030,17 @@ class SG_Repertoire extends SG_Document { //SG_DocumentCouchDB
 		return true;
 	}
 
+	/**
+	 * Remplace une entrée de document par une autre
+	 * 
+	 * @since 2.7
+	 * @param string|SG_Texte|SG_IDDoc|SG_Document|SG_Formule $pOriginal ancien document ou son id
+	 * @param string|SG_Texte|SG_IDDoc|SG_Document|SG_Formule $pNouveau document ou id du remplaçant
+	 * @return SG_Repertoire
+	 */
+	function RemplacerEntree($pOriginal = null, $pNouveau = null) {
+	}
+
 	// Complément de classe spécifique à l'application (créé par la compilation)
 	use SG_Repertoire_trait;
 }

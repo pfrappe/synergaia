@@ -8,7 +8,7 @@ defined("SYNERGAIA_PATH_TO_ROOT") or die('403.14 - Directory listing denied.');
  * Cette classe est statique
  * @since 1.0.6
  * @version 2.1 traitement de memcached
- * @version 2.6
+ * @version 2.7 added error tests and ViderCache('?')
  * @todo Terminer la gestion des objets en cache à partir de json et utiliser serialize et unserialisze
  */
 class SG_Cache {
@@ -112,7 +112,6 @@ class SG_Cache {
 			$_SESSION['cache'] = array();
 			$ok = true;
 		}
-// error_log(print_r(SG_Cache::$memcache_obj -> getStats()));
 	}
 
 	/**
@@ -537,15 +536,18 @@ class SG_Cache {
 	 * @version 1.3.1 getCodeModele, isMultiple sur chaque propriete, getObjetFonction, user=false
 	 * @version 2.0 isProprieteExiste
 	 * @version 2.6 @Dictionnaire.getMethodesObjet => DMO
-	 * @version 2.7 test SG_Erreur et return
+	 * @version 2.7 test SG_Erreur et return ; effacer 'DLE', 'DTR', 'gOD'
 	 * @todo vider ? $codeCache = 'DMO(' . $pCodeObjet . ',' . $pModele . ')';
 	 */
 	static function viderCacheDictionnaire() {
 		self::effacerEnCache('getObjetFonction',false);
+		self::effacerEnCache('DOD', false);
+		self::effacerEnCache('gOD', false);
 		$collec = SG_Dictionnaire::Objets();
 		if ($collec instanceof SG_Erreur) {
 			$ret = $collec;
 		} else {
+			// effacer les caches par modèle de document
 			foreach($collec -> elements as $objet) {
 				$nom = $objet -> getValeur('@Code');
 				self::effacerEnCache('getCodeBase(' . $nom . ')', false);
@@ -553,12 +555,15 @@ class SG_Cache {
 				self::effacerEnCache('@Dictionnaire.classeObjet(' . $nom . ')', false);
 				self::effacerEnCache('@Dictionnaire.getLiens(' . $nom . ')', false);
 				self::effacerEnCache('@Dictionnaire.@Champs(' . $nom . ')', false);
-				self::effacerEnCache('DMO(' . $nom . ')', false);
 				self::effacerEnCache('@Dictionnaire.isLien(' . $nom . ')', false);
 				self::effacerEnCache('isObjetSysteme(' . $nom . ')', false);
+				self::effacerEnCache('DLE(' . $nom . ')', false);
+				self::effacerEnCache('DMO(' . $nom . ')', false);
 				self::effacerEnCache('DPO(' . $nom . ',)', false);
+				self::effacerEnCache('DTR(' . $nom . ')', false);
 				$proprietes = SG_Dictionnaire::getProprietesObjet($nom);
 				foreach($proprietes as $propriete => $uid) {
+					// effacer les caches par code propriété
 					$codeElement = $nom . '.' .$propriete;
 					self::effacerEnCache('isMultiple(' . $codeElement . ')', false);
 					self::effacerEnCache('getCodeModele(' . $codeElement . ')', false);

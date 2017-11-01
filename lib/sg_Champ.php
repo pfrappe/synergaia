@@ -129,7 +129,6 @@ class SG_Champ extends SG_Objet {
 					$this -> typeObjet = $this -> document -> proprietes[$ccs]['modele'];
 				}
 			}
-
 			// Cherche la valeur du champ;
 			$vi = $codeChamp . '_defaut';
 			if (is_null($this -> document)) {

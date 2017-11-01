@@ -78,6 +78,7 @@ class SG_DictionnairePropriete extends SG_Document {
 	 * 
 	 * @since 2.1 ajout
 	 * @version 2.3 maj dictionnaire ; return
+	 * @todo récupérer les erreurs de compilation
 	 * @return boolean|SG_Erreur
 	 */
 	function postEnregistrer() {
@@ -85,9 +86,10 @@ class SG_DictionnairePropriete extends SG_Document {
 		$objet = $this -> getValeurPropriete('@Objet');
 		$codeObjet = $objet -> getValeur('@Code');
 		if (substr($codeObjet, 0,1) !== '@') { // seulement les objets non système
-			$ret = $objet -> compiler();// todo récupérer les erreurs de compilation
+			$ret = $objet -> compiler();
 		}
-		SG_Dictionnaire::isProprieteExiste($codeObjet, $this -> getValeur('@Propriete'), true); // maj dictionnaire
+		// mettre à jour le cache du dictionnaire en forçant le recalcul
+		SG_Dictionnaire::isProprieteExiste($codeObjet, $this -> getValeur('@Propriete'), true);
 		return $ret;
 	}
 
